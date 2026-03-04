@@ -1,0 +1,74 @@
+---
+description: Git commit and push message conventions for LokalMind v2.
+alwaysApply: false
+---
+# Git Conventions
+
+## Commit / Push Description Format
+
+Every commit message must follow this exact format:
+
+```
+DD/MM/YYYY - [short description] - #[serial number]
+```
+
+### Rules
+
+- **Date**: DD/MM/YYYY format, e.g. `04/03/2026`
+- **Description**: Short, imperative, point-wise if multiple changes. Use bullet points with `·` separator for multiple items on one line, or a multiline body for longer descriptions.
+- **Serial number**: Incrementing integer starting from `#1`. Never reuse a number.
+
+### Examples
+
+Single change:
+```
+04/03/2026 - Add GlassSurface component with expo-blur fallback - #1
+```
+
+Multiple changes (inline):
+```
+04/03/2026 - Add ChatViewModel · SendMessageUseCase · IChatRepository - #2
+```
+
+Multiple changes (multiline body):
+```
+04/03/2026 - Phase 1: LLM pipeline - #3
+
+· Add llamaRnAdapter implementing ILLMEngine
+· Add model download with resumable support
+· Add EnsureModelLoadedUseCase
+· Add streaming token debounce in ChatViewModel
+```
+
+Feature completion:
+```
+04/03/2026 - Complete memory pipeline (extraction + injection + toast) - #12
+```
+
+Bug fix:
+```
+04/03/2026 - Fix streaming cursor not clearing after generation ends - #13
+```
+
+## Branch Naming
+
+```
+feature/[short-name]       ← new feature work
+fix/[short-name]           ← bug fix
+refactor/[short-name]      ← refactoring, no behaviour change
+docs/[short-name]          ← documentation only
+phase/[phase-number]       ← phase-level branch (e.g. phase/1-llm-pipeline)
+```
+
+Examples:
+- `feature/reply-to-message`
+- `fix/streaming-cursor-clear`
+- `phase/2-chat-ui`
+
+## Rules
+
+- Never commit directly to `main` — always use a branch + PR
+- Never commit generated files (`node_modules/`, `.expo/`, `*.gguf`, `*.bin`)
+- Never commit `.env` or any file containing secrets or API keys
+- Serial number `#N` must be unique across the entire commit history — check the last commit before pushing
+- PR title must match the commit message format

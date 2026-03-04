@@ -1,0 +1,89 @@
+---
+description: File and symbol naming conventions for LokalMind v2.
+globs: ["src/**/*.ts", "src/**/*.tsx", "app/**/*.tsx"]
+alwaysApply: true
+---
+
+# Naming Conventions
+
+## File Naming
+
+### Screens
+- PascalCase + `Screen` suffix
+- Examples: `ChatScreen.tsx`, `ModelBrowserScreen.tsx`, `ProfileScreen.tsx`
+- Location: `src/features/{feature}/presentation/screens/`
+
+### ViewModels
+- PascalCase + `ViewModel` suffix
+- Examples: `ChatViewModel.ts`, `ModelBrowserViewModel.ts`
+- Location: `src/features/{feature}/presentation/viewmodels/`
+
+### Use Cases
+- PascalCase + `UseCase` suffix
+- Examples: `SendMessageUseCase.ts`, `GetMemoryFactsUseCase.ts`, `MemoryExtractionUseCase.ts`
+- Location: `src/features/{feature}/domain/usecases/`
+
+### Repository Interfaces
+- `I` prefix + PascalCase + `Repository` suffix
+- Examples: `IChatRepository.ts`, `IModelRepository.ts`, `IMemoryRepository.ts`
+- Location: `src/features/{feature}/domain/repositories/`
+
+### Repository Implementations
+- PascalCase + `RepositoryImpl` suffix
+- Examples: `ChatRepositoryImpl.ts`, `ModelRepositoryImpl.ts`
+- Location: `src/features/{feature}/data/repositories/`
+
+### Infrastructure Adapters
+- camelCase + `Adapter` suffix
+- Examples: `llamaRnAdapter.ts`, `whisperRnAdapter.ts`
+- Location: `src/infrastructure/{layer}/`
+
+### Interfaces / Ports
+- `I` prefix + PascalCase
+- Examples: `ILLMEngine.ts`, `IWhisperEngine.ts`
+- Location: `src/core/ports/`
+
+### Entities
+- PascalCase, no suffix
+- Examples: `Chat.ts`, `Message.ts`, `MemoryFact.ts`, `Model.ts`, `User.ts`
+- Location: `src/features/{feature}/domain/entities/`
+
+### React Components
+- PascalCase, no suffix (unless Screen/ViewModel)
+- Examples: `MessageBubble.tsx`, `InputBar.tsx`, `GlassSurface.tsx`, `ModelCard.tsx`
+
+### Hooks
+- camelCase + `use` prefix
+- Examples: `useViewModel.ts`, `useResumableDownload.ts`, `useFontLoader.ts`
+
+### Design System Tokens
+- `colors.ts`, `typography.ts`, `glass.ts`, `spacing.ts` — all lowercase
+- Token constants: SCREAMING_SNAKE_CASE
+- Examples: `PRIMARY_ORANGE`, `BLACK_PRIMARY`, `TEXT_WHITE_60`
+
+## Symbol Naming
+
+### MobX ViewModels
+- Class name matches file name (PascalCase + `ViewModel`)
+- Observable state: camelCase properties
+- Actions: camelCase verbs (`sendMessage`, `loadChats`, `toggleSidebar`)
+- Computed: camelCase nouns/adjectives (`isLoading`, `hasMessages`, `activeModel`)
+
+### Use Cases
+- Single public method: `execute(...args)`
+- Constructor receives repository interfaces only
+
+### Repository Interfaces
+- Methods: camelCase verbs
+- Examples: `getChats()`, `saveMessage()`, `deleteChat()`, `getMemoryFacts()`
+
+### Expo Router Files
+- All lowercase with hyphens for multi-word routes
+- Examples: `ai-behavior.tsx`, `model-setup.tsx`, `[id].tsx`
+- Special: `_layout.tsx`, `index.tsx`
+
+## Anti-patterns to avoid
+- No `Manager`, `Handler`, `Helper`, `Utils` class names — use specific domain names
+- No `data`, `info`, `stuff` as variable names
+- No abbreviated names unless universally understood (`id`, `url`, `db`, `vm`)
+- No `IInterface` redundancy — `ILLMEngine` not `ILLMEngineInterface`

@@ -1,0 +1,43 @@
+---
+description: Error handling patterns for LokalMind v2 use cases, repositories, and ViewModels.
+globs: ["src/features/*/domain/**/*.ts", "src/features/*/presentation/viewmodels/**/*.ts", "src/features/*/data/**/*.ts", "src/infrastructure/**/*.ts"]
+alwaysApply: false
+---
+
+# Error Handling
+
+Full reference: `docs/CONVENTIONS.md` section 5.
+
+## Use cases return Result — never throw
+
+```typescript
+import { ok, err } from '@/src/core/types';
+
+class SendMessageUseCase {
+  async execute(input: string): Promise<Result<Message>> {
+    if (!input.trim()) return err({ code: 'VALIDATION_ERROR', message: 'Empty input' });
+    try {
+      return ok(await this.repo.saveMessage(input));
+    } catch (e) {
+      return err({ code: 'STORAGE_ERROR', message: 'Save failed', cause: e });
+    }
+  }
+}
+```
+
+## ViewModels handle both branches
+
+```typescript
+const result = await this.useCase.execute(input);
+runInAction(() => {
+  if (!result.success) { this.errorMessage = result.error.message; return; }
+  this.data = result.data;
+});
+```
+
+## Rules
+
+- Use cases: MUST return `Result<T>` — never throw
+- Infrastructure adapters: MUST catch and wrap exceptions as `AppError`
+- Never use `any` as error type
+- Never swallow silently — every `catch` must re-throw or return `err(...)`

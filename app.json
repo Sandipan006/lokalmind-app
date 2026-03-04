@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "lokalmind-app",
+    "name": "LokalMind",
     "slug": "lokalmind-app",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "lokalmindapp",
-    "userInterfaceStyle": "automatic",
+    "scheme": "lokalmind",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
@@ -33,10 +33,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#0F0F0F"
         }
       ]
     ],

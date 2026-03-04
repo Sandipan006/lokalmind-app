@@ -3,6 +3,12 @@
 # dependencies
 node_modules/
 
+#old-app
+lokalmind-oldcode
+
+#llm-models
+llm-models/
+
 # Expo
 .expo/
 dist/

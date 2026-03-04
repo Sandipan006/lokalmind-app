@@ -1,0 +1,30 @@
+export interface LLMMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+  imagePath?: string;
+}
+
+export interface LLMConfig {
+  modelId: string;
+  contextSize?: number;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface LLMResponse {
+  text: string;
+  tokensUsed: number;
+  finishReason: 'stop' | 'length' | 'error';
+}
+
+export interface ILLMEngine {
+  initialize(modelId: string, config: LLMConfig): Promise<void>;
+  generateResponse(
+    messages: LLMMessage[],
+    config: LLMConfig,
+    onToken?: (token: string) => void
+  ): Promise<LLMResponse>;
+  unloadModel(): Promise<void>;
+  isModelLoaded(): boolean;
+  getCurrentModelId(): string | null;
+}
