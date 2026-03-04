@@ -7,8 +7,8 @@ import {
   PRIMARY_ORANGE,
   ERROR_RED,
 } from '../tokens/colors';
-import { FONTS, FONT_SIZE } from '../tokens/typography';
-import { SPACING, BORDER_RADIUS } from '../tokens/spacing';
+import { fonts, fontSizes } from '../tokens/typography';
+import { spacing, borderRadius } from '../tokens/spacing';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -65,37 +65,37 @@ const styles = StyleSheet.create({
     backgroundColor: BLACK_PRIMARY,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: SPACING.xl,
+    padding: spacing.xl,
   },
   icon: {
     fontSize: 48,
     color: ERROR_RED,
-    marginBottom: SPACING.md,
+    marginBottom: spacing.md,
   },
   title: {
-    fontFamily: FONTS.semiBold,
-    fontSize: FONT_SIZE.xl,
+    fontFamily: fonts.figtree.semiBold,
+    fontSize: fontSizes.xl,
     color: WHITE_PRIMARY,
-    marginBottom: SPACING.sm,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   message: {
-    fontFamily: FONTS.regular,
-    fontSize: FONT_SIZE.sm,
+    fontFamily: fonts.figtree.regular,
+    fontSize: fontSizes.sm,
     color: TEXT_WHITE_60,
     textAlign: 'center',
-    marginBottom: SPACING.xl,
-    lineHeight: FONT_SIZE.sm * 1.5,
+    marginBottom: spacing.xl,
+    lineHeight: fontSizes.sm * 1.5,
   },
   button: {
     backgroundColor: PRIMARY_ORANGE,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
   },
   buttonText: {
-    fontFamily: FONTS.semiBold,
-    fontSize: FONT_SIZE.md,
+    fontFamily: fonts.figtree.semiBold,
+    fontSize: fontSizes.md,
     color: WHITE_PRIMARY,
   },
 });
