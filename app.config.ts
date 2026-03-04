@@ -4,6 +4,15 @@ import * as path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+const requireEnv = (key: string): string => {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Missing required env var: ${key}`);
+  }
+  return value;
+};
+
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'LokalMind',
@@ -16,10 +25,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'com.lokalmind.app',
+    bundleIdentifier: requireEnv('IOS_BUNDLE_IDENTIFIER'),
   },
   android: {
-    package: 'com.lokalmind.app',
+    package: requireEnv('ANDROID_PACKAGE'),
     adaptiveIcon: {
       backgroundColor: '#E6F4FE',
       foregroundImage: './assets/images/android-icon-foreground.png',
@@ -56,8 +65,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     router: {},
     eas: {
-      projectId: process.env.EAS_PROJECT_ID,
+      projectId: requireEnv('EAS_PROJECT_ID'),
     },
   },
-  owner: process.env.APP_OWNER,
+  owner: requireEnv('APP_OWNER'),
 });
