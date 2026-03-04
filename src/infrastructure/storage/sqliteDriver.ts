@@ -1,34 +1,38 @@
-// expo-sqlite is imported here — the ONLY file allowed to do so.
-// All SQLite access goes through this driver. Nothing outside infrastructure/storage/ imports expo-sqlite.
-// TODO Phase 1: implement using expo-sqlite
-// import * as SQLite from 'expo-sqlite';
+import * as SQLite from 'expo-sqlite';
+
+type SQLiteBindValue = string | number | boolean | null | Uint8Array;
 
 export interface ISQLiteDriver {
-  execute(sql: string, params?: unknown[]): Promise<void>;
-  query<T>(sql: string, params?: unknown[]): Promise<T[]>;
+  execute(sql: string, params?: SQLiteBindValue[]): Promise<void>;
+  query<T>(sql: string, params?: SQLiteBindValue[]): Promise<T[]>;
   transaction(fn: (driver: ISQLiteDriver) => Promise<void>): Promise<void>;
 }
 
 export class SQLiteDriver implements ISQLiteDriver {
   private static readonly DB_NAME = 'lokalmind.db';
+  private db: SQLite.SQLiteDatabase | null = null;
 
   async initialize(): Promise<void> {
-    // TODO Phase 1: open DB, run PRAGMA WAL + foreign_keys, run migrations
-    throw new Error('SQLiteDriver.initialize not yet implemented — Phase 1');
+    this.db = await SQLite.openDatabaseAsync(SQLiteDriver.DB_NAME);
+    
+    await this.db.execAsync('PRAGMA journal_mode = WAL;');
+    await this.db.execAsync('PRAGMA foreign_keys = ON;');
   }
 
-  async execute(_sql: string, _params?: unknown[]): Promise<void> {
-    // TODO Phase 1: db.runAsync(sql, params)
-    throw new Error('SQLiteDriver.execute not yet implemented — Phase 1');
+  async execute(sql: string, params?: SQLiteBindValue[]): Promise<void> {
+    if (!this.db) throw new Error('SQLiteDriver not initialized');
+    await this.db.runAsync(sql, ...(params ?? []));
   }
 
-  async query<T>(_sql: string, _params?: unknown[]): Promise<T[]> {
-    // TODO Phase 1: db.getAllAsync(sql, params)
-    throw new Error('SQLiteDriver.query not yet implemented — Phase 1');
+  async query<T>(sql: string, params?: SQLiteBindValue[]): Promise<T[]> {
+    if (!this.db) throw new Error('SQLiteDriver not initialized');
+    return await this.db.getAllAsync<T>(sql, ...(params ?? []));
   }
 
-  async transaction(_fn: (driver: ISQLiteDriver) => Promise<void>): Promise<void> {
-    // TODO Phase 1: db.withTransactionAsync(fn)
-    throw new Error('SQLiteDriver.transaction not yet implemented — Phase 1');
+  async transaction(fn: (driver: ISQLiteDriver) => Promise<void>): Promise<void> {
+    if (!this.db) throw new Error('SQLiteDriver not initialized');
+    await this.db.withTransactionAsync(async () => {
+      await fn(this);
+    });
   }
 }
