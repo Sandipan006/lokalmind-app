@@ -1,50 +1,71 @@
-# Welcome to your Expo app 👋
+# LokalMind
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A privacy-first, fully on-device AI assistant for Android and iOS. All inference runs locally — no cloud, no data leaving your device.
 
-## Get started
+Built with Expo (React Native), `llama.rn` for LLM inference, `whisper.rn` for voice input, MobX for state, and Clean Architecture.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## Stack
 
-2. Start the app
+| Layer | Tech |
+|---|---|
+| Framework | Expo ~54 / React Native 0.81 |
+| Routing | Expo Router ~6 |
+| State | MobX 6 + mobx-react-lite |
+| LLM | llama.rn ^0.11 |
+| STT | whisper.rn ^0.5 |
+| Storage | expo-sqlite + AsyncStorage |
+| UI | expo-blur, expo-glass-effect, Reanimated 4 |
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Getting Started
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+For a native dev build (required for `llama.rn` / `whisper.rn`):
 
-## Learn more
+```bash
+npx expo run:android
+# or
+npx expo run:ios
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Project Structure
 
-## Join the community
+```
+src/
+  core/          # DI container, ports (ILLMEngine, IWhisperEngine), shared types
+  features/      # Feature slices — domain / data / presentation
+  infrastructure/# llama.rn adapter, whisper.rn adapter, SQLite, storage
+  design-system/ # Tokens (colors, spacing, typography) + components
+app/             # Expo Router file-based routes
+```
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Architecture
+
+Clean Architecture with strict layer boundaries:
+
+- **Domain** — plain TypeScript entities, use cases, repository interfaces. Zero third-party deps.
+- **Data** — repository implementations. Receives infrastructure via constructor injection.
+- **Infrastructure** — only layer that touches `llama.rn`, `whisper.rn`, `expo-sqlite`.
+- **Presentation** — MobX ViewModels + React screens. Never imports infrastructure directly.
+
+---
+
+## Environment
+
+Copy `.env.example` to `.env` and fill in:
+
+```
+EAS_PROJECT_ID=
+APP_OWNER=
+```
