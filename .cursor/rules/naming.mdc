@@ -1,9 +1,7 @@
 ---
 description: File and symbol naming conventions for LokalMind v2.
-globs: ["src/**/*.ts", "src/**/*.tsx", "app/**/*.tsx"]
-alwaysApply: true
+alwaysApply: false
 ---
-
 # Naming Conventions
 
 ## File Naming
