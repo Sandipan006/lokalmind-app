@@ -6,11 +6,12 @@
 //
 // TODO Phase 1: uncomment repository + use case wiring as each layer is implemented.
 
-import { LlamaRnAdapter } from '@/src/infrastructure/llm/llamaRnAdapter';
-import { WhisperRnAdapter } from '@/src/infrastructure/whisper/whisperRnAdapter';
-import { SQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
-import { AsyncStorageDriver } from '@/src/infrastructure/storage/asyncStorageDriver';
+import { UserRepositoryImpl } from '@/src/features/onboarding/data/repositories/UserRepositoryImpl';
 import { DownloadService } from '@/src/infrastructure/downloads/downloadService';
+import { LlamaRnAdapter } from '@/src/infrastructure/llm/llamaRnAdapter';
+import { AsyncStorageDriver } from '@/src/infrastructure/storage/asyncStorageDriver';
+import { SQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
+import { WhisperRnAdapter } from '@/src/infrastructure/whisper/whisperRnAdapter';
 
 const sqliteDriver = new SQLiteDriver();
 const asyncStorageDriver = new AsyncStorageDriver();
@@ -18,17 +19,27 @@ const llmEngine = new LlamaRnAdapter();
 const whisperEngine = new WhisperRnAdapter();
 const downloadService = new DownloadService();
 
+let userRepository: UserRepositoryImpl | null = null;
+let isInitialized = false;
+
+async function initializeContainer() {
+  if (isInitialized) return;
+  await sqliteDriver.initialize();
+  userRepository = new UserRepositoryImpl(sqliteDriver);
+  isInitialized = true;
+}
+
 export const container = {
   sqliteDriver,
   asyncStorageDriver,
   llmEngine,
   whisperEngine,
   downloadService,
-  // Phase 1 — add after implementing:
-  // chatRepository: new ChatRepositoryImpl(sqliteDriver),
-  // messageRepository: new MessageRepositoryImpl(sqliteDriver),
-  // modelRepository: new ModelRepositoryImpl(asyncStorageDriver),
-  // memoryRepository: new MemoryRepositoryImpl(sqliteDriver),
-  // userRepository: new UserRepositoryImpl(asyncStorageDriver),
-  // settingsRepository: new SettingsRepositoryImpl(asyncStorageDriver),
+  get userRepository() {
+    if (!userRepository) {
+      throw new Error('Container not initialized. Call initializeContainer() first.');
+    }
+    return userRepository;
+  },
+  initializeContainer,
 } as const;
