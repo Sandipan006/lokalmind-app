@@ -1,9 +1,7 @@
 ---
 description: Error handling patterns for LokalMind v2 use cases, repositories, and ViewModels.
-globs: ["src/features/*/domain/**/*.ts", "src/features/*/presentation/viewmodels/**/*.ts", "src/features/*/data/**/*.ts", "src/infrastructure/**/*.ts"]
 alwaysApply: false
 ---
-
 # Error Handling
 
 Full reference: `docs/CONVENTIONS.md` section 5.

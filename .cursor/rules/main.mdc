@@ -1,0 +1,59 @@
+---
+description: Main engineering rule for senior-level React Native code in LokalMind v2.
+alwaysApply: true
+---
+
+# LokalMind v2 - Cursor Rules
+
+## Scope of changes (read first)
+- Do exactly what is requested. No unrelated refactors, no extra files, no unsolicited improvements.
+- When editing existing files, match surrounding style, naming, and import patterns before introducing anything new.
+- Do not generate barrel files, index re-exports, README files, or boilerplate unless explicitly asked.
+- Keep final explanations short and technical.
+
+## Engineering bar
+- Write production-ready, senior-level React Native + TypeScript code.
+- Keep implementations concise, modular, and easy to review.
+- Prefer maintainable patterns over quick hacks; avoid duplication.
+- Add brief developer comments only for non-obvious decisions or complex logic.
+
+## Architecture (mandatory)
+- Follow Clean Architecture: Presentation -> Use Cases -> Domain; Data implements repositories; infrastructure injected via DI.
+- Never bypass contracts in `src/core/ports/` or repository interfaces.
+- Keep domain pure: no framework or third-party SDK imports in domain entities or use cases.
+- If a change conflicts with architecture, refactor to comply - do not add exceptions.
+
+## LokalMind conventions (mandatory)
+- Respect naming and folder conventions for screens, ViewModels, use cases, repositories, and routes.
+- Use `Result<T>`-style flows for use cases; explicit error branches in ViewModels.
+- MobX ViewModels: `makeAutoObservable(this)` first in constructor; all async mutations inside `runInAction`.
+- Stack: Expo 54, RN 0.81, React 19.1, expo-router v6, MobX 6, llama.rn (GGUF), whisper.rn, expo-sqlite, RevenueCat.
+
+## Platform constraints
+- No Node.js-only APIs; all packages must be Expo-compatible.
+- Validate native module compatibility (llama.rn, whisper.rn) before adding new dependencies.
+- Do not assume web APIs are available; guard platform-specific branches explicitly.
+
+## TypeScript strictness
+- TypeScript strictness: avoid `any`, prefer precise interfaces and explicit return types on public APIs.
+- Use guard clauses and early returns to keep control flow flat.
+- Handle edge cases first; never swallow errors silently.
+- Keep UI code declarative; business logic belongs in use cases and ViewModels.
+
+## Performance defaults
+- Avoid unnecessary re-renders; memoize only where it produces measurable improvement.
+- Stable keys and item layout strategies for large lists.
+- Keep expensive computation out of render paths.
+- Prefer incremental/streaming patterns for long-running tasks (inference, STT).
+
+## Developer comments (high-signal only)
+- Comment the "why", not the "what".
+- 1-2 lines max; technical and precise.
+- Comment around complex async flow, fallback behavior, and architectural trade-offs.
+- Remove stale comments when code changes.
+
+## Testing and reliability
+- Add or update tests for critical logic changes and bug fixes.
+- Unit tests for use cases and ViewModels; integration tests for key user flows.
+- Keep tests deterministic; no time or network flakiness.
+- Do not change behavior without validation.

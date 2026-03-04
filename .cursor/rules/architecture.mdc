@@ -1,6 +1,5 @@
 ---
 description: Clean Architecture layer enforcement for LokalMind v2. Apply to all source files in src/.
-globs: ["src/**/*.ts", "src/**/*.tsx"]
 alwaysApply: true
 ---
 
