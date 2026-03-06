@@ -6,6 +6,7 @@
 //
 // TODO Phase 1: uncomment repository + use case wiring as each layer is implemented.
 
+import { ModelRepositoryImpl } from '@/src/features/models/data/repositories/ModelRepositoryImpl';
 import { UserRepositoryImpl } from '@/src/features/onboarding/data/repositories/UserRepositoryImpl';
 import { DownloadService } from '@/src/infrastructure/downloads/downloadService';
 import { LlamaRnAdapter } from '@/src/infrastructure/llm/llamaRnAdapter';
@@ -17,15 +18,18 @@ const sqliteDriver = new SQLiteDriver();
 const asyncStorageDriver = new AsyncStorageDriver();
 const llmEngine = new LlamaRnAdapter();
 const whisperEngine = new WhisperRnAdapter();
-const downloadService = new DownloadService();
+const downloadService = new DownloadService(asyncStorageDriver);
 
 let userRepository: UserRepositoryImpl | null = null;
+let modelRepository: ModelRepositoryImpl | null = null;
 let isInitialized = false;
 
 async function initializeContainer() {
   if (isInitialized) return;
   await sqliteDriver.initialize();
   userRepository = new UserRepositoryImpl(sqliteDriver);
+  modelRepository = new ModelRepositoryImpl(downloadService, sqliteDriver);
+  await downloadService.hydratePersistedStates();
   isInitialized = true;
 }
 
@@ -40,6 +44,12 @@ export const container = {
       throw new Error('Container not initialized. Call initializeContainer() first.');
     }
     return userRepository;
+  },
+  get modelRepository() {
+    if (!modelRepository) {
+      throw new Error('Container not initialized. Call initializeContainer() first.');
+    }
+    return modelRepository;
   },
   initializeContainer,
 } as const;
