@@ -17,11 +17,16 @@ interface DownloadContext {
   state: DownloadState;
   speedSamples: { timestamp: number; bytesWritten: number }[];
   lastSpeedLog: number;
+  lastMetricsUpdate: number;
+  lastComputedSpeed: number;
+  lastComputedEta: number;
+  hasPublishedMetrics: boolean;
 }
 
 const SPEED_WINDOW_SIZE = 8;
 const RESUME_STATE_KEY_PREFIX = 'download_resume_';
 const SPEED_LOG_INTERVAL_MS = 15_000;
+const METRICS_UPDATE_INTERVAL_MS = 5_000;
 
 export interface IDownloadService {
   startDownload(
@@ -65,6 +70,10 @@ export class DownloadService implements IDownloadService {
             state: mutableState,
             speedSamples: [],
             lastSpeedLog: 0,
+            lastMetricsUpdate: 0,
+            lastComputedSpeed: 0,
+            lastComputedEta: 0,
+            hasPublishedMetrics: false,
           });
         } catch (e) {
           console.warn(`Failed to parse persisted download state for ${modelId}`, e);
@@ -116,8 +125,6 @@ export class DownloadService implements IDownloadService {
         context.speedSamples.shift();
       }
 
-      const speed = this.calculateSpeed(context.speedSamples);
-
       // totalBytesExpected can be -1 or 0 if the server omits Content-Length; fall back to config.
       const rawExpected = (downloadProgressData as unknown as { totalBytesExpectedToWrite?: number }).totalBytesExpectedToWrite ?? -1;
       const totalBytes = rawExpected > 0 ? rawExpected : config.expectedBytes;
@@ -125,15 +132,26 @@ export class DownloadService implements IDownloadService {
       const bytesWritten = downloadProgressData.totalBytesWritten;
       const progressFraction = totalBytes > 0 ? Math.min(bytesWritten / totalBytes, 1) : 0;
       const bytesRemaining = totalBytes - bytesWritten;
-      const eta = speed > 0 ? bytesRemaining / speed : 0;
+      const shouldRefreshMetrics =
+        (!context.hasPublishedMetrics && context.speedSamples.length >= 2 && bytesWritten > 0) ||
+        now - context.lastMetricsUpdate >= METRICS_UPDATE_INTERVAL_MS ||
+        bytesWritten >= totalBytes;
+
+      if (shouldRefreshMetrics) {
+        const speed = this.calculateSpeed(context.speedSamples);
+        context.lastMetricsUpdate = now;
+        context.lastComputedSpeed = speed;
+        context.lastComputedEta = speed > 0 ? bytesRemaining / speed : 0;
+        context.hasPublishedMetrics = true;
+      }
 
       const progress: DownloadProgress = {
         modelId,
         bytesWritten,
         totalBytes,
         progressFraction,
-        speedBytesPerSecond: speed,
-        etaSeconds: eta,
+        speedBytesPerSecond: context.lastComputedSpeed,
+        etaSeconds: context.lastComputedEta,
       };
 
       context.state = {
@@ -149,7 +167,7 @@ export class DownloadService implements IDownloadService {
       // Log speed every 15s to avoid flooding the console during long downloads.
       if (now - context.lastSpeedLog >= SPEED_LOG_INTERVAL_MS) {
         context.lastSpeedLog = now;
-        const speedMBps = (speed / (1024 * 1024)).toFixed(2);
+        const speedMBps = (progress.speedBytesPerSecond / (1024 * 1024)).toFixed(2);
         const writtenMB = (progress.bytesWritten / (1024 * 1024)).toFixed(1);
         const totalMB = (progress.totalBytes / (1024 * 1024)).toFixed(1);
         const pct = (progress.progressFraction * 100).toFixed(1);
@@ -200,6 +218,10 @@ export class DownloadService implements IDownloadService {
       },
       speedSamples: [],
       lastSpeedLog: 0,
+        lastMetricsUpdate: 0,
+        lastComputedSpeed: 0,
+        lastComputedEta: 0,
+      hasPublishedMetrics: false,
     };
 
     this.activeDownloads.set(config.modelId, context);
@@ -291,6 +313,10 @@ export class DownloadService implements IDownloadService {
       },
       speedSamples: [],
       lastSpeedLog: 0,
+        lastMetricsUpdate: 0,
+        lastComputedSpeed: 0,
+        lastComputedEta: 0,
+      hasPublishedMetrics: false,
     };
 
     this.activeDownloads.set(config.modelId, context);
