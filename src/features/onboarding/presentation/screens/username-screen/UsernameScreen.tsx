@@ -1,22 +1,22 @@
+import { container } from '@/src/core/di/container';
+import { GlassSurface, PrimaryButton } from '@/src/design-system/components';
+import { TEXT_WHITE_60 } from '@/src/design-system/tokens/colors';
+import { router } from 'expo-router';
+import { observer } from 'mobx-react-lite';
 import React, { useRef } from 'react';
 import {
   ImageBackground,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
-  View,
-  KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  Keyboard,
-  Platform,
+  View,
 } from 'react-native';
-import { observer } from 'mobx-react-lite';
-import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { GlassSurface, PrimaryButton } from '@/src/design-system/components';
-import { TEXT_WHITE_60 } from '@/src/design-system/tokens/colors';
-import { UsernameViewModel } from '../../viewmodels/UsernameViewModel';
 import { SaveDisplayNameUseCase } from '../../../domain/usecases/SaveDisplayNameUseCase';
-import { container } from '@/src/core/di/container';
+import { UsernameViewModel } from '../../viewmodels/UsernameViewModel';
 import { usernameScreenStyles as styles } from './UsernameScreenStyles';
 
 export const UsernameScreen = observer(() => {
@@ -35,7 +35,7 @@ export const UsernameScreen = observer(() => {
 
   return (
     <ImageBackground
-      source={require('../../../assets/images/userScreen.png')}
+      source={require('../../../assets/images/userScreen.webp')}
       style={styles.backgroundImage}
       resizeMode="cover"
     >

@@ -3,14 +3,16 @@ import { Redirect } from 'expo-router';
 import { View } from 'react-native';
 import LottieView from 'lottie-react-native';
 import { container } from '@/src/core/di/container';
-import { clearLocalData } from '@/scripts/clearLocalData';
+import { clearLocalData, clearLLMFiles } from '@/scripts/clearLocalData';
 import { splashScreenStyles as styles } from './SplashScreenStyles';
 
 const SPLASH_MIN_DURATION_MS = 2500;
 
+type AppRoute = '/(tabs)/chat' | '/onboarding/model-setup' | '/onboarding/welcome';
+
 export function SplashScreen() {
   const [isChecking, setIsChecking] = useState(true);
-  const [isComplete, setIsComplete] = useState(false);
+  const [route, setRoute] = useState<AppRoute>('/onboarding/welcome');
   const [minimumDurationPassed, setMinimumDurationPassed] = useState(false);
 
   useEffect(() => {
@@ -22,23 +24,43 @@ export function SplashScreen() {
   }, []);
 
   useEffect(() => {
-    async function checkOnboarding() {
+    async function checkAppState() {
       try {
-        // Dev only: uncomment to clear local app data on next app launch.
-        // await clearLocalData();
+        // Dev only: uncomment to reset app state on next launch.
+        // await clearLocalData();   // clears AsyncStorage + SQLite
+        // await clearLLMFiles();    // deletes downloaded GGUF/Whisper files
 
         await container.initializeContainer();
-        const complete = await container.userRepository.isOnboardingComplete();
-        setIsComplete(complete);
+        const onboardingComplete = await container.userRepository.isOnboardingComplete();
+
+        if (!onboardingComplete) {
+          setRoute('/onboarding/welcome');
+          return;
+        }
+
+        const hasModelResult = await container.modelRepository.hasDownloadedModel();
+        const hasModel = hasModelResult.success ? hasModelResult.data : false;
+
+        if (hasModel) {
+          const allModelsResult = await container.modelRepository.getAllModels();
+          if (allModelsResult.success) {
+            const downloaded = allModelsResult.data.filter((m) => m.isDownloaded);
+            console.log('[SplashScreen] Downloaded models:', downloaded.map((m) => m.id));
+          }
+        } else {
+          console.log('[SplashScreen] No downloaded models found.');
+        }
+
+        setRoute(hasModel ? '/(tabs)/chat' : '/onboarding/model-setup');
       } catch (error) {
-        console.error('Failed to check onboarding status:', error);
-        setIsComplete(false);
+        console.error('Failed to check app state:', error);
+        setRoute('/onboarding/welcome');
       } finally {
         setIsChecking(false);
       }
     }
 
-    checkOnboarding();
+    checkAppState();
   }, []);
 
   if (!minimumDurationPassed || isChecking) {
@@ -54,5 +76,5 @@ export function SplashScreen() {
     );
   }
 
-  return <Redirect href={isComplete ? '/(tabs)/chat' : '/onboarding/welcome'} />;
+  return <Redirect href={route} />;
 }
