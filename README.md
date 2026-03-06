@@ -1,33 +1,31 @@
 # LokalMind
 
-A privacy-first, fully on-device AI assistant for Android and iOS. All inference runs locally — no cloud, no data leaving your device.
+LokalMind is a privacy-first, on-device AI assistant built with Expo + React Native.
+Inference uses `llama.rn`, voice transcription uses `whisper.rn`, and the app follows Clean Architecture with MobX ViewModels.
 
-Built with Expo (React Native), `llama.rn` for LLM inference, `whisper.rn` for voice input, MobX for state, and Clean Architecture.
+## Tech Stack
 
----
+- Expo `~54`, React Native `0.81`, React `19`
+- Expo Router `~6`
+- MobX `6` + `mobx-react-lite`
+- `llama.rn` (LLM), `whisper.rn` (STT)
+- `expo-sqlite` + AsyncStorage
 
-## Stack
+## Current Status
 
-| Layer | Tech |
-|---|---|
-| Framework | Expo ~54 / React Native 0.81 |
-| Routing | Expo Router ~6 |
-| State | MobX 6 + mobx-react-lite |
-| LLM | llama.rn ^0.11 |
-| STT | whisper.rn ^0.5 |
-| Storage | expo-sqlite + AsyncStorage |
-| UI | expo-blur, expo-glass-effect, Reanimated 4 |
+- Onboarding flow is implemented (`splash` -> `welcome` -> `username` -> `model setup`).
+- Model setup + download orchestration is implemented in `features/models`.
+- Core DI and infra adapters are wired in `src/core/di/container.ts`.
+- Chat, Models tab, Profile tab, and some profile routes are placeholders for upcoming phases.
 
----
-
-## Getting Started
+## Quick Start
 
 ```bash
 npm install
 npx expo start
 ```
 
-For a native dev build (required for `llama.rn` / `whisper.rn`):
+For native modules (`llama.rn`, `whisper.rn`), use a native dev build:
 
 ```bash
 npx expo run:android
@@ -35,37 +33,52 @@ npx expo run:android
 npx expo run:ios
 ```
 
----
+## Environment Setup
+
+1. Copy `.env.example` to `.env`
+2. Fill required values
+
+```env
+EAS_PROJECT_ID=
+APP_OWNER=
+IOS_BUNDLE_IDENTIFIER=
+ANDROID_PACKAGE=
+HETZNER_BASE_URL=
+HETZNER_WEBDAV_URL=
+MODEL_METADATA_PATH=
+CTX_SIZE_DEFAULT=
+CHAT_MAX_TOKENS=
+DOWNLOAD_CHUNK_SIZE=
+DOWNLOAD_CONCURRENCY=
+HETZNER_WEBDAV_USERNAME=
+HETZNER_WEBDAV_PASSWORD=
+```
+
+`app.config.ts` injects these values into Expo `extra`, and runtime access is centralized in `src/config/env.ts`.
+
+## Scripts
+
+- `npm run start` - start Expo
+- `npm run android` - start Expo for Android
+- `npm run ios` - start Expo for iOS
+- `npm run web` - start Expo for web
+- `npm run lint` - run ESLint
 
 ## Project Structure
 
-```
+```text
+app/                     expo-router routes
 src/
-  core/          # DI container, ports (ILLMEngine, IWhisperEngine), shared types
-  features/      # Feature slices — domain / data / presentation
-  infrastructure/# llama.rn adapter, whisper.rn adapter, SQLite, storage
-  design-system/ # Tokens (colors, spacing, typography) + components
-app/             # Expo Router file-based routes
+  core/                  DI container, ports, shared Result/AppError types
+  features/              feature slices (domain/data/presentation)
+  infrastructure/        platform adapters (llama, whisper, downloads, storage)
+  design-system/         UI primitives and tokens
+  config/                runtime environment config
 ```
 
----
+## Architecture Rules
 
-## Architecture
-
-Clean Architecture with strict layer boundaries:
-
-- **Domain** — plain TypeScript entities, use cases, repository interfaces. Zero third-party deps.
-- **Data** — repository implementations. Receives infrastructure via constructor injection.
-- **Infrastructure** — only layer that touches `llama.rn`, `whisper.rn`, `expo-sqlite`.
-- **Presentation** — MobX ViewModels + React screens. Never imports infrastructure directly.
-
----
-
-## Environment
-
-Copy `.env.example` to `.env` and fill in:
-
-```
-EAS_PROJECT_ID=
-APP_OWNER=
-```
+- Domain layer stays pure TypeScript (no framework/native SDK imports).
+- Presentation calls use cases/repositories only, never infrastructure directly.
+- Data layer implements repository contracts and receives infra via constructor injection.
+- `src/core/di/container.ts` is the single composition root.
