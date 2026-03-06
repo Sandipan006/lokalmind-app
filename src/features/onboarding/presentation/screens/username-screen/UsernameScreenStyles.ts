@@ -48,7 +48,7 @@ export const usernameScreenStyles = StyleSheet.create({
     flex: 1,
   },
   buttonSection: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xs,
   },
   label: {
     fontSize: fontSizes.sm,
