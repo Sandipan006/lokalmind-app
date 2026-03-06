@@ -1,72 +1,31 @@
-import * as dotenv from 'dotenv';
-import { ConfigContext, ExpoConfig } from 'expo/config';
-import * as path from 'path';
+require('dotenv').config({ path: '.env' });
 
-dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-const requireEnv = (key: string): string => {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing required env var: ${key}`);
-  }
-  return value;
-};
-
-
-export default ({ config }: ConfigContext): ExpoConfig => ({
-  ...config,
-  name: 'LokalMind',
-  slug: 'lokalmind-app',
-  version: '2.0.0',
-  orientation: 'portrait',
-  icon: './assets/images/icon.png',
-  scheme: 'lokalmind',
-  userInterfaceStyle: 'dark',
-  newArchEnabled: true,
-  ios: {
-    supportsTablet: true,
-    bundleIdentifier: requireEnv('IOS_BUNDLE_IDENTIFIER'),
-  },
-  android: {
-    package: requireEnv('ANDROID_PACKAGE'),
-    adaptiveIcon: {
-      backgroundColor: '#E6F4FE',
-      foregroundImage: './assets/images/android-icon-foreground.png',
-      backgroundImage: './assets/images/android-icon-background.png',
-      monochromeImage: './assets/images/android-icon-monochrome.png',
+module.exports = ({ config }: { config: any }) => {
+  return {
+    ...config,
+    owner: process.env.APP_OWNER || '',
+    ios: {
+      ...(config.ios || {}),
+      bundleIdentifier: process.env.IOS_BUNDLE_IDENTIFIER || '',
     },
-    edgeToEdgeEnabled: true,
-    predictiveBackGestureEnabled: false,
-  },
-  web: {
-    output: 'static',
-    favicon: './assets/images/favicon.png',
-  },
-  plugins: [
-    'expo-dev-client',
-    'expo-router',
-    [
-      'expo-splash-screen',
-      {
-        image: './assets/images/splash-icon.png',
-        imageWidth: 200,
-        resizeMode: 'contain',
-        backgroundColor: '#0F0F0F',
+    android: {
+      ...(config.android || {}),
+      package: process.env.ANDROID_PACKAGE || '',
+    },
+    extra: {
+      router: {},
+      eas: {
+        projectId: process.env.EAS_PROJECT_ID || '',
       },
-    ],
-    'expo-sqlite',
-    'llama.rn',
-    'expo-background-task',
-  ],
-  experiments: {
-    typedRoutes: true,
-    reactCompiler: true,
-  },
-  extra: {
-    router: {},
-    eas: {
-      projectId: requireEnv('EAS_PROJECT_ID'),
+      HETZNER_BASE_URL: process.env.HETZNER_BASE_URL || '',
+      HETZNER_WEBDAV_URL: process.env.HETZNER_WEBDAV_URL || '',
+      HETZNER_WEBDAV_USERNAME: process.env.HETZNER_WEBDAV_USERNAME || '',
+      HETZNER_WEBDAV_PASSWORD: process.env.HETZNER_WEBDAV_PASSWORD || '',
+      MODEL_METADATA_PATH: process.env.MODEL_METADATA_PATH || '',
+      CTX_SIZE_DEFAULT: process.env.CTX_SIZE_DEFAULT || '2048',
+      CHAT_MAX_TOKENS: process.env.CHAT_MAX_TOKENS || '512',
+      DOWNLOAD_CHUNK_SIZE: process.env.DOWNLOAD_CHUNK_SIZE || '8388608',
+      DOWNLOAD_CONCURRENCY: process.env.DOWNLOAD_CONCURRENCY || '3',
     },
-  },
-  owner: requireEnv('APP_OWNER'),
-});
+  };
+};

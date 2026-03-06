@@ -26,6 +26,10 @@ export interface IAsyncStorageDriver {
   setObject<T>(key: string, value: T): Promise<void>;
   remove(key: string): Promise<void>;
   clear(): Promise<void>;
+  getAllKeys(): Promise<readonly string[]>;
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+  removeItem(key: string): Promise<void>;
 }
 
 export class AsyncStorageDriver implements IAsyncStorageDriver {
@@ -90,5 +94,21 @@ export class AsyncStorageDriver implements IAsyncStorageDriver {
   async clear(): Promise<void> {
     this.cache.clear();
     await AsyncStorage.clear();
+  }
+
+  async getAllKeys(): Promise<readonly string[]> {
+    return AsyncStorage.getAllKeys();
+  }
+
+  async getItem(key: string): Promise<string | null> {
+    return this.getString(key);
+  }
+
+  async setItem(key: string, value: string): Promise<void> {
+    return this.setString(key, value);
+  }
+
+  async removeItem(key: string): Promise<void> {
+    return this.remove(key);
   }
 }
