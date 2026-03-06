@@ -164,9 +164,11 @@ export class ModelRepositoryImpl implements IModelRepository {
         }
       );
 
-      // downloadAsync resolves with null when cancelled/paused — don't mark as downloaded.
-      const state = this.downloadService.getDownloadState(modelId);
-      if (!state || state.status === 'paused') return ok(undefined);
+      // Cancel/pause paths do not leave a completed file on disk.
+      const downloadedFile = new File(Paths.document, 'models', config.filename);
+      if (!downloadedFile.exists) {
+        return ok(undefined);
+      }
 
       return await this.markDownloaded(modelId, config.filename, destinationPath);
     } catch (e) {
@@ -228,6 +230,11 @@ export class ModelRepositoryImpl implements IModelRepository {
           });
         }
       );
+
+      const resumedFile = new File(Paths.document, 'models', config.filename);
+      if (!resumedFile.exists) {
+        return ok(undefined);
+      }
 
       return await this.markDownloaded(modelId, config.filename, destinationPath);
     } catch (e) {

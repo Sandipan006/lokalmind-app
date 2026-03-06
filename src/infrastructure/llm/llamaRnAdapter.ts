@@ -1,26 +1,43 @@
-import type { ILLMEngine, LLMMessage, LLMConfig, LLMResponse } from '@/src/core/ports';
-import type { AppError } from '@/src/core/types';
-
 // llama.rn is imported here — the ONLY file in the codebase allowed to do so.
 // All LLM calls go through ILLMEngine. Nothing outside this file imports llama.rn.
-// TODO Phase 1: implement using llama.rn
-// import { initLlama } from 'llama.rn';
-// import type { LlamaContext } from 'llama.rn';
+import { initLlama, releaseAllLlama } from 'llama.rn';
+import type { LlamaContext } from 'llama.rn';
+import { Platform } from 'react-native';
+import type { ILLMEngine, LLMMessage, LLMConfig, LLMResponse } from '@/src/core/ports';
+import { Paths, File } from 'expo-file-system';
+import { getModelConfig } from '@/src/infrastructure/downloads/modelConfig';
+
+// 60 s is generous for model loading; a corrupt/truncated GGUF would hang indefinitely without this.
+const INIT_TIMEOUT_MS = 60_000;
+
+// iOS has more performance cores available; Android stays conservative for thermals.
+const N_THREADS = Platform.OS === 'ios' ? 6 : 4;
+
+// Strips DeepSeek R1 chain-of-thought blocks before returning to the caller.
+// The <think>…</think> wrapper is an implementation detail of the reasoning model, not user content.
+// Also handles incomplete blocks when generation is aborted mid-think.
+function stripThinkingTags(text: string): string {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/g, '')  // complete blocks
+    .replace(/<think>[\s\S]*/g, '')             // incomplete block (aborted mid-generation)
+    .trimStart();
+}
 
 export class LlamaRnAdapter implements ILLMEngine {
-  private isInitialized = false;
+  private context: LlamaContext | null = null;
   private currentModelId: string | null = null;
+  // Deduplicate concurrent initialize() calls — prevents double-loading during app boot races.
   private initializingPromise: Promise<void> | null = null;
 
-  async initialize(modelId: string, _config: LLMConfig): Promise<void> {
-    if (this.isInitialized && this.currentModelId === modelId) return;
+  async initialize(modelId: string, config: LLMConfig): Promise<void> {
+    if (this.context && this.currentModelId === modelId) return;
 
     if (this.initializingPromise) {
       await this.initializingPromise;
       return;
     }
 
-    this.initializingPromise = this.performInitialize(modelId, _config);
+    this.initializingPromise = this.performInitialize(modelId, config);
     try {
       await this.initializingPromise;
     } finally {
@@ -28,42 +45,129 @@ export class LlamaRnAdapter implements ILLMEngine {
     }
   }
 
-  private async performInitialize(_modelId: string, _config: LLMConfig): Promise<void> {
-    // TODO Phase 1: resolve GGUF path, call initLlama(), configure n_ctx/n_threads/n_gpu_layers
-    throw this.notImplemented('initialize');
+  private async performInitialize(modelId: string, config: LLMConfig): Promise<void> {
+    // Release any previously loaded model before loading a new one.
+    if (this.context) {
+      await this.context.release();
+      this.context = null;
+      this.currentModelId = null;
+    }
+
+    const modelConfig = getModelConfig(modelId);
+    if (!modelConfig) {
+      throw new Error(`[LlamaRnAdapter] Unknown model id: ${modelId}`);
+    }
+
+    const modelFile = new File(Paths.document, 'models', modelConfig.filename);
+    if (!modelFile.exists) {
+      throw new Error(`[LlamaRnAdapter] Model file not found on disk: ${modelConfig.filename}`);
+    }
+
+    // Strip file:// prefix — initLlama handles it but being explicit avoids platform edge cases.
+    const modelPath = modelFile.uri.replace(/^file:\/\//, '');
+
+    let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(
+        () => reject(new Error('[LlamaRnAdapter] Model load timed out after 60 s')),
+        INIT_TIMEOUT_MS,
+      );
+    });
+
+    try {
+      this.context = await Promise.race([
+        initLlama({
+          model: modelPath,
+          n_ctx: config.contextSize ?? modelConfig.contextSize,
+          n_threads: N_THREADS,
+          n_gpu_layers: 99,   // llama.rn auto-caps at what the device supports
+          n_batch: 256,
+          use_mlock: false,   // never lock memory on mobile — risks OOM kills
+          ctx_shift: false,   // avoid silent context corruption on some models
+        }),
+        timeoutPromise,
+      ]);
+    } finally {
+      if (timeoutHandle !== null) clearTimeout(timeoutHandle);
+    }
+
+    this.currentModelId = modelId;
   }
 
   async generateResponse(
-    _messages: LLMMessage[],
-    _config: LLMConfig,
-    _onToken?: (token: string) => void,
-    _signal?: AbortSignal
+    messages: LLMMessage[],
+    config: LLMConfig,
+    onToken?: (token: string) => void,
+    signal?: AbortSignal,
   ): Promise<LLMResponse> {
-    if (!this.isInitialized) {
-      throw this.notImplemented('generateResponse — model not loaded');
+    if (!this.context) {
+      throw new Error('[LlamaRnAdapter] Model not loaded. Call initialize() first.');
     }
-    // TODO Phase 1: build ChatML prompt, call context.completion(), stream tokens via onToken
-    throw this.notImplemented('generateResponse');
+
+    const modelConfig = this.currentModelId ? getModelConfig(this.currentModelId) : null;
+
+    const oaiMessages = messages.map((m) => ({ role: m.role, content: m.content }));
+
+    let stopped = false;
+    const stopCompletion = () => {
+      if (!stopped) {
+        stopped = true;
+        this.context?.stopCompletion();
+      }
+    };
+
+    signal?.addEventListener('abort', stopCompletion);
+
+    try {
+      const result = await this.context.completion(
+        {
+          messages: oaiMessages,
+          n_predict: config.maxTokens ?? -1,
+          temperature: config.temperature ?? 0.7,
+          stop: modelConfig?.stopTokens ? [...modelConfig.stopTokens] : ['<|im_end|>', '</s>'],
+        },
+        onToken ? (data) => { if (data.token) onToken(data.token); } : undefined,
+      );
+
+      const finishReason: LLMResponse['finishReason'] =
+        result.stopped_eos || result.stopped_word
+          ? 'stop'
+          : result.stopped_limit
+            ? 'length'
+            : 'stop';
+
+      return {
+        text: stripThinkingTags(result.content),
+        tokensUsed: result.tokens_predicted + result.tokens_evaluated,
+        finishReason,
+      };
+    } finally {
+      signal?.removeEventListener('abort', stopCompletion);
+    }
   }
 
   async unloadModel(): Promise<void> {
-    // TODO Phase 1: call context.release()
-    this.isInitialized = false;
+    if (this.context) {
+      await this.context.release();
+      this.context = null;
+    }
     this.currentModelId = null;
+    this.initializingPromise = null;
   }
 
   isModelLoaded(): boolean {
-    return this.isInitialized;
+    return this.context !== null;
   }
 
   getCurrentModelId(): string | null {
     return this.currentModelId;
   }
 
-  private notImplemented(method: string): AppError {
-    return {
-      code: 'MODEL_LOAD_FAILED',
-      message: `LlamaRnAdapter.${method} not yet implemented — Phase 1`,
-    };
+  // Releases all llama contexts — call on app teardown.
+  async releaseAll(): Promise<void> {
+    await releaseAllLlama();
+    this.context = null;
+    this.currentModelId = null;
+    this.initializingPromise = null;
   }
 }

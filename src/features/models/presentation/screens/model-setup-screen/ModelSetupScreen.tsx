@@ -1,6 +1,7 @@
 import { container } from '@/src/core/di/container';
 import { PRIMARY_ORANGE } from '@/src/design-system/tokens/colors';
 import { spacing } from '@/src/design-system/tokens/spacing';
+import { useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, Image, ImageBackground, ScrollView, Text, View } from 'react-native';
@@ -18,6 +19,7 @@ import { modelSetupScreenStyles as styles } from './ModelSetupScreenStyles';
 
 export const ModelSetupScreen = observer(() => {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const viewModel = useRef(
     new ModelSetupViewModel(
       new GetAllModelsUseCase(container.modelRepository),
@@ -49,9 +51,6 @@ export const ModelSetupScreen = observer(() => {
     );
   }
 
-  const freeModels = viewModel.models.filter((m) => !m.isPaid);
-  const premiumModels = viewModel.models.filter((m) => m.isPaid);
-
   return (
     <ImageBackground
       source={require('@/src/features/onboarding/assets/images/userScreen.webp')}
@@ -74,8 +73,7 @@ export const ModelSetupScreen = observer(() => {
             <View style={styles.header}>
               <Text style={styles.title}>Choose Your AI Model</Text>
               <Text style={styles.subtitle}>
-                Select and download a model to get started. Free models work great for everyday use.
-                Premium models offer advanced capabilities.
+                Select and download a model to get started.
               </Text>
             </View>
 
@@ -85,41 +83,19 @@ export const ModelSetupScreen = observer(() => {
               </View>
             )}
 
-            {freeModels.length > 0 && (
-              <>
-                <Text style={styles.sectionTitle}>Free Models</Text>
-                {freeModels.map((model) => (
-                  <ModelCard
-                    key={model.id}
-                    model={model}
-                    downloadProgress={viewModel.getDownloadProgress(model.id)}
-                    isExpanded={viewModel.expandedModelId === model.id}
-                    onDownloadPress={() => viewModel.startDownload(model.id)}
-                    onPausePress={() => viewModel.pauseDownload(model.id)}
-                    onResumePress={() => viewModel.resumeDownload(model.id)}
-                    onCancelPress={() => viewModel.cancelDownload(model.id)}
-                  />
-                ))}
-              </>
-            )}
-
-            {premiumModels.length > 0 && (
-              <>
-                <Text style={styles.sectionTitle}>Premium Models</Text>
-                {premiumModels.map((model) => (
-                  <ModelCard
-                    key={model.id}
-                    model={model}
-                    downloadProgress={viewModel.getDownloadProgress(model.id)}
-                    isExpanded={viewModel.expandedModelId === model.id}
-                    onDownloadPress={() => viewModel.startDownload(model.id)}
-                    onPausePress={() => viewModel.pauseDownload(model.id)}
-                    onResumePress={() => viewModel.resumeDownload(model.id)}
-                    onCancelPress={() => viewModel.cancelDownload(model.id)}
-                  />
-                ))}
-              </>
-            )}
+            {viewModel.models.map((model) => (
+              <ModelCard
+                key={model.id}
+                model={model}
+                downloadProgress={viewModel.getDownloadProgress(model.id)}
+                isExpanded={viewModel.expandedModelId === model.id}
+                onDownloadPress={() => viewModel.startDownload(model.id)}
+                onPausePress={() => viewModel.pauseDownload(model.id)}
+                onResumePress={() => viewModel.resumeDownload(model.id)}
+                onCancelPress={() => viewModel.cancelDownload(model.id)}
+                onUsePress={() => router.push('/(tabs)/chat')}
+              />
+            ))}
         </ScrollView>
       </SafeAreaView>
       <View pointerEvents="none" style={styles.bottomOverlayContainer}>
