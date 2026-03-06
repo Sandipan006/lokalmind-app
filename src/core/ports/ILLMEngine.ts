@@ -22,7 +22,8 @@ export interface ILLMEngine {
   generateResponse(
     messages: LLMMessage[],
     config: LLMConfig,
-    onToken?: (token: string) => void
+    onToken?: (token: string) => void,
+    signal?: AbortSignal
   ): Promise<LLMResponse>;
   unloadModel(): Promise<void>;
   isModelLoaded(): boolean;
