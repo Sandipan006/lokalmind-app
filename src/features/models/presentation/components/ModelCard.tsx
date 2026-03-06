@@ -7,15 +7,14 @@ import {
   WARNING_AMBER,
   WHITE_PRIMARY,
 } from '@/src/design-system/tokens/colors';
-import { borderRadius, spacing } from '@/src/design-system/tokens/spacing';
-import { typography } from '@/src/design-system/tokens/typography';
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
 import type { Model } from '../../domain/entities/Model';
+import { modelCardStyles as styles } from './ModelCardStyles';
 
 interface ModelCardProps {
   model: Model;
@@ -25,6 +24,7 @@ interface ModelCardProps {
   onPausePress: () => void;
   onResumePress: () => void;
   onCancelPress: () => void;
+  onUsePress: () => void;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -37,6 +37,7 @@ export function ModelCard({
   onPausePress,
   onResumePress,
   onCancelPress,
+  onUsePress,
 }: ModelCardProps) {
   const scale = useSharedValue(1);
 
@@ -114,11 +115,6 @@ export function ModelCard({
             </View>
             <View style={styles.titleContainer}>
               <Text style={styles.modelName}>{model.displayName}</Text>
-              {model.isPaid && (
-                <View style={styles.premiumBadge}>
-                  <Text style={styles.premiumText}>Premium</Text>
-                </View>
-              )}
             </View>
           </View>
           <Pressable
@@ -156,8 +152,10 @@ export function ModelCard({
         </Text>
 
         <View style={styles.footer}>
-          <Text style={styles.sizeText}>{formatBytes(model.sizeBytes)}</Text>
-          <Text style={styles.ramText}>{model.ramRequirement}</Text>
+          <View style={styles.sizeCapsule}>
+            <SymbolView name="internaldrive.fill" size={14} tintColor={TEXT_WHITE_80} />
+            <Text style={styles.sizeText}>{formatBytes(model.sizeBytes)}</Text>
+          </View>
         </View>
 
         {isExpanded && !isCompleted && (
@@ -176,9 +174,11 @@ export function ModelCard({
                 {formatBytes(displayProgress.bytesWritten)} / {formatBytes(displayProgress.totalBytes)}
               </Text>
               <Text style={styles.progressText}>
-                {displayProgress.speedBytesPerSecond > 0
-                  ? `${formatSpeed(displayProgress.speedBytesPerSecond)} · ETA ${formatETA(displayProgress.etaSeconds)}`
-                  : 'Starting…'}
+                {displayProgress.bytesWritten <= 0
+                  ? 'Starting…'
+                  : `${formatSpeed(Math.max(displayProgress.speedBytesPerSecond, 0))} · ETA ${
+                      displayProgress.etaSeconds > 0 ? formatETA(displayProgress.etaSeconds) : '--'
+                    }`}
               </Text>
             </View>
 
@@ -202,127 +202,17 @@ export function ModelCard({
             </View>
           </View>
         )}
+
+        {isCompleted && (
+          <View style={styles.completedContainer}>
+            <Pressable onPress={onUsePress} style={styles.useModelButton}>
+              <SymbolView name="bubble.left.and.bubble.right.fill" size={18} tintColor={WHITE_PRIMARY} />
+              <Text style={styles.useModelText}>Start Chat</Text>
+            </Pressable>
+          </View>
+        )}
       </GlassSurface>
     </AnimatedPressable>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.md,
-  },
-  card: {
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 66, 11, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  titleContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  modelName: {
-    ...typography.heading.h3,
-    color: WHITE_PRIMARY,
-  },
-  premiumBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    backgroundColor: 'rgba(255, 66, 11, 0.2)',
-    borderRadius: borderRadius.sm,
-  },
-  premiumText: {
-    ...typography.caption.default,
-    color: PRIMARY_ORANGE,
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  actionButton: {
-    padding: spacing.xs,
-  },
-  description: {
-    ...typography.body.small,
-    color: TEXT_WHITE_80,
-    marginBottom: spacing.md,
-    lineHeight: 20,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  sizeText: {
-    ...typography.body.small,
-    color: TEXT_WHITE_60,
-    fontWeight: '600',
-  },
-  ramText: {
-    ...typography.caption.default,
-    color: TEXT_WHITE_60,
-  },
-  progressContainer: {
-    marginTop: spacing.lg,
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  progressBarBackground: {
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: spacing.md,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: PRIMARY_ORANGE,
-    borderRadius: 3,
-  },
-  progressInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  progressText: {
-    ...typography.caption.default,
-    color: TEXT_WHITE_60,
-  },
-  downloadActions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  downloadActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: borderRadius.md,
-  },
-  downloadActionText: {
-    ...typography.caption.default,
-    color: TEXT_WHITE_80,
-    fontWeight: '600',
-  },
-});

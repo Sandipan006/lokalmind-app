@@ -17,6 +17,7 @@ export interface ModelConfig {
   readonly modelType: string;
   readonly contextSize: number;
   readonly isPaid: boolean;
+  readonly stopTokens: readonly string[];
 }
 
 export const MODEL_CONFIGS: readonly ModelConfig[] = [
@@ -36,6 +37,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     modelType: 'chat',
     contextSize: 32768,
     isPaid: false,
+    stopTokens: ['<|im_end|>', '<|end_of_text|>'],
   },
   {
     id: 'qwen3.5-2b',
@@ -53,6 +55,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     modelType: 'chat',
     contextSize: 32768,
     isPaid: false,
+    stopTokens: ['<|im_end|>', '<|end_of_text|>'],
   },
   {
     id: 'deepseek-r1-1.5b',
@@ -67,9 +70,11 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     provider: 'hetzner',
     capabilities: ['reasoning', 'coding', 'math', 'logic', 'analysis'],
     version: 'R1-Distill',
+    // DeepSeek R1 distilled on Qwen — same stop tokens as Qwen family.
     modelType: 'reasoning',
     contextSize: 32768,
     isPaid: false,
+    stopTokens: ['<|im_end|>', '<|end_of_text|>'],
   },
   {
     id: 'qwen3.5-4b',
@@ -87,6 +92,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     modelType: 'general',
     contextSize: 32768,
     isPaid: true,
+    stopTokens: ['<|im_end|>', '<|end_of_text|>'],
   },
   {
     id: 'qwen3-4b',
@@ -104,6 +110,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     modelType: 'reasoning',
     contextSize: 32768,
     isPaid: true,
+    stopTokens: ['<|im_end|>', '<|end_of_text|>'],
   },
   {
     id: 'gemma3-4b',
@@ -121,6 +128,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     modelType: 'general',
     contextSize: 131072,
     isPaid: true,
+    stopTokens: ['<end_of_turn>', '<eos>'],
   },
 ] as const;
 
