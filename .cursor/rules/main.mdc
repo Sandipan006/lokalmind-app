@@ -32,6 +32,7 @@ alwaysApply: true
 ## Platform constraints
 - No Node.js-only APIs; all packages must be Expo-compatible.
 - Validate native module compatibility (llama.rn, whisper.rn) before adding new dependencies.
+- Whenever using a package, verify API usage against current docs and do not use deprecated APIs.
 - Do not assume web APIs are available; guard platform-specific branches explicitly.
 
 ## TypeScript strictness

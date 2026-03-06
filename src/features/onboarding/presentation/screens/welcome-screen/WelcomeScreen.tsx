@@ -1,7 +1,7 @@
+import { PrimaryButton } from '@/src/design-system/components';
+import { router } from 'expo-router';
 import React from 'react';
 import { ImageBackground, Text, View } from 'react-native';
-import { router } from 'expo-router';
-import { PrimaryButton } from '@/src/design-system/components';
 import { welcomeScreenStyles as styles } from './WelcomeScreenStyles';
 
 export function WelcomeScreen() {
@@ -11,7 +11,7 @@ export function WelcomeScreen() {
 
   return (
     <ImageBackground
-      source={require('../../../assets/images/SplashScreen.png')}
+      source={require('../../../assets/images/SplashScreen.webp')}
       style={styles.backgroundImage}
       resizeMode="cover"
     >
