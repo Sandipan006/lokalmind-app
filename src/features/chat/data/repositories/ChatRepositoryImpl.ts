@@ -139,6 +139,19 @@ export class ChatRepositoryImpl implements IChatRepository {
     }
   }
 
+  async deleteSession(sessionId: string): Promise<Result<void>> {
+    try {
+      await this.ensureInitialized();
+      await this.sqliteDriver.transaction(async (driver) => {
+        await driver.execute(`DELETE FROM chat_messages WHERE session_id = ?`, [sessionId]);
+        await driver.execute(`DELETE FROM chat_sessions WHERE id = ?`, [sessionId]);
+      });
+      return ok(undefined);
+    } catch (e) {
+      return err(createError('STORAGE_ERROR', 'Failed to delete session', e));
+    }
+  }
+
   async updateAutoSessionTitle(sessionId: string, title: string, bucket: number): Promise<Result<void>> {
     try {
       await this.ensureInitialized();

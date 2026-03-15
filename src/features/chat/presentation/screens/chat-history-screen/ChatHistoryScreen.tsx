@@ -1,13 +1,16 @@
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import { container } from '@/src/core/di/container';
-import { PRIMARY_ORANGE } from '@/src/design-system/tokens/colors';
+import { PRIMARY_ORANGE, TEXT_WHITE_60 } from '@/src/design-system/tokens/colors';
+import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ChatSession } from '../../../domain/entities/ChatSession';
 import { ChatSessionRow } from '../../components/ChatSessionRow/ChatSessionRow';
 import { NewChatButton } from '../../components/NewChatButton/NewChatButton';
+import { RenameChatModal } from '../../components/RenameChatModal/RenameChatModal';
 import { styles } from './ChatHistoryScreenStyles';
 
 export function ChatHistoryScreen() {
@@ -49,14 +52,56 @@ export function ChatHistoryScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <ChatSessionRow
-            session={item}
-            onPress={() => router.push(`/chat/${item.id}`)}
-            onEdit={() => {
-              setEditingSession(item);
-              setTitleDraft(item.title);
-            }}
-          />
+          <View style={styles.swipeableContainer}>
+            <Swipeable
+              overshootRight={false}
+              rightThreshold={24}
+              renderRightActions={() => (
+                <View style={styles.swipeActions}>
+                  <TouchableOpacity
+                    style={[styles.swipeActionButton, styles.editActionButton]}
+                    onPress={() => {
+                      setEditingSession(item);
+                      setTitleDraft(item.title);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <SymbolView name="pencil" size={20} tintColor={TEXT_WHITE_60} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.swipeActionButton, styles.deleteActionButton]}
+                    onPress={() => {
+                      Alert.alert(
+                        'Delete chat?',
+                        'This chat and all messages will be permanently deleted.',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Delete',
+                            style: 'destructive',
+                            onPress: async () => {
+                              await container.chatRepository.deleteSession(item.id);
+                              await loadHistory();
+                            },
+                          },
+                        ],
+                      );
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <SymbolView name="trash" size={20} tintColor={TEXT_WHITE_60} />
+                  </TouchableOpacity>
+                </View>
+              )}
+            >
+              <View style={styles.rowInset}>
+                <ChatSessionRow
+                  session={item}
+                  onPress={() => router.push(`/chat/${item.id}`)}
+                />
+              </View>
+            </Swipeable>
+          </View>
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -66,39 +111,19 @@ export function ChatHistoryScreen() {
       />
 
       <NewChatButton onPress={() => router.push('/chat/new')} />
-
-      <Modal visible={editingSession !== null} transparent animationType="fade" onRequestClose={() => setEditingSession(null)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Rename chat</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={titleDraft}
-              onChangeText={setTitleDraft}
-              placeholder="Enter chat title"
-              placeholderTextColor="#6E6E6E"
-              autoFocus
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalButtonSecondary} onPress={() => setEditingSession(null)}>
-                <Text style={styles.modalButtonSecondaryText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalButtonPrimary}
-                onPress={async () => {
-                  if (!editingSession) return;
-                  const title = titleDraft.trim() || 'New Chat';
-                  await container.chatRepository.updateSessionTitle(editingSession.id, title);
-                  setEditingSession(null);
-                  await loadHistory();
-                }}
-              >
-                <Text style={styles.modalButtonPrimaryText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <RenameChatModal
+        visible={editingSession !== null}
+        titleDraft={titleDraft}
+        onChangeTitle={setTitleDraft}
+        onCancel={() => setEditingSession(null)}
+        onSave={async () => {
+          if (!editingSession) return;
+          const title = titleDraft.trim() || 'New Chat';
+          await container.chatRepository.updateSessionTitle(editingSession.id, title);
+          setEditingSession(null);
+          await loadHistory();
+        }}
+      />
     </SafeAreaView>
   );
 }
