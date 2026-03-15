@@ -1,0 +1,79 @@
+import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { BLACK_PRIMARY, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { spacing, borderRadius } from '@/src/design-system/tokens/spacing';
+import { typography } from '@/src/design-system/tokens/typography';
+
+export const styles = StyleSheet.create<{
+  safeArea: ViewStyle;
+  row: ViewStyle;
+  logoRow: ViewStyle;
+  logoMark: ViewStyle;
+  logoText: TextStyle;
+  actionsRow: ViewStyle;
+  iconButton: ViewStyle;
+  avatarButton: ViewStyle;
+  searchIcon: TextStyle;
+  avatarIcon: TextStyle;
+}>({
+  safeArea: {
+    backgroundColor: BLACK_PRIMARY,
+  },
+  row: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: BLACK_PRIMARY,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  logoMark: {
+    width: 28,
+    height: 28,
+    borderRadius: borderRadius.full,
+    // backgroundColor: 'rgba(255,255,255,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    ...typography.body.largeSemiBold,
+    color: WHITE_PRIMARY,
+  },
+  actionsRow: {
+    height: 40,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  iconButton: {
+    width: 34,
+    height: 34,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarButton: {
+    width: 30,
+    height: 30,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchIcon: {
+    color: WHITE_PRIMARY,
+    fontSize: 22,
+    lineHeight: 24,
+  },
+  avatarIcon: {
+    color: WHITE_PRIMARY,
+    fontSize: 15,
+  },
+});

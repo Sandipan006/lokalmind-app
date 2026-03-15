@@ -148,11 +148,11 @@ Four pre-built prompt modes that change how the AI behaves. Each has a default s
 | **General** | Helpful, concise, conversational. Default for most users. |
 | **Coding** | Code-first. Prefers code blocks. Explains technical concepts precisely. Structured output. |
 | **Creative** | Open-ended, imaginative. Storytelling, brainstorming, writing. Less constrained. |
-| **Deep Think** | Step-by-step reasoning. Shows working. Ideal for math, logic, and complex analysis. |
+| **Marketing** | Conversion-focused. Messaging, positioning, hooks, CTA, campaign-ready copy. |
 
 ### How it works
 
-- Mode selector shown as chips in the chat header (or a bottom sheet)
+- Mode selector shown inside the chat input box
 - Active mode stored in `ChatViewModel.selectedMode`
 - `ResolveSystemPromptUseCase` uses the mode's default prompt as the lowest-priority fallback
 - User can override any mode's default prompt in Profile → AI Behavior → tap the mode
