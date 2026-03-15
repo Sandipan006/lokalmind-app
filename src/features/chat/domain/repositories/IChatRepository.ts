@@ -11,4 +11,5 @@ export interface IChatRepository {
   saveMessage(message: ChatMessage): Promise<Result<void>>;
   updateMessageContent(messageId: string, content: string, status: ChatMessage['status']): Promise<Result<void>>;
   getMessages(sessionId: string): Promise<Result<ChatMessage[]>>;
+  searchSessions(query: string): Promise<Result<ChatSession[]>>;
 }
