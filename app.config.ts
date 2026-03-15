@@ -26,6 +26,8 @@ module.exports = ({ config }: { config: any }) => {
       CHAT_MAX_TOKENS: process.env.CHAT_MAX_TOKENS || '512',
       DOWNLOAD_CHUNK_SIZE: process.env.DOWNLOAD_CHUNK_SIZE || '8388608',
       DOWNLOAD_CONCURRENCY: process.env.DOWNLOAD_CONCURRENCY || '3',
+      SUPPORT_PAYPAL_URL: process.env.SUPPORT_PAYPAL_URL || '',
+      SUPPORT_OTHER_PAYMENT_URL: process.env.SUPPORT_OTHER_PAYMENT_URL || '',
     },
   };
 };

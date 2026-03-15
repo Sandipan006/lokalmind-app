@@ -1,13 +1,10 @@
 import { Text, TouchableOpacity, View } from 'react-native';
-import { SvgXml } from 'react-native-svg';
 import type { ChatSession } from '../../../domain/entities/ChatSession';
 import { styles } from './ChatSessionRowStyles';
-import { editTitleSvg } from '../../../assets/svgs';
 
 interface ChatSessionRowProps {
   session: ChatSession;
   onPress: () => void;
-  onEdit?: () => void;
   subtitle?: string;
   plain?: boolean;
   highlightQuery?: string;
@@ -53,7 +50,6 @@ function renderHighlightedText(
 export function ChatSessionRow({
   session,
   onPress,
-  onEdit,
   subtitle,
   plain = false,
   highlightQuery,
@@ -67,11 +63,6 @@ export function ChatSessionRow({
           plain ? styles.titleMuted : styles.title,
           styles.highlightText,
           1
-        )}
-        {onEdit && (
-          <TouchableOpacity onPress={onEdit} style={styles.editButton} hitSlop={6}>
-            <SvgXml xml={editTitleSvg} width={16} height={16} />
-          </TouchableOpacity>
         )}
       </View>
       {subtitle ? (
