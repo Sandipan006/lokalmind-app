@@ -1,1 +1,2 @@
-export { dropdownChevronSvg, newChatPlusSvg, sendMessageSvg, editTitleSvg } from './svg';
+export { dropdownChevronSvg, editTitleSvg, newChatPlusSvg, sendMessageSvg } from './svg';
+
