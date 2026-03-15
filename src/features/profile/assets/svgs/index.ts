@@ -1,0 +1,1 @@
+export { paypalLogoSvg } from './svg';
