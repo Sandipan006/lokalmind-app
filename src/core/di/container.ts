@@ -8,6 +8,7 @@
 
 import { ModelRepositoryImpl } from '@/src/features/models/data/repositories/ModelRepositoryImpl';
 import { UserRepositoryImpl } from '@/src/features/onboarding/data/repositories/UserRepositoryImpl';
+import { ChatRepositoryImpl } from '@/src/features/chat/data/repositories/ChatRepositoryImpl';
 import { DownloadService } from '@/src/infrastructure/downloads/downloadService';
 import { LlamaRnAdapter } from '@/src/infrastructure/llm/llamaRnAdapter';
 import { AsyncStorageDriver } from '@/src/infrastructure/storage/asyncStorageDriver';
@@ -22,6 +23,7 @@ const downloadService = new DownloadService(asyncStorageDriver);
 
 let userRepository: UserRepositoryImpl | null = null;
 let modelRepository: ModelRepositoryImpl | null = null;
+let chatRepository: ChatRepositoryImpl | null = null;
 let isInitialized = false;
 
 async function initializeContainer() {
@@ -29,6 +31,7 @@ async function initializeContainer() {
   await sqliteDriver.initialize();
   userRepository = new UserRepositoryImpl(sqliteDriver);
   modelRepository = new ModelRepositoryImpl(downloadService, sqliteDriver);
+  chatRepository = new ChatRepositoryImpl(sqliteDriver);
   await downloadService.hydratePersistedStates();
   isInitialized = true;
 }
@@ -50,6 +53,12 @@ export const container = {
       throw new Error('Container not initialized. Call initializeContainer() first.');
     }
     return modelRepository;
+  },
+  get chatRepository() {
+    if (!chatRepository) {
+      throw new Error('Container not initialized. Call initializeContainer() first.');
+    }
+    return chatRepository;
   },
   initializeContainer,
 } as const;
