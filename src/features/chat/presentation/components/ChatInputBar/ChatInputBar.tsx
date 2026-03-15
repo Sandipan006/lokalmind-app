@@ -47,7 +47,7 @@ export function ChatInputBar({
         <View style={styles.inputInner}>
           <TextInput
             style={[styles.textInput, { minHeight: inputHeight }]}
-            placeholder="Message LokalMind…"
+            placeholder="ask LokalMind…"
             placeholderTextColor={TEXT_INPUT_PLACEHOLDER_COLOR}
             value={inputText}
             onChangeText={onChangeText}
