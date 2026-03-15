@@ -8,7 +8,7 @@ import { splashScreenStyles as styles } from './SplashScreenStyles';
 
 const SPLASH_MIN_DURATION_MS = 2500;
 
-type AppRoute = '/(tabs)/chat' | '/onboarding/model-setup' | '/onboarding/welcome';
+type AppRoute = '/chat/new' | '/onboarding/model-setup' | '/onboarding/welcome';
 
 export function SplashScreen() {
   const [isChecking, setIsChecking] = useState(true);
@@ -51,7 +51,7 @@ export function SplashScreen() {
           console.log('[SplashScreen] No downloaded models found.');
         }
 
-        setRoute(hasModel ? '/(tabs)/chat' : '/onboarding/model-setup');
+        setRoute(hasModel ? '/chat/new' : '/onboarding/model-setup');
       } catch (error) {
         console.error('Failed to check app state:', error);
         setRoute('/onboarding/welcome');
