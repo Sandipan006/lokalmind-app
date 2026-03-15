@@ -1,9 +1,11 @@
 import { GlassSurface } from '@/src/design-system/components';
-import { useState } from 'react';
+import { WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { useEffect, useState } from 'react';
+import { SymbolView } from 'expo-symbols';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
-import { dropdownChevronSvg, sendMessageSvg } from '../../../assets/svgs';
+import { sendMessageSvg } from '../../../assets/svgs';
 import { CHAT_MODE_LABELS, type ChatMode } from '../../../domain/entities/ChatMode';
 import { styles, TEXT_INPUT_PLACEHOLDER_COLOR } from './ChatInputBarStyles';
 
@@ -29,15 +31,22 @@ export function ChatInputBar({
   onStop,
 }: ChatInputBarProps) {
   const insets = useSafeAreaInsets();
-  const [inputHeight, setInputHeight] = useState<number>(24);
+  const minTextInputHeight = 24;
   const maxTextInputHeight = 108;
+  const [inputHeight, setInputHeight] = useState<number>(minTextInputHeight);
+
+  useEffect(() => {
+    if (inputText.length === 0 && inputHeight !== minTextInputHeight) {
+      setInputHeight(minTextInputHeight);
+    }
+  }, [inputHeight, inputText, minTextInputHeight]);
 
   return (
     <View style={[styles.inputBar, { paddingBottom: Math.max((styles.inputBar.paddingBottom ?? 0) as number, insets.bottom) }]}>
       <GlassSurface tier="medium" style={styles.inputGlass}>
         <View style={styles.inputInner}>
           <TextInput
-            style={[styles.textInput, { height: inputHeight }]}
+            style={[styles.textInput, { minHeight: inputHeight }]}
             placeholder="Message LokalMind…"
             placeholderTextColor={TEXT_INPUT_PLACEHOLDER_COLOR}
             value={inputText}
@@ -46,18 +55,21 @@ export function ChatInputBar({
             returnKeyType="default"
             editable={!isStreaming}
             textAlignVertical="top"
+            underlineColorAndroid="transparent"
             scrollEnabled={inputHeight >= maxTextInputHeight}
             onContentSizeChange={(event) => {
-              const contentHeight = event.nativeEvent.contentSize.height;
-              const nextHeight = Math.min(maxTextInputHeight, Math.max(24, contentHeight));
-              setInputHeight(nextHeight);
+              const contentHeight = Math.ceil(event.nativeEvent.contentSize.height);
+              const nextHeight = Math.min(maxTextInputHeight, Math.max(minTextInputHeight, contentHeight));
+              if (Math.abs(nextHeight - inputHeight) > 1) {
+                setInputHeight(nextHeight);
+              }
             }}
           />
 
           <View style={styles.bottomRow}>
             <TouchableOpacity style={styles.modeButton} onPress={onModePress} activeOpacity={0.8}>
               <Text style={styles.modeButtonText}>{CHAT_MODE_LABELS[selectedMode]}</Text>
-              <SvgXml xml={dropdownChevronSvg} width={14} height={14} />
+              <SymbolView name="chevron.down" size={12} tintColor={WHITE_PRIMARY} />
             </TouchableOpacity>
 
             {isStreaming ? (
