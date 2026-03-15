@@ -1,16 +1,18 @@
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { container } from '@/src/core/di/container';
+import { GlassSurface } from '@/src/design-system/components';
+import { PRIMARY_ORANGE, TEXT_WHITE_60 } from '@/src/design-system/tokens/colors';
+import { spacing } from '@/src/design-system/tokens/spacing';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { container } from '@/src/core/di/container';
-import { PRIMARY_ORANGE, TEXT_WHITE_60 } from '@/src/design-system/tokens/colors';
-import { GlassSurface } from '@/src/design-system/components';
-import { spacing } from '@/src/design-system/tokens/spacing';
-import type { ChatSession } from '../../../domain/entities/ChatSession';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ChatMessage } from '../../../domain/entities/ChatMessage';
+import type { ChatSession } from '../../../domain/entities/ChatSession';
 import { SearchChatsUseCase } from '../../../domain/usecases/SearchChatsUseCase';
 import { ChatSessionRow } from '../../components/ChatSessionRow/ChatSessionRow';
+import { RenameChatModal } from '../../components/RenameChatModal/RenameChatModal';
 import { styles } from './ChatSearchScreenStyles';
 
 export function ChatSearchScreen() {
@@ -21,6 +23,8 @@ export function ChatSearchScreen() {
   const [results, setResults] = useState<ChatSession[]>([]);
   const [messagePreviewBySession, setMessagePreviewBySession] = useState<Record<string, string>>({});
   const [hasSearched, setHasSearched] = useState(false);
+  const [editingSession, setEditingSession] = useState<ChatSession | null>(null);
+  const [titleDraft, setTitleDraft] = useState('');
 
   const searchUseCase = new SearchChatsUseCase(container.chatRepository);
 
@@ -73,6 +77,32 @@ export function ChatSearchScreen() {
     setHasSearched(false);
   }, []);
 
+  const handleSaveTitle = useCallback(async () => {
+    if (!editingSession) return;
+    const title = titleDraft.trim() || 'New Chat';
+    await container.chatRepository.updateSessionTitle(editingSession.id, title);
+    setEditingSession(null);
+    await handleSearch(query);
+  }, [editingSession, handleSearch, query, titleDraft]);
+
+  const handleDeleteSession = useCallback((session: ChatSession) => {
+    Alert.alert(
+      'Delete chat?',
+      'This chat and all messages will be permanently deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await container.chatRepository.deleteSession(session.id);
+            await handleSearch(query);
+          },
+        },
+      ],
+    );
+  }, [handleSearch, query]);
+
   return (
     <SafeAreaView edges={['left', 'right']} style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.xs }]}>
@@ -121,13 +151,39 @@ export function ChatSearchScreen() {
           renderItem={({ item }) => {
             const subtitle = messagePreviewBySession[item.id];
             return (
-              <ChatSessionRow
-                session={item}
-                onPress={() => router.push(`/chat/${item.id}`)}
-                plain
-                highlightQuery={query}
-                {...(subtitle ? { subtitle } : {})}
-              />
+              <Swipeable
+                overshootRight={false}
+                rightThreshold={24}
+                renderRightActions={() => (
+                  <View style={styles.swipeActions}>
+                    <TouchableOpacity
+                      style={[styles.swipeActionButton, styles.editActionButton]}
+                      onPress={() => {
+                        setEditingSession(item);
+                        setTitleDraft(item.title);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <SymbolView name="pencil" size={16} tintColor={TEXT_WHITE_60} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.swipeActionButton, styles.deleteActionButton]}
+                      onPress={() => handleDeleteSession(item)}
+                      activeOpacity={0.8}
+                    >
+                      <SymbolView name="trash" size={16} tintColor={TEXT_WHITE_60} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              >
+                <ChatSessionRow
+                  session={item}
+                  onPress={() => router.push(`/chat/${item.id}`)}
+                  plain
+                  highlightQuery={query}
+                  {...(subtitle ? { subtitle } : {})}
+                />
+              </Swipeable>
             );
           }}
           ListEmptyComponent={
@@ -143,6 +199,14 @@ export function ChatSearchScreen() {
           <Text style={styles.emptyText}>Search your chat history</Text>
         </View>
       )}
+
+      <RenameChatModal
+        visible={editingSession !== null}
+        titleDraft={titleDraft}
+        onChangeTitle={setTitleDraft}
+        onCancel={() => setEditingSession(null)}
+        onSave={handleSaveTitle}
+      />
     </SafeAreaView>
   );
 }

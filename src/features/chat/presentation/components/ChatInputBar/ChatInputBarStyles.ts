@@ -1,23 +1,11 @@
 import { BLACK_PRIMARY, INPUT_BOX_COLOR, PRIMARY_ORANGE, TEXT_WHITE_40, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { borderRadius, spacing } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
-import { Platform, StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const TEXT_INPUT_PLACEHOLDER_COLOR = TEXT_WHITE_40;
 
-export const styles = StyleSheet.create<{
-  inputBar: ViewStyle;
-  inputGlass: ViewStyle;
-  inputInner: ViewStyle;
-  textInput: TextStyle;
-  bottomRow: ViewStyle;
-  modeButton: ViewStyle;
-  modeButtonText: TextStyle;
-  sendButton: ViewStyle;
-  sendButtonDisabled: ViewStyle;
-  stopButton: ViewStyle;
-  stopSquare: ViewStyle;
-}>({
+export const styles = StyleSheet.create({
   inputBar: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,

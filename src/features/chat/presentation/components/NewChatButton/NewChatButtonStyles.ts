@@ -1,14 +1,10 @@
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { PRIMARY_ORANGE, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { spacing, borderRadius, normalize } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
 
 
-export const styles = StyleSheet.create<{
-  anchor: ViewStyle;
-  pill: ViewStyle;
-  label: TextStyle;
-}>({
+export const styles = StyleSheet.create({
   anchor: {
     position: 'absolute',
     right: spacing.md,
