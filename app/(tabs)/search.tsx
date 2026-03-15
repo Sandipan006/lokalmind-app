@@ -1,9 +1,5 @@
-import { View, Text } from 'react-native';
+import { SupportScreen } from '@/src/features/profile/presentation/screens/support-screen/SupportScreen';
 
 export default function SearchScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Search</Text>
-    </View>
-  );
+  return <SupportScreen />;
 }

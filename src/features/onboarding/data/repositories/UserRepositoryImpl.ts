@@ -13,11 +13,18 @@ export class UserRepositoryImpl implements IUserRepository {
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         display_name TEXT NOT NULL,
+        avatar_index INTEGER NOT NULL DEFAULT 1,
         onboarding_complete INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
         updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
       );
     `);
+
+    const columns = await this.sqliteDriver.query<{ name: string }>('PRAGMA table_info(users)');
+    const names = new Set(columns.map((c) => c.name));
+    if (!names.has('avatar_index')) {
+      await this.sqliteDriver.execute('ALTER TABLE users ADD COLUMN avatar_index INTEGER NOT NULL DEFAULT 1');
+    }
 
     this.initialized = true;
   }
@@ -43,6 +50,29 @@ export class UserRepositoryImpl implements IUserRepository {
     );
     
     return rows.length > 0 ? rows[0]?.display_name ?? null : null;
+  }
+
+  async saveAvatarIndex(index: number): Promise<void> {
+    await this.ensureInitialized();
+
+    await this.sqliteDriver.execute(
+      `INSERT INTO users (id, display_name, avatar_index, updated_at)
+       VALUES (1, '', ?, strftime('%s', 'now'))
+       ON CONFLICT(id) DO UPDATE SET
+         avatar_index = excluded.avatar_index,
+         updated_at = excluded.updated_at;`,
+      [index]
+    );
+  }
+
+  async getAvatarIndex(): Promise<number | null> {
+    await this.ensureInitialized();
+
+    const rows = await this.sqliteDriver.query<{ avatar_index: number }>(
+      'SELECT avatar_index FROM users WHERE id = 1'
+    );
+
+    return rows.length > 0 ? rows[0]?.avatar_index ?? null : null;
   }
 
   async markOnboardingComplete(): Promise<void> {

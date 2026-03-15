@@ -1,6 +1,8 @@
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SymbolView } from 'expo-symbols';
 import { GlassSurface } from '@/src/design-system/components';
+import { WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { borderRadius, spacing } from '@/src/design-system/tokens/spacing';
 import { styles } from './NewChatButtonStyles';
 
@@ -17,8 +19,8 @@ export function NewChatButton({ onPress }: NewChatButtonProps) {
     <View style={[styles.anchor, { bottom: bottomOffset }]}>
       <GlassSurface tier="medium" style={{ borderRadius: borderRadius.full, overflow: 'hidden' }}>
         <TouchableOpacity style={styles.pill} onPress={onPress} activeOpacity={0.85}>
-          <Text style={styles.icon}>✎</Text>
-          <Text style={styles.label}>Chat</Text>
+          <SymbolView name="square.and.pencil" size={20} tintColor={WHITE_PRIMARY} />
+          <Text style={styles.label}>New Chat</Text>
         </TouchableOpacity>
       </GlassSurface>
     </View>

@@ -1,4 +1,4 @@
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet, ViewStyle, TextStyle, ImageStyle } from 'react-native';
 import { BLACK_PRIMARY, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { spacing, borderRadius } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
@@ -14,6 +14,7 @@ export const styles = StyleSheet.create<{
   avatarButton: ViewStyle;
   searchIcon: TextStyle;
   avatarIcon: TextStyle;
+  avatarImage: ImageStyle;
 }>({
   safeArea: {
     backgroundColor: BLACK_PRIMARY,
@@ -47,10 +48,11 @@ export const styles = StyleSheet.create<{
   actionsRow: {
     height: 40,
     borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.sm,
+    paddingLeft: spacing.xxs,
+    paddingRight: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xxs,
+    gap: spacing.xs,
   },
   iconButton: {
     width: 34,
@@ -75,5 +77,10 @@ export const styles = StyleSheet.create<{
   avatarIcon: {
     color: WHITE_PRIMARY,
     fontSize: 15,
+  },
+  avatarImage: {
+    width: 30,
+    height: 30,
+    borderRadius: borderRadius.full,
   },
 });

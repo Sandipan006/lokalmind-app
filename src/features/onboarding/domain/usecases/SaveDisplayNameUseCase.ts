@@ -14,7 +14,17 @@ export class SaveDisplayNameUseCase {
       throw new Error('Display name must be less than 30 characters');
     }
     
+    const avatarIndex = this.assignAvatarIndex(trimmed);
     await this.userRepository.saveDisplayName(trimmed);
+    await this.userRepository.saveAvatarIndex(avatarIndex);
     await this.userRepository.markOnboardingComplete();
+  }
+
+  private assignAvatarIndex(displayName: string): number {
+    let hash = 0;
+    for (let i = 0; i < displayName.length; i += 1) {
+      hash = (hash * 31 + displayName.charCodeAt(i)) % 21;
+    }
+    return hash + 1;
   }
 }
