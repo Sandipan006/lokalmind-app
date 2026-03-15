@@ -1,0 +1,89 @@
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import { BLACK_PRIMARY, TEXT_WHITE_60, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { borderRadius, spacing } from '@/src/design-system/tokens/spacing';
+import { typography } from '@/src/design-system/tokens/typography';
+
+export const styles = StyleSheet.create<{
+  header: ViewStyle;
+  backButton: ViewStyle;
+  backIconSvg: ViewStyle;
+  headerCenter: ViewStyle;
+  headerModelCapsule: ViewStyle;
+  headerModelButton: ViewStyle;
+  headerModelName: TextStyle;
+  headerModelChevron: ViewStyle;
+  headerNewChatCapsule: ViewStyle;
+  headerNewChatButton: ViewStyle;
+  headerNewChatIcon: ViewStyle;
+  headerNewChatText: TextStyle;
+}>({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
+    backgroundColor: BLACK_PRIMARY,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.xs,
+  },
+  backIconSvg: {
+    transform: [{ rotate: '90deg' }],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+    marginRight: spacing.xs,
+  },
+  headerModelCapsule: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+  },
+  headerModelButton: {
+    height: 38,
+    maxWidth: 210,
+    borderRadius: borderRadius.full,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  headerModelName: {
+    ...typography.body.semiBold,
+    color: WHITE_PRIMARY,
+    maxWidth: 170,
+  },
+  headerModelChevron: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerNewChatCapsule: {
+    borderRadius: borderRadius.full,
+    overflow: 'hidden',
+  },
+  headerNewChatButton: {
+    height: 38,
+    borderRadius: borderRadius.full,
+    paddingHorizontal: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xxs,
+  },
+  headerNewChatIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerNewChatText: {
+    ...typography.caption.smallSemiBold,
+    color: WHITE_PRIMARY,
+  },
+});
