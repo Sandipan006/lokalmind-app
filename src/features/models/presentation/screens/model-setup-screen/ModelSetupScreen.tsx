@@ -93,7 +93,7 @@ export const ModelSetupScreen = observer(() => {
                 onPausePress={() => viewModel.pauseDownload(model.id)}
                 onResumePress={() => viewModel.resumeDownload(model.id)}
                 onCancelPress={() => viewModel.cancelDownload(model.id)}
-                onUsePress={() => router.push('/(tabs)/chat')}
+                onUsePress={() => router.push('/chat/new')}
               />
             ))}
         </ScrollView>
