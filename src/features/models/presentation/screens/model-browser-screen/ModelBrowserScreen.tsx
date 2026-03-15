@@ -62,7 +62,7 @@ export const ModelBrowserScreen = observer(() => {
           styles.scrollContent,
           {
             paddingTop: spacing.md,
-            paddingBottom: insets.bottom + spacing.xl,
+            paddingBottom: insets.bottom + spacing.xxxxl,
           },
         ]}
         showsVerticalScrollIndicator={false}
