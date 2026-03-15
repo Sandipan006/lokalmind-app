@@ -1,11 +1,13 @@
-import { StyleSheet } from 'react-native';
-import { spacing, borderRadius } from '@/src/design-system/tokens/spacing';
-import { fontSizes, fonts } from '@/src/design-system/tokens/typography';
 import {
   BLACK_PRIMARY,
-  WHITE_PRIMARY,
+  CHAT_BACKGROUND_COLOR,
+  INPUT_BOX_COLOR,
   TEXT_WHITE_60,
+  WHITE_PRIMARY,
 } from '@/src/design-system/tokens/colors';
+import { borderRadius, spacing } from '@/src/design-system/tokens/spacing';
+import { fontSizes, fonts } from '@/src/design-system/tokens/typography';
+import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   container: {
@@ -68,5 +70,24 @@ export const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     color: TEXT_WHITE_60,
     fontFamily: fonts.figtree.regular,
+  },
+  swipeActions: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.xxs,
+    marginLeft: spacing.xs,
+  },
+  swipeActionButton: {
+    width: 48,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'stretch',
+  },
+  editActionButton: {
+    backgroundColor: CHAT_BACKGROUND_COLOR,
+  },
+  deleteActionButton: {
+    backgroundColor: INPUT_BOX_COLOR,
   },
 });

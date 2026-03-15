@@ -30,6 +30,10 @@ export const env = {
     timeoutMs: 30000,
     retryAttempts: 3,
   },
+  support: {
+    paypalUrl: getEnvVar('SUPPORT_PAYPAL_URL', ''),
+    otherPaymentUrl: getEnvVar('SUPPORT_OTHER_PAYMENT_URL', ''),
+  },
   storage: {
     modelsDir: 'models',
     tempDir: 'temp',

@@ -1,21 +1,11 @@
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { INPUT_BOX_COLOR, WHITE_PRIMARY, TEXT_WHITE_60 } from '@/src/design-system/tokens/colors';
+import { StyleSheet } from 'react-native';
+import { WHITE_PRIMARY, TEXT_WHITE_60, CHAT_BACKGROUND_COLOR } from '@/src/design-system/tokens/colors';
 import { spacing, borderRadius } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
 
-export const styles = StyleSheet.create<{
-  row: ViewStyle;
-  rowPlain: ViewStyle;
-  topRow: ViewStyle;
-  title: TextStyle;
-  titleMuted: TextStyle;
-  subtitle: TextStyle;
-  subtitleMuted: TextStyle;
-  highlightText: TextStyle;
-  editButton: ViewStyle;
-}>({
+export const styles = StyleSheet.create({
   row: {
-    backgroundColor: INPUT_BOX_COLOR,
+    backgroundColor: CHAT_BACKGROUND_COLOR,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
   },
@@ -54,12 +44,5 @@ export const styles = StyleSheet.create<{
   },
   highlightText: {
     color: WHITE_PRIMARY,
-  },
-  editButton: {
-    width: 24,
-    height: 24,
-    borderRadius: borderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
