@@ -216,4 +216,38 @@ export class ChatRepositoryImpl implements IChatRepository {
       return err(createError('STORAGE_ERROR', 'Failed to get messages', e));
     }
   }
+
+  async searchSessions(query: string): Promise<Result<ChatSession[]>> {
+    try {
+      await this.ensureInitialized();
+      const searchPattern = `%${query}%`;
+      const rows = await this.sqliteDriver.query<{
+        id: string; model_id: string; title: string; is_title_locked: number; last_title_bucket: number; created_at: number; updated_at: number;
+      }>(
+        `SELECT DISTINCT s.*
+         FROM chat_sessions s
+         WHERE s.title LIKE ?
+            OR EXISTS (
+              SELECT 1 FROM chat_messages m
+              WHERE m.session_id = s.id AND m.content LIKE ?
+            )
+         ORDER BY s.updated_at DESC`,
+        [searchPattern, searchPattern],
+      );
+
+      const sessions: ChatSession[] = rows.map((r) => ({
+        id: r.id,
+        modelId: r.model_id,
+        title: r.title,
+        isTitleLocked: r.is_title_locked === 1,
+        lastTitleBucket: r.last_title_bucket ?? 0,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }));
+
+      return ok(sessions);
+    } catch (e) {
+      return err(createError('STORAGE_ERROR', 'Failed to search sessions', e));
+    }
+  }
 }
