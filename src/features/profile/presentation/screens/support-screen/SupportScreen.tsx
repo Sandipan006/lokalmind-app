@@ -1,5 +1,6 @@
 import { GlassSurface } from '@/src/design-system/components';
 import { TEXT_WHITE_40, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { env } from '@/src/config/env';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -19,7 +20,11 @@ export function SupportScreen() {
 
   const handlePayPal = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const url = 'https://paypal.me/sandipan804';
+    const url = env.support.paypalUrl;
+    if (!url) {
+      Alert.alert('Error', 'PayPal link is not configured');
+      return;
+    }
     try {
       const supported = await Linking.canOpenURL(url);
       if (supported) {
@@ -34,7 +39,11 @@ export function SupportScreen() {
 
   const handleOther = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const url = 'https://checkout.dodopayments.com/buy/pdt_IEOG0s908rxVulWQVLxkV?quantity=1';
+    const url = env.support.otherPaymentUrl;
+    if (!url) {
+      Alert.alert('Error', 'Payment link is not configured');
+      return;
+    }
     try {
       const supported = await Linking.canOpenURL(url);
       if (supported) {

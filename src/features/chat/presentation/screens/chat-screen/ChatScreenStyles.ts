@@ -1,4 +1,4 @@
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 import {
   BLACK_PRIMARY, CHAT_BACKGROUND_COLOR,
   CHAT_BUBBLE_USER_BG, CHAT_BUBBLE_AI_BG,
@@ -8,27 +8,7 @@ import {
 import { spacing, borderRadius } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
 
-export const styles = StyleSheet.create<{
-  safeAreaContainer: ViewStyle;
-  container: ViewStyle;
-  messageList: ViewStyle;
-  messageListContent: ViewStyle;
-  messageRow: ViewStyle;
-  userRow: ViewStyle;
-  assistantRow: ViewStyle;
-  bubble: ViewStyle;
-  userBubble: ViewStyle;
-  assistantBubble: ViewStyle;
-  bubbleText: TextStyle;
-  userBubbleText: TextStyle;
-  assistantBubbleText: TextStyle;
-  cursor: TextStyle;
-  thinkingRow: ViewStyle;
-  thinkingBubble: ViewStyle;
-  thinkingDot: ViewStyle;
-  errorBanner: ViewStyle;
-  errorText: TextStyle;
-}>({
+export const styles = StyleSheet.create({
   safeAreaContainer: {
     flex: 1,
     backgroundColor: BLACK_PRIMARY,

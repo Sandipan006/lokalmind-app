@@ -1,21 +1,9 @@
-import { StyleSheet, ViewStyle, TextStyle, ImageStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { BLACK_PRIMARY, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { spacing, borderRadius } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
 
-export const styles = StyleSheet.create<{
-  safeArea: ViewStyle;
-  row: ViewStyle;
-  logoRow: ViewStyle;
-  logoMark: ViewStyle;
-  logoText: TextStyle;
-  actionsRow: ViewStyle;
-  iconButton: ViewStyle;
-  avatarButton: ViewStyle;
-  searchIcon: TextStyle;
-  avatarIcon: TextStyle;
-  avatarImage: ImageStyle;
-}>({
+export const styles = StyleSheet.create({
   safeArea: {
     backgroundColor: BLACK_PRIMARY,
   },
