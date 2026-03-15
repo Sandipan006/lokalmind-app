@@ -1,17 +1,20 @@
-import { useEffect, useRef, useCallback } from 'react';
-import {
-  View, Text, FlatList,
-  KeyboardAvoidingView, Platform, Animated,
-} from 'react-native';
-import { observer } from 'mobx-react-lite';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChatViewModel } from '../../viewmodels/ChatViewModel';
-import { styles } from './ChatScreenStyles';
 import { getModelConfig } from '@/src/infrastructure/downloads/modelConfig';
+import { useRouter } from 'expo-router';
+import { observer } from 'mobx-react-lite';
+import { useCallback, useEffect, useRef } from 'react';
+import {
+  Animated, Easing,
+  FlatList,
+  KeyboardAvoidingView, Platform,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatHeader } from '../../components/ChatHeader/ChatHeader';
 import { ChatInputBar } from '../../components/ChatInputBar/ChatInputBar';
+import { ChatViewModel } from '../../viewmodels/ChatViewModel';
+import { styles } from './ChatScreenStyles';
 
 interface ChatScreenProps {
   sessionId: string;
@@ -36,45 +39,58 @@ function StreamingCursor() {
   return <Animated.Text style={[styles.cursor, { opacity }]}>▋</Animated.Text>;
 }
 
-// Animated dots for model-loading state.
+// Shimmering thinking indicator while model prepares first token.
 function ThinkingIndicator() {
-  const dot1 = useRef(new Animated.Value(0.3)).current;
-  const dot2 = useRef(new Animated.Value(0.3)).current;
-  const dot3 = useRef(new Animated.Value(0.3)).current;
+  const shimmerProgress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const pulse = (val: Animated.Value, delay: number) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(delay),
-          Animated.timing(val, { toValue: 1, duration: 300, useNativeDriver: true }),
-          Animated.timing(val, { toValue: 0.3, duration: 300, useNativeDriver: true }),
-        ])
-      );
-    const a1 = pulse(dot1, 0);
-    const a2 = pulse(dot2, 200);
-    const a3 = pulse(dot3, 400);
-    a1.start(); a2.start(); a3.start();
-    return () => { a1.stop(); a2.stop(); a3.stop(); };
-  }, [dot1, dot2, dot3]);
+    const shimmer = Animated.loop(
+      Animated.timing(shimmerProgress, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    shimmer.start();
+    return () => shimmer.stop();
+  }, [shimmerProgress]);
+
+  const shimmerTranslateX = shimmerProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-110, 110],
+  });
 
   return (
     <View style={styles.thinkingRow}>
-      <View style={styles.thinkingBubble}>
-        <Animated.View style={[styles.thinkingDot, { opacity: dot1 }]} />
-        <Animated.View style={[styles.thinkingDot, { opacity: dot2 }]} />
-        <Animated.View style={[styles.thinkingDot, { opacity: dot3 }]} />
-      </View>
+      <Text style={styles.thinkingText}>Thinking...</Text>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.thinkingShimmer, { transform: [{ translateX: shimmerTranslateX }] }]}
+      />
     </View>
   );
 }
 
 const MessageBubble = observer(({ message }: { message: ChatMessage }) => {
   const isUser = message.role === 'user';
+
+  if (isUser) {
+    return (
+      <View style={[styles.messageRow, styles.userRow]}>
+        <View style={[styles.bubble, styles.userBubble]}>
+          <Text style={[styles.bubbleText, styles.userBubbleText]}>
+            {message.content}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={[styles.messageRow, isUser ? styles.userRow : styles.assistantRow]}>
-      <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-        <Text style={[styles.bubbleText, isUser ? styles.userBubbleText : styles.assistantBubbleText]}>
+    <View style={[styles.messageRow, styles.assistantRow]}>
+      <View style={[styles.bubble, styles.assistantBubble]}>
+        <Text style={[styles.bubbleText, styles.assistantBubbleText]}>
           {message.content}
         </Text>
       </View>

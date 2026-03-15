@@ -3,6 +3,7 @@ import {
   BLACK_PRIMARY, CHAT_BACKGROUND_COLOR,
   CHAT_BUBBLE_USER_BG, CHAT_BUBBLE_AI_BG,
   CHAT_BUBBLE_USER_TEXT, CHAT_BUBBLE_AI_TEXT,
+  WHITE_PRIMARY,
   ERROR_RED,
 } from '@/src/design-system/tokens/colors';
 import { spacing, borderRadius } from '@/src/design-system/tokens/spacing';
@@ -30,7 +31,7 @@ export const styles = StyleSheet.create({
 
   // ── Bubbles ─────────────────────────────────────────────────────────────────
   messageRow: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xl,
   },
   userRow: {
     alignItems: 'flex-end',
@@ -46,26 +47,27 @@ export const styles = StyleSheet.create({
   },
   userBubble: {
     backgroundColor: CHAT_BUBBLE_USER_BG,
-    borderBottomRightRadius: borderRadius.xs,
   },
   assistantBubble: {
-    backgroundColor: CHAT_BUBBLE_AI_BG,
+    backgroundColor: 'transparent',
     borderBottomLeftRadius: borderRadius.xs,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    maxWidth: '100%',
   },
   bubbleText: {
     ...typography.body.default,
-    lineHeight: 22,
   },
   userBubbleText: {
     color: CHAT_BUBBLE_USER_TEXT,
   },
   assistantBubbleText: {
-    color: CHAT_BUBBLE_AI_TEXT,
+    color: WHITE_PRIMARY,
   },
 
   // ── Streaming cursor ────────────────────────────────────────────────────────
   cursor: {
-    color: CHAT_BUBBLE_AI_TEXT,
+    color: WHITE_PRIMARY,
     opacity: 0.6,
   },
 
@@ -73,24 +75,23 @@ export const styles = StyleSheet.create({
   thinkingRow: {
     alignItems: 'flex-start',
     marginBottom: spacing.sm,
+    position: 'relative',
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
-  thinkingBubble: {
-    backgroundColor: CHAT_BUBBLE_AI_BG,
-    borderRadius: borderRadius.xl,
-    borderBottomLeftRadius: borderRadius.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+  thinkingText: {
+    ...typography.body.default,
+    color: WHITE_PRIMARY,
+    opacity: 0.75,
   },
-  thinkingDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: CHAT_BUBBLE_AI_TEXT,
+  thinkingShimmer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: -40,
+    width: 40,
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
-
   // ── Error banner ─────────────────────────────────────────────────────────────
   errorBanner: {
     marginHorizontal: spacing.md,
