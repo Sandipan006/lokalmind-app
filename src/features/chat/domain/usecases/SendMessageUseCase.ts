@@ -50,14 +50,17 @@ export class SendMessageUseCase {
 
       const modeOverride = await this.appSettingsRepository.getModeSystemPromptOverride(mode);
       const systemContent = resolveSystemPromptForChat(mode, modeOverride);
+      // TODO: Trim `history` to last 20 messages total (user + assistant) before mapping — full session currently sent.
       const llmMessages: LLMMessage[] = [
         { role: 'system', content: systemContent },
         ...history.map((m) => ({ role: m.role as LLMMessage['role'], content: m.content })),
         { role: 'user', content: userMessage.content },
       ];
       console.log('[Chat][LLM] Mode:', mode);
-      console.log('[Chat][LLM] System prompt:', systemContent);
-      console.log('[Chat][LLM] Messages:', llmMessages.map((m) => ({ role: m.role, content: m.content })));
+      console.log('[Chat][LLM] History:', history);
+      console.log('[Chat][LLM] User message:', userMessage);
+      // console.log('[Chat][LLM] System prompt:', systemContent);
+      // console.log('[Chat][LLM] Messages:', llmMessages.map((m) => ({ role: m.role, content: m.content })));
 
       let accumulatedContent = '';
       const response = await this.llmEngine.generateResponse(
