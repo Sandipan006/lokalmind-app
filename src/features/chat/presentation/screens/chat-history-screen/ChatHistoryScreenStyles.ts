@@ -29,7 +29,7 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
   listContent: {
-    paddingBottom: spacing.xxxxl,
+    paddingBottom: normalize(175),
     gap: spacing.xs,
   },
   swipeableContainer: {
