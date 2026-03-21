@@ -55,7 +55,7 @@ export class GenerateChatTitleUseCase {
       const titleMessages: LLMMessage[] = [
         {
           role: 'system',
-          content: `Generate a neutral, topic-focused chat title for history list.
+          content: `Generate a neutral, topic-focused chat title for chat history.
 
 Rules:
 - Focus on the user's main intent/topic, not assistant wording style.

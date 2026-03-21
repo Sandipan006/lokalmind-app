@@ -8,7 +8,7 @@ import { splashScreenStyles as styles } from './SplashScreenStyles';
 
 const SPLASH_MIN_DURATION_MS = 2500;
 
-type AppRoute = '/chat/new' | '/onboarding/model-setup' | '/onboarding/welcome';
+type AppRoute = '/chat/new' | '/(tabs)/chat' | '/onboarding/model-setup' | '/onboarding/welcome';
 
 export function SplashScreen() {
   const [isChecking, setIsChecking] = useState(true);
@@ -41,17 +41,27 @@ export function SplashScreen() {
         const hasModelResult = await container.modelRepository.hasDownloadedModel();
         const hasModel = hasModelResult.success ? hasModelResult.data : false;
 
+        const sessionsResult = await container.chatRepository.getSessions();
+        const hasAnyChats = sessionsResult.success && sessionsResult.data.length > 0;
+
         if (hasModel) {
           const allModelsResult = await container.modelRepository.getAllModels();
           if (allModelsResult.success) {
             const downloaded = allModelsResult.data.filter((m) => m.isDownloaded);
             console.log('[SplashScreen] Downloaded models:', downloaded.map((m) => m.id));
           }
-        } else {
-          console.log('[SplashScreen] No downloaded models found.');
+          setRoute('/chat/new');
+          return;
         }
 
-        setRoute(hasModel ? '/chat/new' : '/onboarding/model-setup');
+        console.log('[SplashScreen] No downloaded models found.');
+
+        // Chats remain after deleting models — open Recents instead of forcing download flow.
+        if (hasAnyChats) {
+          setRoute('/(tabs)/chat');
+        } else {
+          setRoute('/onboarding/model-setup');
+        }
       } catch (error) {
         console.error('Failed to check app state:', error);
         setRoute('/onboarding/welcome');

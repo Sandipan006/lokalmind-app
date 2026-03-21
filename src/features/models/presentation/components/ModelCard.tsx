@@ -5,7 +5,6 @@ import {
   SUCCESS_GREEN,
   TEXT_WHITE_60,
   TEXT_WHITE_80,
-  WARNING_AMBER,
   WHITE_PRIMARY,
 } from '@/src/design-system/tokens/colors';
 import * as Haptics from 'expo-haptics';
@@ -27,6 +26,8 @@ interface ModelCardProps {
   onCancelPress: () => void;
   onUsePress: () => void;
   onDeletePress: () => void;
+  /** First-time onboarding model setup — hide delete next to Start Chat. */
+  showDeleteWhenDownloaded?: boolean;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -41,6 +42,7 @@ export function ModelCard({
   onCancelPress,
   onUsePress,
   onDeletePress,
+  showDeleteWhenDownloaded = true,
 }: ModelCardProps) {
   const scale = useSharedValue(1);
 
@@ -201,12 +203,12 @@ export function ModelCard({
             </View>
 
             <View style={styles.downloadActions}>
-              {isDownloading && (
+              {/* {isDownloading && (
                 <Pressable onPress={onPausePress} style={styles.downloadActionButton}>
                   <SymbolView name="pause.fill" size={20} tintColor={WARNING_AMBER} />
                   <Text style={styles.downloadActionText}>Pause</Text>
                 </Pressable>
-              )}
+              )} */}
               {isPaused && (
                 <Pressable onPress={onResumePress} style={styles.downloadActionButton}>
                   <SymbolView name="play.fill" size={20} tintColor={SUCCESS_GREEN} />
@@ -223,14 +225,16 @@ export function ModelCard({
 
         {isCompleted && (
           <View style={styles.completedContainer}>
-            <Pressable
-              onPress={handleDeletePress}
-              style={styles.deleteIconButton}
-              hitSlop={8}
-              accessibilityLabel="Delete downloaded model"
-            >
-              <SymbolView name="trash" size={18} tintColor={ERROR_RED} />
-            </Pressable>
+            {showDeleteWhenDownloaded ? (
+              <Pressable
+                onPress={handleDeletePress}
+                style={styles.deleteIconButton}
+                hitSlop={8}
+                accessibilityLabel="Delete downloaded model"
+              >
+                <SymbolView name="trash" size={18} tintColor={ERROR_RED} />
+              </Pressable>
+            ) : null}
             <Pressable onPress={onUsePress} style={styles.useModelButton}>
               <SymbolView name="bubble.left.and.bubble.right.fill" size={22} tintColor={WHITE_PRIMARY} />
               <Text style={styles.useModelText}>Start Chat</Text>

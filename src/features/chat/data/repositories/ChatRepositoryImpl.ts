@@ -124,6 +124,19 @@ export class ChatRepositoryImpl implements IChatRepository {
     }
   }
 
+  async updateSessionModelId(sessionId: string, modelId: string): Promise<Result<void>> {
+    try {
+      await this.ensureInitialized();
+      await this.sqliteDriver.execute(
+        `UPDATE chat_sessions SET model_id = ?, updated_at = ? WHERE id = ?`,
+        [modelId, Date.now(), sessionId],
+      );
+      return ok(undefined);
+    } catch (e) {
+      return err(createError('STORAGE_ERROR', 'Failed to update session model', e));
+    }
+  }
+
   async updateSessionTitle(sessionId: string, title: string): Promise<Result<void>> {
     try {
       await this.ensureInitialized();

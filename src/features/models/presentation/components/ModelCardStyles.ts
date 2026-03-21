@@ -139,9 +139,10 @@ export const modelCardStyles = StyleSheet.create({
   useModelButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.md,
     borderRadius: borderRadius.lg,
     backgroundColor: 'rgba(255, 66, 11, 0.16)',
   },
