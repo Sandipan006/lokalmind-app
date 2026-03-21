@@ -1,4 +1,4 @@
-import { BLACK_PRIMARY, INPUT_BOX_COLOR, PRIMARY_ORANGE, TEXT_WHITE_40, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { INPUT_BOX_COLOR, PRIMARY_ORANGE, TEXT_WHITE_40, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { borderRadius, normalize, spacing } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
 import { Platform, StyleSheet } from 'react-native';
@@ -85,5 +85,58 @@ export const styles = StyleSheet.create({
     height: normalize(14),
     backgroundColor: PRIMARY_ORANGE,
     borderRadius: normalize(2),
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: INPUT_BOX_COLOR,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    gap: spacing.sm,
+  },
+  modalTitle: {
+    ...typography.body.medium,
+    color: WHITE_PRIMARY,
+    marginBottom: spacing.xs,
+  },
+  modalOption: {
+    minHeight: normalize(44),
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalOptionSelected: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: PRIMARY_ORANGE,
+  },
+  modalOptionText: {
+    ...typography.body.medium,
+    color: WHITE_PRIMARY,
+  },
+  modalOptionDot: {
+    width: normalize(8),
+    height: normalize(8),
+    borderRadius: normalize(4),
+    backgroundColor: PRIMARY_ORANGE,
+  },
+  modalCloseButton: {
+    minHeight: normalize(44),
+    borderRadius: borderRadius.md,
+    backgroundColor: PRIMARY_ORANGE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+  },
+  modalCloseButtonText: {
+    ...typography.body.medium,
+    color: WHITE_PRIMARY,
   },
 });

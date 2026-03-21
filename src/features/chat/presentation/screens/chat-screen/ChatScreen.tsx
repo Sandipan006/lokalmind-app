@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatHeader } from '../../components/ChatHeader/ChatHeader';
 import { ChatInputBar } from '../../components/ChatInputBar/ChatInputBar';
-import { ChatViewModel } from '../../viewmodels/ChatViewModel';
+import type { ChatViewModel } from '../../viewmodels/ChatViewModel';
 import { styles } from './ChatScreenStyles';
 
 interface ChatScreenProps {
@@ -188,7 +188,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
           canSend={canSend}
           selectedMode={viewModel.selectedMode}
           onChangeText={(t) => viewModel.setInputText(t)}
-          onModePress={() => viewModel.cycleMode()}
+          onSelectMode={(mode) => viewModel.setSelectedMode(mode)}
           onSend={handleSend}
           onStop={handleStop}
         />

@@ -6,6 +6,7 @@ import type { StartDownloadUseCase } from '../../domain/usecases/StartDownloadUs
 import type { PauseDownloadUseCase } from '../../domain/usecases/PauseDownloadUseCase';
 import type { ResumeDownloadUseCase } from '../../domain/usecases/ResumeDownloadUseCase';
 import type { CancelDownloadUseCase } from '../../domain/usecases/CancelDownloadUseCase';
+import type { DeleteDownloadedModelUseCase } from '../../domain/usecases/DeleteDownloadedModelUseCase';
 
 export class ModelSetupViewModel {
   @observable models: Model[] = [];
@@ -19,7 +20,8 @@ export class ModelSetupViewModel {
     private readonly startDownloadUseCase: StartDownloadUseCase,
     private readonly pauseDownloadUseCase: PauseDownloadUseCase,
     private readonly resumeDownloadUseCase: ResumeDownloadUseCase,
-    private readonly cancelDownloadUseCase: CancelDownloadUseCase
+    private readonly cancelDownloadUseCase: CancelDownloadUseCase,
+    private readonly deleteDownloadedModelUseCase: DeleteDownloadedModelUseCase,
   ) {
     makeObservable(this);
   }
@@ -50,13 +52,6 @@ export class ModelSetupViewModel {
 
       this.models = result.data;
       this.isLoading = false;
-
-      const downloaded = result.data.filter((m) => m.isDownloaded);
-      if (downloaded.length > 0) {
-        console.log('[ModelSetupViewModel] Downloaded models:', downloaded.map((m) => m.id));
-      } else {
-        console.log('[ModelSetupViewModel] No models downloaded yet.');
-      }
     });
   }
 
@@ -145,6 +140,24 @@ export class ModelSetupViewModel {
         this.expandedModelId = null;
       }
     });
+  }
+
+  @action
+  async deleteDownloaded(modelId: string): Promise<void> {
+    const result = await this.deleteDownloadedModelUseCase.execute(modelId);
+
+    runInAction(() => {
+      if (!result.success) {
+        this.errorMessage = result.error.message;
+      } else {
+        this.downloadProgress.delete(modelId);
+        this.expandedModelId = null;
+      }
+    });
+
+    if (result.success) {
+      await this.loadModels();
+    }
   }
 
   getDownloadProgress(modelId: string): DownloadProgressInfo | undefined {

@@ -40,6 +40,10 @@ export class ChatViewModel {
     this.inputText = text;
   }
 
+  setSelectedMode(mode: ChatMode): void {
+    this.selectedMode = mode;
+  }
+
   cycleMode(): void {
     const currentIndex = CHAT_MODES.indexOf(this.selectedMode);
     const nextIndex = (currentIndex + 1) % CHAT_MODES.length;

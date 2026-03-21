@@ -34,6 +34,10 @@ export const env = {
     paypalUrl: getEnvVar('SUPPORT_PAYPAL_URL', ''),
     otherPaymentUrl: getEnvVar('SUPPORT_OTHER_PAYMENT_URL', ''),
   },
+  app: {
+    githubRepoUrl: getEnvVar('GITHUB_REPO_URL', ''),
+    developerContactEmail: getEnvVar('DEVELOPER_CONTACT_EMAIL', ''),
+  },
   storage: {
     modelsDir: 'models',
     tempDir: 'temp',
