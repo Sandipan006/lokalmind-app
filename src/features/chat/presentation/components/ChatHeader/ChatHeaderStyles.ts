@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { BLACK_PRIMARY, PRIMARY_ORANGE, TEXT_WHITE_40, TEXT_WHITE_60, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
-import { borderRadius, spacing } from '@/src/design-system/tokens/spacing';
-import { typography } from '@/src/design-system/tokens/typography';
+import { borderRadius, spacing, typography } from '@/src/design-system/tokens';
 
 export const styles = StyleSheet.create({
   header: {

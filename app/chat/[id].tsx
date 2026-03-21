@@ -29,7 +29,7 @@ export default function ChatSessionScreen() {
       new CreateSessionUseCase(repo),
       new GetSessionUseCase(repo),
       new GetMessagesUseCase(repo),
-      new SendMessageUseCase(repo, llm),
+      new SendMessageUseCase(repo, llm, container.appSettingsRepository),
       new GenerateChatTitleUseCase(repo, llm),
       new UpdateSessionModelUseCase(repo),
     );

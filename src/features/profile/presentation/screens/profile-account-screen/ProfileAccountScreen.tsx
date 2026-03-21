@@ -1,10 +1,10 @@
-import { container } from '@/src/core/di/container';
 import { env } from '@/src/config/env';
+import { container } from '@/src/core/di/container';
 import { GlassSurface } from '@/src/design-system/components';
 import { ERROR_RED, TEXT_WHITE_40 } from '@/src/design-system/tokens/colors';
 import { ResetAllLocalDataUseCase } from '@/src/features/profile/domain/usecases/ResetAllLocalDataUseCase';
-import { getUserAvatarSource } from '@/src/features/profile/presentation/constants/userAvatarSources';
 import { MemberSinceAvatarRing } from '@/src/features/profile/presentation/components/MemberSinceAvatarRing/MemberSinceAvatarRing';
+import { getUserAvatarSource } from '@/src/features/profile/presentation/constants/userAvatarSources';
 import { ProfileAccountViewModel } from '@/src/features/profile/presentation/viewmodels/ProfileAccountViewModel';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -85,6 +85,11 @@ export const ProfileAccountScreen = observer(() => {
     }
   };
 
+  const openModePrompts = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/profile/mode-system-prompts');
+  };
+
   const confirmLogout = () => {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert(
@@ -118,17 +123,18 @@ export const ProfileAccountScreen = observer(() => {
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.flex}>
         <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <SymbolView name="chevron.left" size={18} tintColor={TEXT_WHITE_40} />
-          </TouchableOpacity>
+          <GlassSurface tier="light" style={styles.headerBackGlass}>
+            <TouchableOpacity
+              style={styles.headerBackInner}
+              onPress={() => router.back()}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <SymbolView name="chevron.left" size={18} tintColor={TEXT_WHITE_40} />
+            </TouchableOpacity>
+          </GlassSurface>
           <Text style={styles.headerTitle}>Account</Text>
-          <View style={{ width: 40 }} />
         </View>
 
         <ScrollView
@@ -156,6 +162,25 @@ export const ProfileAccountScreen = observer(() => {
           <GlassSurface tier="medium" style={styles.card}>
             <TouchableOpacity
               style={styles.cardInner}
+              onPress={openModePrompts}
+              activeOpacity={0.75}
+              disabled={viewModel.isResetting}
+            >
+              <View style={styles.cardLeft}>
+                <Text style={styles.cardTitle}>System prompts</Text>
+                <Text style={styles.cardSubtitle}>
+                  Customize the assistant for each chat mode (General, Coding, Creative, Marketing)
+                </Text>
+              </View>
+              <View style={styles.cardChevron}>
+                <SymbolView name="chevron.right" size={14} tintColor={TEXT_WHITE_40} />
+              </View>
+            </TouchableOpacity>
+          </GlassSurface>
+
+          <GlassSurface tier="medium" style={styles.card}>
+            <TouchableOpacity
+              style={styles.cardInner}
               onPress={openGitHub}
               activeOpacity={0.75}
               disabled={viewModel.isResetting}
@@ -165,7 +190,7 @@ export const ProfileAccountScreen = observer(() => {
                   Star us on <Text style={styles.accentWord}>GitHub</Text>
                 </Text>
                 <Text style={styles.cardSubtitle}>
-                  Peek at the source, report a bug, or leave a star — it keeps the project alive.
+                  Peek at the source, report a bug, or leave a star - it keeps the project alive
                 </Text>
               </View>
               <View style={styles.cardChevron}>
@@ -184,7 +209,7 @@ export const ProfileAccountScreen = observer(() => {
               <View style={styles.cardLeft}>
                 <Text style={styles.cardTitle}>Contact the developer</Text>
                 <Text style={styles.cardSubtitle}>
-                  Questions, rough edges, or ideas — send a note. We read every message.
+                  Questions, rough edges, or ideas - send a note. We read every message
                 </Text>
               </View>
               <View style={styles.cardChevron}>

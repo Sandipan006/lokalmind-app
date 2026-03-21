@@ -1,6 +1,5 @@
 import { INPUT_BOX_COLOR, PRIMARY_ORANGE, TEXT_WHITE_40, TEXT_WHITE_60, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
-import { borderRadius, normalize, spacing } from '@/src/design-system/tokens/spacing';
-import { typography } from '@/src/design-system/tokens/typography';
+import { borderRadius, normalize, spacing, typography } from '@/src/design-system/tokens';
 import { Platform, StyleSheet } from 'react-native';
 
 export const TEXT_INPUT_PLACEHOLDER_COLOR = TEXT_WHITE_40;

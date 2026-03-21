@@ -6,9 +6,8 @@ import {
   TEXT_WHITE_60,
   PRIMARY_ORANGE,
   ERROR_RED,
-} from '../tokens/colors';
-import { fonts, fontSizes } from '../tokens/typography';
-import { spacing, borderRadius } from '../tokens/spacing';
+} from '@/src/design-system/tokens/colors';
+import { fonts, fontSizes, spacing, borderRadius  } from '@/src/design-system/tokens';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;

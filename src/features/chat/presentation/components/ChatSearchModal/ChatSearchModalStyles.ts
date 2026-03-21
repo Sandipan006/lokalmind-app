@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { spacing, borderRadius, normalize } from '@/src/design-system/tokens/spacing';
+import { spacing, borderRadius, normalize, typography } from '@/src/design-system/tokens';
 import { fontSizes, fonts } from '@/src/design-system/tokens/typography';
 import {
   BLACK_PRIMARY,
