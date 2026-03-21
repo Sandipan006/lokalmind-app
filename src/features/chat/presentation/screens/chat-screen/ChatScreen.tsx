@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatHeader } from '../../components/ChatHeader/ChatHeader';
 import { ChatInputBar } from '../../components/ChatInputBar/ChatInputBar';
+import { MessageRenderer } from '../../components/MessageRenderer/MessageRenderer';
 import type { ChatViewModel } from '../../viewmodels/ChatViewModel';
 import { styles } from './ChatScreenStyles';
 
@@ -94,9 +95,7 @@ const MessageBubble = observer(({ message }: { message: ChatMessage }) => {
   return (
     <View style={[styles.messageRow, styles.assistantRow]}>
       <View style={[styles.bubble, styles.assistantBubble]}>
-        <Text style={[styles.bubbleText, styles.assistantBubbleText]}>
-          {message.content}
-        </Text>
+        <MessageRenderer content={message.content} />
       </View>
     </View>
   );
@@ -105,9 +104,7 @@ const MessageBubble = observer(({ message }: { message: ChatMessage }) => {
 const StreamingBubble = observer(({ content }: { content: string }) => (
   <View style={[styles.messageRow, styles.assistantRow]}>
     <View style={[styles.bubble, styles.assistantBubble]}>
-      <Text style={[styles.bubbleText, styles.assistantBubbleText]}>
-        {content}<StreamingCursor />
-      </Text>
+      <MessageRenderer content={content} isStreaming trailingElement={<StreamingCursor />} />
     </View>
   </View>
 ));
@@ -150,12 +147,12 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
     viewModel.loadSession(sessionId);
   }, [sessionId, viewModel]);
 
-  // Scroll to bottom whenever messages or streaming content change.
+  // Scroll to bottom whenever messages are added (non-streaming).
   useEffect(() => {
-    if (viewModel.messages.length > 0 || viewModel.streamingContent) {
+    if (viewModel.messages.length > 0) {
       listRef.current?.scrollToEnd({ animated: true });
     }
-  }, [viewModel.messages.length, viewModel.streamingContent]);
+  }, [viewModel.messages.length]);
 
   const modelConfig = viewModel.session
     ? getModelConfig(viewModel.session.modelId)
@@ -219,6 +216,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
           keyExtractor={keyExtractor}
           keyboardShouldPersistTaps="handled"
           removeClippedSubviews={false}
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           ListFooterComponent={
             <>
               {viewModel.isModelLoading && <ThinkingIndicator />}
