@@ -1,7 +1,11 @@
+import { container } from '@/src/core/di/container';
+import type { Model } from '@/src/features/models/domain/entities/Model';
+import { GetAllModelsUseCase } from '@/src/features/models/domain/usecases/GetAllModelsUseCase';
 import { getModelConfig } from '@/src/infrastructure/downloads/modelConfig';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated, Easing,
   FlatList,
@@ -111,6 +115,36 @@ const StreamingBubble = observer(({ content }: { content: string }) => (
 export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) => {
   const router = useRouter();
   const listRef = useRef<FlatList>(null);
+  const [hasDownloadedModel, setHasDownloadedModel] = useState(true);
+  const [pickerModels, setPickerModels] = useState<Model[]>([]);
+
+  const loadPickerModels = useCallback(async () => {
+    try {
+      await container.initializeContainer();
+      const result = await new GetAllModelsUseCase(container.modelRepository).execute();
+      if (result.success) {
+        setPickerModels(result.data);
+      }
+    } catch {
+      setPickerModels([]);
+    }
+  }, []);
+
+  const refreshDownloadedModel = useCallback(async () => {
+    try {
+      await container.initializeContainer();
+      const r = await container.modelRepository.hasDownloadedModel();
+      setHasDownloadedModel(r.success && r.data);
+    } catch {
+      setHasDownloadedModel(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshDownloadedModel();
+    }, [refreshDownloadedModel]),
+  );
 
   useEffect(() => {
     viewModel.loadSession(sessionId);
@@ -135,7 +169,10 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
     viewModel.stopGeneration();
   }, [viewModel]);
 
-  const canSend = viewModel.inputText.trim().length > 0 && !viewModel.isStreaming;
+  const canSend =
+    hasDownloadedModel &&
+    viewModel.inputText.trim().length > 0 &&
+    !viewModel.isStreaming;
 
   const renderItem = useCallback(
     ({ item }: { item: ChatMessage }) => <MessageBubble message={item} />,
@@ -152,9 +189,24 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
         keyboardVerticalOffset={0}
       >
         <ChatHeader
+          hasDownloadedModel={hasDownloadedModel}
           modelName={modelConfig?.displayName}
+          pickerModels={pickerModels}
+          onRequestPickerModels={loadPickerModels}
+          currentModelId={viewModel.session?.modelId}
+          onGoToModels={() => router.push('/(tabs)/models')}
+          onSelectDownloadedModel={(modelId) => {
+            void viewModel.updateSessionModel(modelId);
+          }}
           onBack={() => router.replace('/(tabs)/chat')}
-          onNewChat={() => router.push('/chat/new')}
+          onNewChat={() =>
+            router.push(
+              viewModel.session?.modelId
+                ? `/chat/new?modelId=${encodeURIComponent(viewModel.session.modelId)}`
+                : '/chat/new',
+            )
+          }
+          onDownloadModelPress={() => router.push('/(tabs)/models')}
         />
 
         {/* Message list */}
@@ -186,6 +238,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
           inputText={viewModel.inputText}
           isStreaming={viewModel.isStreaming}
           canSend={canSend}
+          inputEnabled={hasDownloadedModel}
           selectedMode={viewModel.selectedMode}
           onChangeText={(t) => viewModel.setInputText(t)}
           onSelectMode={(mode) => viewModel.setSelectedMode(mode)}
