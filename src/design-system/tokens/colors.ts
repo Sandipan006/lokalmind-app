@@ -1,5 +1,5 @@
 // ─── Primitive Palette ───────────────────────────────────────────────────────
-// Raw values. Never use these directly in components — use semantic tokens below.
+// Raw values. Never use these directly in components - use semantic tokens below.
 
 const palette = {
   orange: {

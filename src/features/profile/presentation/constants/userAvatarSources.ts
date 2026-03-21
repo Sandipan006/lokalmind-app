@@ -1,3 +1,4 @@
+import { USER_AVATAR_COUNT } from '@/src/core/constants/userAvatarCount';
 import type { ImageSourcePropType } from 'react-native';
 
 const AVATAR_SOURCES: ImageSourcePropType[] = [
@@ -24,12 +25,20 @@ const AVATAR_SOURCES: ImageSourcePropType[] = [
   require('@/src/features/profile/assets/images/avatars/user-avatar-21.png'),
 ];
 
+if (__DEV__ && AVATAR_SOURCES.length !== USER_AVATAR_COUNT) {
+  throw new Error(
+    `userAvatarSources: expected ${USER_AVATAR_COUNT} avatars, got ${AVATAR_SOURCES.length}`,
+  );
+}
+
 export const DEFAULT_AVATAR_INDEX = 1;
 
 export function getUserAvatarSource(avatarIndex?: number | null): ImageSourcePropType {
-  if (!avatarIndex || avatarIndex < 1 || avatarIndex > AVATAR_SOURCES.length) {
+  if (!avatarIndex || avatarIndex < 1 || avatarIndex > USER_AVATAR_COUNT) {
     return AVATAR_SOURCES[DEFAULT_AVATAR_INDEX - 1]!;
   }
 
   return AVATAR_SOURCES[avatarIndex - 1] ?? AVATAR_SOURCES[DEFAULT_AVATAR_INDEX - 1]!;
 }
+
+export { USER_AVATAR_COUNT };

@@ -1,11 +1,11 @@
 import { GlassSurface } from '@/src/design-system/components';
 import { PRIMARY_ORANGE, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import type { Model } from '@/src/features/models/domain/entities/Model';
+import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
-import { SymbolView } from 'expo-symbols';
-import type { Model } from '@/src/features/models/domain/entities/Model';
 import { dropdownChevronSvg, newChatPlusSvg } from '../../../assets/svgs';
 import { styles as modalStyles } from '../ChatInputBar/ChatInputBarStyles';
 import { styles } from './ChatHeaderStyles';
@@ -139,7 +139,7 @@ export function ChatHeader({
               <View style={modalStyles.modalSectionBlock}>
                 <Text style={modalStyles.modalSectionTitle}>Downloaded</Text>
                 {downloaded.length === 0 ? (
-                  <Text style={modalStyles.modalHelperText}>None yet — choose a model under Other models.</Text>
+                  <Text style={modalStyles.modalHelperText}>None yet - choose a model under Other models.</Text>
                 ) : (
                   downloaded.map((model) => {
                     const isCurrent = model.id === currentModelId;
