@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Redirect } from 'expo-router';
-import { View } from 'react-native';
-import LottieView from 'lottie-react-native';
 import { container } from '@/src/core/di/container';
-import { clearLocalData, clearLLMFiles } from '@/scripts/clearLocalData';
+import { Redirect } from 'expo-router';
+import LottieView from 'lottie-react-native';
+import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { splashScreenStyles as styles } from './SplashScreenStyles';
 
 const SPLASH_MIN_DURATION_MS = 2500;
@@ -56,7 +55,7 @@ export function SplashScreen() {
 
         console.log('[SplashScreen] No downloaded models found.');
 
-        // Chats remain after deleting models — open Recents instead of forcing download flow.
+        // Chats remain after deleting models - open Recents instead of forcing download flow.
         if (hasAnyChats) {
           setRoute('/(tabs)/chat');
         } else {

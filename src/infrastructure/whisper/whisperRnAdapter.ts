@@ -1,7 +1,7 @@
-import type { IWhisperEngine, WhisperTranscribeOptions, WhisperResult } from '@/src/core/ports';
+import type { IWhisperEngine, WhisperResult, WhisperTranscribeOptions } from '@/src/core/ports';
 import type { AppError } from '@/src/core/types';
 
-// whisper.rn is imported here — the ONLY file in the codebase allowed to do so.
+// whisper.rn is imported here - the ONLY file in the codebase allowed to do so.
 // All STT calls go through IWhisperEngine. Nothing outside this file imports whisper.rn.
 // TODO Phase 3: implement using whisper.rn
 // import { initWhisper } from 'whisper.rn';
@@ -16,7 +16,7 @@ export class WhisperRnAdapter implements IWhisperEngine {
 
   async transcribe(_options: WhisperTranscribeOptions): Promise<WhisperResult> {
     if (!this.isInitialized) {
-      throw this.notImplemented('transcribe — model not loaded');
+      throw this.notImplemented('transcribe - model not loaded');
     }
     // TODO Phase 3: call context.transcribe(), return text + detected language
     throw this.notImplemented('transcribe');
@@ -34,7 +34,7 @@ export class WhisperRnAdapter implements IWhisperEngine {
   private notImplemented(method: string): AppError {
     return {
       code: 'TRANSCRIPTION_ERROR',
-      message: `WhisperRnAdapter.${method} not yet implemented — Phase 3`,
+      message: `WhisperRnAdapter.${method} not yet implemented - Phase 3`,
     };
   }
 }

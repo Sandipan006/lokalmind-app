@@ -7,7 +7,7 @@ export interface FontLoaderResult {
 }
 
 const FONT_MAP: Record<string, FontSource> = {
-  // Figtree — primary UI font
+  // Figtree - primary UI font
   'Figtree-Regular': require('../../assets/fonts/figtree/Figtree-Regular.ttf'),
   'Figtree-Medium': require('../../assets/fonts/figtree/Figtree-Medium.ttf'),
   'Figtree-SemiBold': require('../../assets/fonts/figtree/Figtree-SemiBold.ttf'),
@@ -23,11 +23,11 @@ const FONT_MAP: Record<string, FontSource> = {
   'Figtree-BlackItalic': require('../../assets/fonts/figtree/Figtree-BlackItalic.ttf'),
   'Figtree-LightItalic': require('../../assets/fonts/figtree/Figtree-LightItalic.ttf'),
 
-  // Instrument Serif — accent/display font
+  // Instrument Serif - accent/display font
   'InstrumentSerif-Regular': require('../../assets/fonts/instrument/InstrumentSerif-Regular.ttf'),
   'InstrumentSerif-Italic': require('../../assets/fonts/instrument/InstrumentSerif-Italic.ttf'),
 
-  // Bricolage Grotesque — secondary display font
+  // Bricolage Grotesque - secondary display font
   'BricolageGrotesque-ExtraLight': require('../../assets/fonts/BricolageGrotesque/BricolageGrotesque-ExtraLight.ttf'),
   'BricolageGrotesque-Light': require('../../assets/fonts/BricolageGrotesque/BricolageGrotesque-Light.ttf'),
   'BricolageGrotesque-Regular': require('../../assets/fonts/BricolageGrotesque/BricolageGrotesque-Regular.ttf'),
