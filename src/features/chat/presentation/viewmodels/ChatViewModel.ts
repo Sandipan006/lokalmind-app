@@ -1,19 +1,19 @@
-import { makeAutoObservable, runInAction } from 'mobx';
 import * as Haptics from 'expo-haptics';
+import { makeAutoObservable, runInAction } from 'mobx';
 import type { ChatMessage } from '../../domain/entities/ChatMessage';
-import type { ChatSession } from '../../domain/entities/ChatSession';
-import type { SendMessageUseCase } from '../../domain/usecases/SendMessageUseCase';
-import type { CreateSessionUseCase } from '../../domain/usecases/CreateSessionUseCase';
-import type { GetSessionUseCase } from '../../domain/usecases/GetSessionUseCase';
-import type { GetMessagesUseCase } from '../../domain/usecases/GetMessagesUseCase';
-import type { GenerateChatTitleUseCase } from '../../domain/usecases/GenerateChatTitleUseCase';
-import type { UpdateSessionModelUseCase } from '../../domain/usecases/UpdateSessionModelUseCase';
 import { CHAT_MODES, type ChatMode } from '../../domain/entities/ChatMode';
+import type { ChatSession } from '../../domain/entities/ChatSession';
+import type { CreateSessionUseCase } from '../../domain/usecases/CreateSessionUseCase';
+import type { GenerateChatTitleUseCase } from '../../domain/usecases/GenerateChatTitleUseCase';
+import type { GetMessagesUseCase } from '../../domain/usecases/GetMessagesUseCase';
+import type { GetSessionUseCase } from '../../domain/usecases/GetSessionUseCase';
+import type { SendMessageUseCase } from '../../domain/usecases/SendMessageUseCase';
+import type { UpdateSessionModelUseCase } from '../../domain/usecases/UpdateSessionModelUseCase';
 
 export class ChatViewModel {
   messages: ChatMessage[] = [];
   session: ChatSession | null = null;
-  // Streaming content for the in-flight assistant bubble — avoids mutating the messages array on every token.
+  // Streaming content for the in-flight assistant bubble - avoids mutating the messages array on every token.
   streamingContent: string = '';
   isStreaming = false;
   isLoading = false;

@@ -1,10 +1,11 @@
 import type { Result } from '@/src/core/types';
 import { createError } from '@/src/core/types';
+import type { IAppSettingsRepository } from '@/src/core/ports/IAppSettingsRepository';
 import type { ILLMEngine, LLMMessage } from '@/src/core/ports/ILLMEngine';
 import type { IChatRepository } from '../repositories/IChatRepository';
 import type { ChatMessage } from '../entities/ChatMessage';
 import type { ChatMode } from '../entities/ChatMode';
-import { MODE_SYSTEM_PROMPTS } from '../config/modeSystemPrompts';
+import { resolveSystemPromptForChat } from '../config/systemPromptResolution';
 
 export interface SendMessageParams {
   sessionId: string;
@@ -20,6 +21,7 @@ export class SendMessageUseCase {
   constructor(
     private readonly chatRepository: IChatRepository,
     private readonly llmEngine: ILLMEngine,
+    private readonly appSettingsRepository: IAppSettingsRepository,
   ) {}
 
   async execute(params: SendMessageParams): Promise<Result<ChatMessage>> {
@@ -46,13 +48,15 @@ export class SendMessageUseCase {
         await this.llmEngine.initialize(modelId, { modelId });
       }
 
+      const modeOverride = await this.appSettingsRepository.getModeSystemPromptOverride(mode);
+      const systemContent = resolveSystemPromptForChat(mode, modeOverride);
       const llmMessages: LLMMessage[] = [
-        { role: 'system', content: MODE_SYSTEM_PROMPTS[mode] },
+        { role: 'system', content: systemContent },
         ...history.map((m) => ({ role: m.role as LLMMessage['role'], content: m.content })),
         { role: 'user', content: userMessage.content },
       ];
       console.log('[Chat][LLM] Mode:', mode);
-      console.log('[Chat][LLM] System prompt:', MODE_SYSTEM_PROMPTS[mode]);
+      console.log('[Chat][LLM] System prompt:', systemContent);
       console.log('[Chat][LLM] Messages:', llmMessages.map((m) => ({ role: m.role, content: m.content })));
 
       let accumulatedContent = '';

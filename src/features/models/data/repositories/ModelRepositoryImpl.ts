@@ -1,13 +1,13 @@
-import { ok, err, createError } from '@/src/core/types';
-import type { Result } from '@/src/core/types';
-import type { IModelRepository } from '../../domain/repositories/IModelRepository';
-import type { Model } from '../../domain/entities/Model';
-import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
-import type { IDownloadService } from '@/src/infrastructure/downloads/downloadService';
-import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
-import { MODEL_CONFIGS } from '@/src/infrastructure/downloads/modelConfig';
-import { File, Paths } from 'expo-file-system';
 import { env } from '@/src/config/env';
+import type { Result } from '@/src/core/types';
+import { createError, err, ok } from '@/src/core/types';
+import type { IDownloadService } from '@/src/infrastructure/downloads/downloadService';
+import { MODEL_CONFIGS } from '@/src/infrastructure/downloads/modelConfig';
+import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
+import { File, Paths } from 'expo-file-system';
+import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
+import type { Model } from '../../domain/entities/Model';
+import type { IModelRepository } from '../../domain/repositories/IModelRepository';
 
 export class ModelRepositoryImpl implements IModelRepository {
   private initialized = false;
@@ -198,7 +198,7 @@ export class ModelRepositoryImpl implements IModelRepository {
 
       const state = this.downloadService.getDownloadState(modelId);
 
-      // No resumeUri means app was killed mid-download — restart from scratch.
+      // No resumeUri means app was killed mid-download - restart from scratch.
       if (!state?.resumeUri) {
         return this.startDownload(modelId, onProgress);
       }
@@ -271,7 +271,7 @@ export class ModelRepositoryImpl implements IModelRepository {
       try {
         await this.downloadService.cancelDownload(modelId);
       } catch {
-        // No active download — ignore.
+        // No active download - ignore.
       }
 
       const file = new File(Paths.document, 'models', config.filename);

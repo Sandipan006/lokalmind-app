@@ -1,14 +1,15 @@
-// Dependency Injection Container — single composition root for LokalMind v2.
+// Dependency Injection Container - single composition root for LokalMind v2.
 //
 // All infrastructure adapters are instantiated here and injected downward via constructors.
 // Nothing outside this file instantiates infrastructure adapters directly.
-// Feature code receives use cases via constructor injection — never imports from this file directly.
+// Feature code receives use cases via constructor injection - never imports from this file directly.
 //
 // TODO Phase 1: uncomment repository + use case wiring as each layer is implemented.
 
+import { ChatRepositoryImpl } from '@/src/features/chat/data/repositories/ChatRepositoryImpl';
 import { ModelRepositoryImpl } from '@/src/features/models/data/repositories/ModelRepositoryImpl';
 import { UserRepositoryImpl } from '@/src/features/onboarding/data/repositories/UserRepositoryImpl';
-import { ChatRepositoryImpl } from '@/src/features/chat/data/repositories/ChatRepositoryImpl';
+import { AppSettingsRepositoryImpl } from '@/src/features/profile/data/repositories/AppSettingsRepositoryImpl';
 import { DownloadService } from '@/src/infrastructure/downloads/downloadService';
 import { LlamaRnAdapter } from '@/src/infrastructure/llm/llamaRnAdapter';
 import { AsyncStorageDriver } from '@/src/infrastructure/storage/asyncStorageDriver';
@@ -25,6 +26,7 @@ const downloadService = new DownloadService(asyncStorageDriver);
 let userRepository: UserRepositoryImpl | null = null;
 let modelRepository: ModelRepositoryImpl | null = null;
 let chatRepository: ChatRepositoryImpl | null = null;
+let appSettingsRepository: AppSettingsRepositoryImpl | null = null;
 let localDataReset: LocalDataResetAdapter | null = null;
 let isInitialized = false;
 
@@ -34,6 +36,7 @@ async function initializeContainer() {
   userRepository = new UserRepositoryImpl(sqliteDriver);
   modelRepository = new ModelRepositoryImpl(downloadService, sqliteDriver);
   chatRepository = new ChatRepositoryImpl(sqliteDriver);
+  appSettingsRepository = new AppSettingsRepositoryImpl(asyncStorageDriver);
   localDataReset = new LocalDataResetAdapter(
     llmEngine,
     whisperEngine,
@@ -68,6 +71,12 @@ export const container = {
       throw new Error('Container not initialized. Call initializeContainer() first.');
     }
     return chatRepository;
+  },
+  get appSettingsRepository() {
+    if (!appSettingsRepository) {
+      throw new Error('Container not initialized. Call initializeContainer() first.');
+    }
+    return appSettingsRepository;
   },
   get localDataReset() {
     if (!localDataReset) {

@@ -26,7 +26,7 @@ interface ModelCardProps {
   onCancelPress: () => void;
   onUsePress: () => void;
   onDeletePress: () => void;
-  /** First-time onboarding model setup — hide delete next to Start Chat. */
+  /** First-time onboarding model setup - hide delete next to Start Chat. */
   showDeleteWhenDownloaded?: boolean;
 }
 

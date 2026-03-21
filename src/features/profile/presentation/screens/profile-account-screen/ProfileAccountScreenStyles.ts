@@ -23,11 +23,20 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    gap: spacing.xxs,
+    gap: spacing.sm,
   },
-  backButton: {
-    padding: spacing.xxs,
-    marginLeft: spacing.xxs,
+  headerBackGlass: {
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: { borderCurve: 'continuous' as const },
+      default: {},
+    }),
+  },
+  headerBackInner: {
+    padding: spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     flex: 1,
@@ -37,18 +46,16 @@ export const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxxl,
+    paddingBottom: spacing.xxl,
   },
   hero: {
     alignItems: 'center',
-    marginTop: spacing.md,
     marginBottom: spacing.xl,
   },
   displayName: {
     marginTop: spacing.lg,
-    fontSize: fontSizes.xxxl,
+    ...typography.heading.h2,
     color: WHITE_PRIMARY,
-    fontFamily: fonts.figtree.bold,
     textAlign: 'center',
   },
   card: {

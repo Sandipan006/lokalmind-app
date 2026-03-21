@@ -1,11 +1,11 @@
-// llama.rn is imported here — the ONLY file in the codebase allowed to do so.
+// llama.rn is imported here - the ONLY file in the codebase allowed to do so.
 // All LLM calls go through ILLMEngine. Nothing outside this file imports llama.rn.
-import { initLlama, releaseAllLlama } from 'llama.rn';
-import type { LlamaContext } from 'llama.rn';
-import { Platform } from 'react-native';
-import type { ILLMEngine, LLMMessage, LLMConfig, LLMResponse } from '@/src/core/ports';
-import { Paths, File } from 'expo-file-system';
+import type { ILLMEngine, LLMConfig, LLMMessage, LLMResponse } from '@/src/core/ports';
 import { getModelConfig } from '@/src/infrastructure/downloads/modelConfig';
+import { File, Paths } from 'expo-file-system';
+import type { LlamaContext } from 'llama.rn';
+import { initLlama, releaseAllLlama } from 'llama.rn';
+import { Platform } from 'react-native';
 
 // 60 s is generous for model loading; a corrupt/truncated GGUF would hang indefinitely without this.
 const INIT_TIMEOUT_MS = 60_000;
@@ -26,7 +26,7 @@ function stripThinkingTags(text: string): string {
 export class LlamaRnAdapter implements ILLMEngine {
   private context: LlamaContext | null = null;
   private currentModelId: string | null = null;
-  // Deduplicate concurrent initialize() calls — prevents double-loading during app boot races.
+  // Deduplicate concurrent initialize() calls - prevents double-loading during app boot races.
   private initializingPromise: Promise<void> | null = null;
 
   async initialize(modelId: string, config: LLMConfig): Promise<void> {
@@ -63,7 +63,7 @@ export class LlamaRnAdapter implements ILLMEngine {
       throw new Error(`[LlamaRnAdapter] Model file not found on disk: ${modelConfig.filename}`);
     }
 
-    // Strip file:// prefix — initLlama handles it but being explicit avoids platform edge cases.
+    // Strip file:// prefix - initLlama handles it but being explicit avoids platform edge cases.
     const modelPath = modelFile.uri.replace(/^file:\/\//, '');
 
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
@@ -82,7 +82,7 @@ export class LlamaRnAdapter implements ILLMEngine {
           n_threads: N_THREADS,
           n_gpu_layers: 99,   // llama.rn auto-caps at what the device supports
           n_batch: 256,
-          use_mlock: false,   // never lock memory on mobile — risks OOM kills
+          use_mlock: false,   // never lock memory on mobile - risks OOM kills
           ctx_shift: false,   // avoid silent context corruption on some models
         }),
         timeoutPromise,
@@ -163,7 +163,7 @@ export class LlamaRnAdapter implements ILLMEngine {
     return this.currentModelId;
   }
 
-  // Releases all llama contexts — call on app teardown.
+  // Releases all llama contexts - call on app teardown.
   async releaseAll(): Promise<void> {
     await releaseAllLlama();
     this.context = null;

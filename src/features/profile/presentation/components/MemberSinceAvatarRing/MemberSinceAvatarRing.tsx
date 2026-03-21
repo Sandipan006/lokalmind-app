@@ -38,7 +38,7 @@ export function MemberSinceAvatarRing({ size, imageDiameter, avatarSource }: Mem
           letterSpacing={1.2}
           textAnchor="middle"
         >
-          {/* Path starts at top; 50% = bottom arc — centered under the avatar */}
+          {/* Path starts at top; 50% = bottom arc - centered under the avatar */}
           <TextPath href={`#${pathId}`} startOffset="50%">
             {RING_TEXT}
           </TextPath>

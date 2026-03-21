@@ -2,9 +2,8 @@ import React from 'react';
 import { Pressable, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { PRIMARY_ORANGE, SHADOW_PRIMARY_ORANGE, WHITE_PRIMARY } from '../tokens/colors';
-import { fonts, fontSizes, typography } from '../tokens/typography';
-import { spacing, borderRadius } from '../tokens/spacing';
+import { PRIMARY_ORANGE, SHADOW_PRIMARY_ORANGE, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { fonts, fontSizes, typography, spacing, borderRadius } from '@/src/design-system/tokens';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
