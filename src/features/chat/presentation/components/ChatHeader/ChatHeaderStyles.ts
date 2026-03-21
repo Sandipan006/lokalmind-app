@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { BLACK_PRIMARY, TEXT_WHITE_60, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { BLACK_PRIMARY, PRIMARY_ORANGE, TEXT_WHITE_40, TEXT_WHITE_60, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { borderRadius, spacing } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
 
@@ -48,6 +48,11 @@ export const styles = StyleSheet.create({
     color: WHITE_PRIMARY,
     maxWidth: 170,
   },
+  headerDownloadCta: {
+    ...typography.body.semiBold,
+    color: PRIMARY_ORANGE,
+    maxWidth: 170,
+  },
   headerModelChevron: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -65,6 +70,9 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xxs,
   },
+  headerNewChatButtonDisabled: {
+    opacity: 0.38,
+  },
   headerNewChatIcon: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -72,5 +80,8 @@ export const styles = StyleSheet.create({
   headerNewChatText: {
     ...typography.caption.smallSemiBold,
     color: WHITE_PRIMARY,
+  },
+  headerNewChatTextDisabled: {
+    color: TEXT_WHITE_40,
   },
 });
