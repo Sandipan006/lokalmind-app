@@ -40,6 +40,8 @@ export interface IDownloadService {
     onProgress: (progress: DownloadProgress) => void
   ): Promise<void>;
   cancelDownload(modelId: string): Promise<void>;
+  /** Cancels every in-flight download and clears persisted resume state keys. */
+  cancelAllDownloads(): Promise<void>;
   getDownloadState(modelId: string): DownloadState | null;
   hydratePersistedStates(): Promise<void>;
 }
@@ -172,7 +174,7 @@ export class DownloadService implements IDownloadService {
         const totalMB = (progress.totalBytes / (1024 * 1024)).toFixed(1);
         const pct = (progress.progressFraction * 100).toFixed(1);
         const etaMin = progress.etaSeconds > 0 ? (progress.etaSeconds / 60).toFixed(1) : '?';
-        console.log(
+        console.warn(
           `[Download] ${modelId} | ${pct}% (${writtenMB}/${totalMB} MB) | ${speedMBps} MB/s | ETA ${etaMin} min`
         );
       }
@@ -372,6 +374,18 @@ export class DownloadService implements IDownloadService {
       }
     } catch (e) {
       throw new Error(`Failed to cancel download: ${e instanceof Error ? e.message : 'Unknown error'}`);
+    }
+  }
+
+  async cancelAllDownloads(): Promise<void> {
+    const ids = [...this.activeDownloads.keys()];
+    for (const modelId of ids) {
+      try {
+        await this.cancelDownload(modelId);
+      } catch {
+        await this.clearPersistedState(modelId);
+        this.activeDownloads.delete(modelId);
+      }
     }
   }
 

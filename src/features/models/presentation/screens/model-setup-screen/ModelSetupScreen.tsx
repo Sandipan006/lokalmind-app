@@ -8,6 +8,7 @@ import { ActivityIndicator, Image, ImageBackground, ScrollView, Text, View } fro
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   CancelDownloadUseCase,
+  DeleteDownloadedModelUseCase,
   GetAllModelsUseCase,
   PauseDownloadUseCase,
   ResumeDownloadUseCase,
@@ -26,7 +27,8 @@ export const ModelSetupScreen = observer(() => {
       new StartDownloadUseCase(container.modelRepository),
       new PauseDownloadUseCase(container.modelRepository),
       new ResumeDownloadUseCase(container.modelRepository),
-      new CancelDownloadUseCase(container.modelRepository)
+      new CancelDownloadUseCase(container.modelRepository),
+      new DeleteDownloadedModelUseCase(container.modelRepository),
     )
   ).current;
 
@@ -94,6 +96,7 @@ export const ModelSetupScreen = observer(() => {
                 onResumePress={() => viewModel.resumeDownload(model.id)}
                 onCancelPress={() => viewModel.cancelDownload(model.id)}
                 onUsePress={() => router.push('/chat/new')}
+                onDeletePress={() => viewModel.deleteDownloaded(model.id)}
               />
             ))}
         </ScrollView>

@@ -1,5 +1,6 @@
 import { GlassSurface } from '@/src/design-system/components';
 import {
+  ERROR_RED,
   PRIMARY_ORANGE,
   SUCCESS_GREEN,
   TEXT_WHITE_60,
@@ -10,7 +11,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { SymbolView } from 'expo-symbols';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
 import type { Model } from '../../domain/entities/Model';
@@ -25,6 +26,7 @@ interface ModelCardProps {
   onResumePress: () => void;
   onCancelPress: () => void;
   onUsePress: () => void;
+  onDeletePress: () => void;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -38,6 +40,7 @@ export function ModelCard({
   onResumePress,
   onCancelPress,
   onUsePress,
+  onDeletePress,
 }: ModelCardProps) {
   const scale = useSharedValue(1);
 
@@ -84,6 +87,21 @@ export function ModelCard({
   const isDownloading = isExpanded && (!downloadProgress || downloadProgress.status === 'downloading');
   const isPaused = downloadProgress?.status === 'paused';
   const isCompleted = model.isDownloaded;
+
+  const handleDeletePress = () => {
+    Alert.alert(
+      'Remove this model?',
+      'The file will be deleted from this device. You can download it again later.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => onDeletePress(),
+        },
+      ],
+    );
+  };
 
   // Use real progress if available, otherwise show 0% placeholder while download initialises.
   const displayProgress: DownloadProgressInfo = downloadProgress ?? {
@@ -205,8 +223,16 @@ export function ModelCard({
 
         {isCompleted && (
           <View style={styles.completedContainer}>
+            <Pressable
+              onPress={handleDeletePress}
+              style={styles.deleteIconButton}
+              hitSlop={8}
+              accessibilityLabel="Delete downloaded model"
+            >
+              <SymbolView name="trash" size={18} tintColor={ERROR_RED} />
+            </Pressable>
             <Pressable onPress={onUsePress} style={styles.useModelButton}>
-              <SymbolView name="bubble.left.and.bubble.right.fill" size={18} tintColor={WHITE_PRIMARY} />
+              <SymbolView name="bubble.left.and.bubble.right.fill" size={22} tintColor={WHITE_PRIMARY} />
               <Text style={styles.useModelText}>Start Chat</Text>
             </Pressable>
           </View>
