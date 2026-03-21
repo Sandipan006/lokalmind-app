@@ -251,6 +251,42 @@ export class ModelRepositoryImpl implements IModelRepository {
     }
   }
 
+  async deleteDownloadedModel(modelId: string): Promise<Result<void>> {
+    try {
+      await this.ensureInitialized();
+
+      const config = MODEL_CONFIGS.find((m) => m.id === modelId);
+      if (!config) {
+        return err(createError('NOT_FOUND', `Model ${modelId} not found`));
+      }
+
+      const rows = await this.sqliteDriver.query<{ is_downloaded: number }>(
+        'SELECT is_downloaded FROM models WHERE id = ?',
+        [modelId],
+      );
+      if (rows.length === 0 || rows[0]?.is_downloaded !== 1) {
+        return err(createError('NOT_FOUND', 'Model is not downloaded'));
+      }
+
+      try {
+        await this.downloadService.cancelDownload(modelId);
+      } catch {
+        // No active download — ignore.
+      }
+
+      const file = new File(Paths.document, 'models', config.filename);
+      if (file.exists) {
+        await file.delete();
+      }
+
+      await this.sqliteDriver.execute('DELETE FROM models WHERE id = ?', [modelId]);
+
+      return ok(undefined);
+    } catch (e) {
+      return err(createError('STORAGE_ERROR', 'Failed to delete downloaded model', e));
+    }
+  }
+
   async hasDownloadedModel(): Promise<Result<boolean>> {
     try {
       await this.ensureInitialized();

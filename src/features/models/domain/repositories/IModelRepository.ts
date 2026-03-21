@@ -15,6 +15,8 @@ export interface IModelRepository {
     onProgress: (progress: DownloadProgressInfo) => void
   ): Promise<Result<void>>;
   cancelDownload(modelId: string): Promise<Result<void>>;
+  /** Removes the GGUF file from disk and clears the download record for this model. */
+  deleteDownloadedModel(modelId: string): Promise<Result<void>>;
   getDownloadStatus(modelId: string): Promise<Result<DownloadProgressInfo | null>>;
   hasDownloadedModel(): Promise<Result<boolean>>;
 }
