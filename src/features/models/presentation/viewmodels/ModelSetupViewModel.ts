@@ -1,12 +1,12 @@
-import { makeObservable, observable, action, runInAction, computed } from 'mobx';
-import type { Model } from '../../domain/entities/Model';
+import { action, computed, makeObservable, observable, runInAction } from 'mobx';
 import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
-import type { GetAllModelsUseCase } from '../../domain/usecases/GetAllModelsUseCase';
-import type { StartDownloadUseCase } from '../../domain/usecases/StartDownloadUseCase';
-import type { PauseDownloadUseCase } from '../../domain/usecases/PauseDownloadUseCase';
-import type { ResumeDownloadUseCase } from '../../domain/usecases/ResumeDownloadUseCase';
+import type { Model } from '../../domain/entities/Model';
 import type { CancelDownloadUseCase } from '../../domain/usecases/CancelDownloadUseCase';
 import type { DeleteDownloadedModelUseCase } from '../../domain/usecases/DeleteDownloadedModelUseCase';
+import type { GetAllModelsUseCase } from '../../domain/usecases/GetAllModelsUseCase';
+import type { PauseDownloadUseCase } from '../../domain/usecases/PauseDownloadUseCase';
+import type { ResumeDownloadUseCase } from '../../domain/usecases/ResumeDownloadUseCase';
+import type { StartDownloadUseCase } from '../../domain/usecases/StartDownloadUseCase';
 
 export class ModelSetupViewModel {
   @observable models: Model[] = [];
@@ -77,7 +77,7 @@ export class ModelSetupViewModel {
         this.errorMessage = result.error.message;
         this.expandedModelId = null;
       } else if (!wasPausedOrCancelled) {
-        // Completed — refresh model list so isDownloaded flips to true in the UI.
+        // Completed - refresh model list so isDownloaded flips to true in the UI.
         this.downloadProgress.delete(modelId);
         this.expandedModelId = null;
       }

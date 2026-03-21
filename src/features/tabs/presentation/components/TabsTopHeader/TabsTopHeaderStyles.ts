@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
     height: 40,
     borderRadius: borderRadius.full,
     paddingLeft: spacing.xxs,
-    paddingRight: spacing.xs,
+    paddingRight: spacing.xs-2,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,

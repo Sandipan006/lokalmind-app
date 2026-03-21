@@ -1,4 +1,4 @@
-// Model registry — GGUF filenames, CDN URLs, RAM requirements.
+// Model registry - GGUF filenames, CDN URLs, RAM requirements.
 // CDN base URL is read from environment config (never hardcoded here).
 
 export interface ModelConfig {
@@ -70,7 +70,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     provider: 'hetzner',
     capabilities: ['reasoning', 'coding', 'math', 'logic', 'analysis'],
     version: 'R1-Distill',
-    // DeepSeek R1 distilled on Qwen — same stop tokens as Qwen family.
+    // DeepSeek R1 distilled on Qwen - same stop tokens as Qwen family.
     modelType: 'reasoning',
     contextSize: 32768,
     isPaid: false,
