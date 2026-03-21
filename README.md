@@ -1,31 +1,40 @@
 # LokalMind
 
-LokalMind is a privacy-first, on-device AI assistant built with Expo + React Native.
-Inference uses `llama.rn`, voice transcription uses `whisper.rn`, and the app follows Clean Architecture with MobX ViewModels.
+**On-device AI for your phone** — private, offline-capable chat and tooling built with **Expo** and **React Native**. Inference runs locally via **llama.rn**; speech uses **whisper.rn**. The app uses **Clean Architecture**, **MobX** view models, and **expo-router** for navigation.
 
-## Tech Stack
+---
 
-- Expo `~54`, React Native `0.81`, React `19`
-- Expo Router `~6`
-- MobX `6` + `mobx-react-lite`
-- `llama.rn` (LLM), `whisper.rn` (STT)
-- `expo-sqlite` + AsyncStorage
+## Highlights
 
-## Current Status
+| | |
+| :--- | :--- |
+| **Privacy** | Models and data stay on device; no cloud inference required for core chat |
+| **Stack** | Expo 54 · RN 0.81 · React 19 · Expo Router 6 |
+| **Patterns** | Domain / data / presentation · `Result<T>` flows · DI in `src/core/di/container.ts` |
 
-- Onboarding flow is implemented (`splash` -> `welcome` -> `username` -> `model setup`).
-- Model setup + download orchestration is implemented in `features/models`.
-- Core DI and infra adapters are wired in `src/core/di/container.ts`.
-- Chat, Models tab, Profile tab, and some profile routes are placeholders for upcoming phases.
+---
 
-## Quick Start
+## Tech stack
+
+- **Runtime:** Expo ~54, React Native 0.81, React 19  
+- **Navigation:** Expo Router ~6  
+- **State (UI):** MobX 6, mobx-react-lite  
+- **AI:** llama.rn (GGUF), whisper.rn (STT)  
+- **Storage:** expo-sqlite, AsyncStorage  
+- **Monetization / misc:** RevenueCat, design-system tokens under `src/design-system/`
+
+---
+
+## Quick start
 
 ```bash
+git clone <repo-url>
+cd lokalmind-app
 npm install
 npx expo start
 ```
 
-For native modules (`llama.rn`, `whisper.rn`), use a native dev build:
+**Native modules** (`llama.rn`, `whisper.rn`, dev client): use a dev build, not only Expo Go.
 
 ```bash
 npx expo run:android
@@ -33,52 +42,55 @@ npx expo run:android
 npx expo run:ios
 ```
 
-## Environment Setup
+---
 
-1. Copy `.env.example` to `.env`
-2. Fill required values
+## Environment
 
-```env
-EAS_PROJECT_ID=
-APP_OWNER=
-IOS_BUNDLE_IDENTIFIER=
-ANDROID_PACKAGE=
-HETZNER_BASE_URL=
-HETZNER_WEBDAV_URL=
-MODEL_METADATA_PATH=
-CTX_SIZE_DEFAULT=
-CHAT_MAX_TOKENS=
-DOWNLOAD_CHUNK_SIZE=
-DOWNLOAD_CONCURRENCY=
-HETZNER_WEBDAV_USERNAME=
-HETZNER_WEBDAV_PASSWORD=
-```
+1. Copy `.env.example` → `.env` and fill values.  
+2. `app.config.ts` exposes values via Expo `extra`; runtime reads from `src/config/env.ts`.
 
-`app.config.ts` injects these values into Expo `extra`, and runtime access is centralized in `src/config/env.ts`.
+Key variables include `EAS_PROJECT_ID`, bundle IDs, Hetzner / WebDAV model hosting, `CTX_SIZE_DEFAULT`, `CHAT_MAX_TOKENS`, download tuning, and credentials as needed.
+
+---
 
 ## Scripts
 
-- `npm run start` - start Expo
-- `npm run android` - start Expo for Android
-- `npm run ios` - start Expo for iOS
-- `npm run web` - start Expo for web
-- `npm run lint` - run ESLint
+| Command | Purpose |
+|--------|---------|
+| `npm run start` | Expo dev server |
+| `npm run android` / `npm run ios` / `npm run web` | Platform targets |
+| `npm run lint` | ESLint (expo config) |
+| `npm run reset-project` | Reset helper script |
 
-## Project Structure
+---
+
+## Repository layout
 
 ```text
-app/                     expo-router routes
+app/                 Expo Router routes
 src/
-  core/                  DI container, ports, shared Result/AppError types
-  features/              feature slices (domain/data/presentation)
-  infrastructure/        platform adapters (llama, whisper, downloads, storage)
-  design-system/         UI primitives and tokens
-  config/                runtime environment config
+  core/              DI, ports, shared types (e.g. Result)
+  features/          Feature slices — domain / data / presentation
+  infrastructure/    Adapters only (llama, whisper, storage, downloads)
+  design-system/     Tokens and UI primitives
+  config/            Env and app config helpers
+docs/                Architecture, PRD, conventions, feature notes
 ```
 
-## Architecture Rules
+Deeper detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/FOLDER-STRUCTURE.md`](docs/FOLDER-STRUCTURE.md), [`docs/LLM-PIPELINE.md`](docs/LLM-PIPELINE.md).
 
-- Domain layer stays pure TypeScript (no framework/native SDK imports).
-- Presentation calls use cases/repositories only, never infrastructure directly.
-- Data layer implements repository contracts and receives infra via constructor injection.
-- `src/core/di/container.ts` is the single composition root.
+---
+
+## Architecture (short)
+
+- **Domain** — pure TypeScript; no React / native SDK imports.  
+- **Presentation** — screens + MobX VMs; calls use cases and repository interfaces only.  
+- **Data** — implements repositories; infra injected via constructors.  
+- **Infrastructure** — only layer that touches llama.rn, whisper.rn, sqlite, etc.  
+- **Composition root** — `src/core/di/container.ts`.
+
+---
+
+## Status
+
+Core flows: onboarding, model download/management, local chat with streaming UI, profile and settings surfaces. See `docs/` and issue tracker for roadmap and in-progress work.
