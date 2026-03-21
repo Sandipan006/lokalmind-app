@@ -95,7 +95,7 @@ export const ModelBrowserScreen = observer(() => {
             onPausePress={() => viewModel.pauseDownload(model.id)}
             onResumePress={() => viewModel.resumeDownload(model.id)}
             onCancelPress={() => viewModel.cancelDownload(model.id)}
-            onUsePress={() => router.push('/chat/new')}
+            onUsePress={() => router.push(`/chat/new?modelId=${encodeURIComponent(model.id)}`)}
             onDeletePress={() => viewModel.deleteDownloaded(model.id)}
           />
         ))}
@@ -114,7 +114,7 @@ export const ModelBrowserScreen = observer(() => {
             onPausePress={() => viewModel.pauseDownload(model.id)}
             onResumePress={() => viewModel.resumeDownload(model.id)}
             onCancelPress={() => viewModel.cancelDownload(model.id)}
-            onUsePress={() => router.push('/chat/new')}
+            onUsePress={() => router.push(`/chat/new?modelId=${encodeURIComponent(model.id)}`)}
             onDeletePress={() => viewModel.deleteDownloaded(model.id)}
           />
         ))}

@@ -1,5 +1,5 @@
 import { GlassSurface } from '@/src/design-system/components';
-import { WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { TEXT_WHITE_40, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { useEffect, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Modal, Pressable, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -13,6 +13,8 @@ interface ChatInputBarProps {
   inputText: string;
   isStreaming: boolean;
   canSend: boolean;
+  /** When false (e.g. no GGUF on device), composer is read-only. */
+  inputEnabled?: boolean;
   selectedMode: ChatMode;
   onChangeText: (text: string) => void;
   onSelectMode: (mode: ChatMode) => void;
@@ -24,6 +26,7 @@ export function ChatInputBar({
   inputText,
   isStreaming,
   canSend,
+  inputEnabled = true,
   selectedMode,
   onChangeText,
   onSelectMode,
@@ -51,19 +54,21 @@ export function ChatInputBar({
     }
   }, [inputHeight, inputText, minTextInputHeight]);
 
+  const composerLocked = !inputEnabled;
+
   return (
     <View style={[styles.inputBar, { paddingBottom: Math.max((styles.inputBar.paddingBottom ?? 0) as number, insets.bottom) }]}>
-      <GlassSurface tier="medium" style={styles.inputGlass}>
+      <GlassSurface tier="medium" style={[styles.inputGlass, composerLocked && styles.inputGlassDisabled]}>
         <View style={styles.inputInner}>
           <TextInput
             style={[styles.textInput, { minHeight: inputHeight }]}
-            placeholder="ask LokalMind…"
+            placeholder={composerLocked ? 'Download a model to send messages…' : 'ask LokalMind…'}
             placeholderTextColor={TEXT_INPUT_PLACEHOLDER_COLOR}
             value={inputText}
             onChangeText={onChangeText}
             multiline
             returnKeyType="default"
-            editable={!isStreaming}
+            editable={inputEnabled && !isStreaming}
             textAlignVertical="top"
             underlineColorAndroid="transparent"
             scrollEnabled={inputHeight >= maxTextInputHeight}
@@ -77,9 +82,16 @@ export function ChatInputBar({
           />
 
           <View style={styles.bottomRow}>
-            <TouchableOpacity style={styles.modeButton} onPress={handleModeButtonPress} activeOpacity={0.8}>
-              <Text style={styles.modeButtonText}>{CHAT_MODE_LABELS[selectedMode]}</Text>
-              <SymbolView name="chevron.down" size={12} tintColor={WHITE_PRIMARY} />
+            <TouchableOpacity
+              style={[styles.modeButton, composerLocked && styles.modeButtonDisabled]}
+              onPress={handleModeButtonPress}
+              disabled={composerLocked}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.modeButtonText, composerLocked && styles.modeButtonTextDisabled]}>
+                {CHAT_MODE_LABELS[selectedMode]}
+              </Text>
+              <SymbolView name="chevron.down" size={12} tintColor={composerLocked ? TEXT_WHITE_40 : WHITE_PRIMARY} />
             </TouchableOpacity>
 
             {isStreaming ? (
@@ -108,7 +120,18 @@ export function ChatInputBar({
       >
         <Pressable style={styles.modalBackdrop} onPress={() => setIsModeModalVisible(false)}>
           <Pressable style={[styles.modalSheet, { paddingBottom: Math.max(insets.bottom, 12) }]} onPress={() => undefined}>
-            <Text style={styles.modalTitle}>Select Mode</Text>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Select Mode</Text>
+              <TouchableOpacity
+                style={styles.modalDismissButton}
+                onPress={() => setIsModeModalVisible(false)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+              >
+                <SymbolView name="xmark" size={18} tintColor={WHITE_PRIMARY} />
+              </TouchableOpacity>
+            </View>
             {CHAT_MODES.map((mode) => {
               const isSelected = mode === selectedMode;
               return (
@@ -123,13 +146,6 @@ export function ChatInputBar({
                 </TouchableOpacity>
               );
             })}
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setIsModeModalVisible(false)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.modalCloseButtonText}>Close</Text>
-            </TouchableOpacity>
           </Pressable>
         </Pressable>
       </Modal>

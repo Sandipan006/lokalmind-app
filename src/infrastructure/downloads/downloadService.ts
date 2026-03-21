@@ -26,7 +26,7 @@ interface DownloadContext {
 const SPEED_WINDOW_SIZE = 8;
 const RESUME_STATE_KEY_PREFIX = 'download_resume_';
 const SPEED_LOG_INTERVAL_MS = 15_000;
-const METRICS_UPDATE_INTERVAL_MS = 5_000;
+const METRICS_UPDATE_INTERVAL_MS = 3_000;
 
 export interface IDownloadService {
   startDownload(
@@ -174,7 +174,7 @@ export class DownloadService implements IDownloadService {
         const totalMB = (progress.totalBytes / (1024 * 1024)).toFixed(1);
         const pct = (progress.progressFraction * 100).toFixed(1);
         const etaMin = progress.etaSeconds > 0 ? (progress.etaSeconds / 60).toFixed(1) : '?';
-        console.warn(
+        console.log(
           `[Download] ${modelId} | ${pct}% (${writtenMB}/${totalMB} MB) | ${speedMBps} MB/s | ETA ${etaMin} min`
         );
       }

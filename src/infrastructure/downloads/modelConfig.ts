@@ -23,7 +23,7 @@ export interface ModelConfig {
 export const MODEL_CONFIGS: readonly ModelConfig[] = [
   {
     id: 'qwen3.5-0.8b',
-    displayName: 'Qwen 3.5 — 0.8B',
+    displayName: 'Qwen 3.5 - 0.8B',
     filename: 'Qwen_Qwen3.5-0.8B-Q4_K_M.gguf',
     sizeBytes: 549_916_416,
     minRamBytes: 2 * 1024 * 1024 * 1024,
@@ -41,7 +41,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
   },
   {
     id: 'qwen3.5-2b',
-    displayName: 'Qwen 3.5 — 2B',
+    displayName: 'Qwen 3.5 - 2B',
     filename: 'Qwen_Qwen3.5-2B-Q4_K_M.gguf',
     sizeBytes: 1_315_634_944,
     minRamBytes: 3 * 1024 * 1024 * 1024,
@@ -59,7 +59,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
   },
   {
     id: 'deepseek-r1-1.5b',
-    displayName: 'DeepSeek R1 — 1.5B',
+    displayName: 'DeepSeek R1 - 1.5B',
     filename: 'DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf',
     sizeBytes: 1_117_320_832,
     minRamBytes: 3 * 1024 * 1024 * 1024,
@@ -78,7 +78,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
   },
   {
     id: 'qwen3.5-4b',
-    displayName: 'Qwen 3.5 — 4B',
+    displayName: 'Qwen 3.5 - 4B',
     filename: 'Qwen_Qwen3.5-4B-Q4_K_M.gguf',
     sizeBytes: 2_856_936_448,
     minRamBytes: 5 * 1024 * 1024 * 1024,
@@ -96,7 +96,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
   },
   {
     id: 'qwen3-4b',
-    displayName: 'Qwen 3 — 4B',
+    displayName: 'Qwen 3 - 4B',
     filename: 'Qwen_Qwen3-4B-Q4_K_M.gguf',
     sizeBytes: 2_497_280_960,
     minRamBytes: 5 * 1024 * 1024 * 1024,
@@ -114,7 +114,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
   },
   {
     id: 'gemma3-4b',
-    displayName: 'Gemma 3 — 4B',
+    displayName: 'Gemma 3 - 4B',
     filename: 'google_gemma-3-4b-it-Q4_K_M.gguf',
     sizeBytes: 2_489_758_720,
     minRamBytes: 5 * 1024 * 1024 * 1024,

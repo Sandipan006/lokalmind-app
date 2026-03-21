@@ -7,6 +7,7 @@ import type { CreateSessionUseCase } from '../../domain/usecases/CreateSessionUs
 import type { GetSessionUseCase } from '../../domain/usecases/GetSessionUseCase';
 import type { GetMessagesUseCase } from '../../domain/usecases/GetMessagesUseCase';
 import type { GenerateChatTitleUseCase } from '../../domain/usecases/GenerateChatTitleUseCase';
+import type { UpdateSessionModelUseCase } from '../../domain/usecases/UpdateSessionModelUseCase';
 import { CHAT_MODES, type ChatMode } from '../../domain/entities/ChatMode';
 
 export class ChatViewModel {
@@ -32,6 +33,7 @@ export class ChatViewModel {
     private readonly getMessagesUseCase: GetMessagesUseCase,
     private readonly sendMessageUseCase: SendMessageUseCase,
     private readonly generateChatTitleUseCase: GenerateChatTitleUseCase,
+    private readonly updateSessionModelUseCase: UpdateSessionModelUseCase,
   ) {
     makeAutoObservable(this);
   }
@@ -65,6 +67,21 @@ export class ChatViewModel {
     } finally {
       runInAction(() => { this.isLoading = false; });
     }
+  }
+
+  async updateSessionModel(modelId: string): Promise<void> {
+    if (!this.session) return;
+    const result = await this.updateSessionModelUseCase.execute(this.session.id, modelId);
+    if (!result.success) {
+      runInAction(() => {
+        this.error = result.error.message;
+      });
+      return;
+    }
+    runInAction(() => {
+      this.session = { ...this.session!, modelId };
+      this.error = null;
+    });
   }
 
   async initNewSession(modelId: string): Promise<string | null> {

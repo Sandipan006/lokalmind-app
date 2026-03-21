@@ -6,6 +6,7 @@ export interface IChatRepository {
   createSession(modelId: string): Promise<Result<ChatSession>>;
   getSessions(): Promise<Result<ChatSession[]>>;
   getSession(sessionId: string): Promise<Result<ChatSession | null>>;
+  updateSessionModelId(sessionId: string, modelId: string): Promise<Result<void>>;
   updateSessionTitle(sessionId: string, title: string): Promise<Result<void>>;
   deleteSession(sessionId: string): Promise<Result<void>>;
   updateAutoSessionTitle(sessionId: string, title: string, bucket: number): Promise<Result<void>>;
