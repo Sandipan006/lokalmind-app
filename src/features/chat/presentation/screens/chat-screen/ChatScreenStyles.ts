@@ -1,13 +1,13 @@
-import { StyleSheet } from 'react-native';
 import {
   BLACK_PRIMARY, CHAT_BACKGROUND_COLOR,
-  CHAT_BUBBLE_USER_BG, CHAT_BUBBLE_AI_BG,
-  CHAT_BUBBLE_USER_TEXT, CHAT_BUBBLE_AI_TEXT,
-  WHITE_PRIMARY,
+  CHAT_BUBBLE_USER_BG,
+  CHAT_BUBBLE_USER_TEXT,
   ERROR_RED,
+  WHITE_PRIMARY,
 } from '@/src/design-system/tokens/colors';
-import { spacing, borderRadius } from '@/src/design-system/tokens/spacing';
+import { borderRadius, spacing } from '@/src/design-system/tokens/spacing';
 import { typography } from '@/src/design-system/tokens/typography';
+import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   safeAreaContainer: {
@@ -22,11 +22,12 @@ export const styles = StyleSheet.create({
   // ── Message list ────────────────────────────────────────────────────────────
   messageList: {
     flex: 1,
+    // marginBottom: spacing.md,
   },
   messageListContent: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
   },
 
   // ── Bubbles ─────────────────────────────────────────────────────────────────

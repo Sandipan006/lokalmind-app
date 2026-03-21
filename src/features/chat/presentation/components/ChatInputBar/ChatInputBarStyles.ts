@@ -10,8 +10,8 @@ export const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: Platform.OS === 'ios' ? spacing.lg : spacing.md,
     // backgroundColor: BLACK_PRIMARY,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    // borderTopWidth: 0.5,
+    // borderTopColor: 'rgba(255,255,255,0.08)',
     gap: spacing.xs,
   },
   inputGlass: {
@@ -19,10 +19,10 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   inputGlassDisabled: {
-    opacity: 0.85,
+    // opacity: 0.85,
   },
   inputInner: {
-    backgroundColor: 'rgba(42,42,42,0.72)',
+    // backgroundColor: 'rgba(42,42,42,0.72)',
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
@@ -49,7 +49,7 @@ export const styles = StyleSheet.create({
   },
   modeButton: {
     minHeight: normalize(40),
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.full,
     backgroundColor: 'rgba(255,255,255,0.10)',
     paddingLeft: spacing.md,
     paddingRight: spacing.sm,
@@ -70,7 +70,7 @@ export const styles = StyleSheet.create({
   sendButton: {
     width: normalize(40),
     height: normalize(40),
-    borderRadius: borderRadius.sm,
+    borderRadius: borderRadius.full,
     backgroundColor: PRIMARY_ORANGE,
     justifyContent: 'center',
     alignItems: 'center',
