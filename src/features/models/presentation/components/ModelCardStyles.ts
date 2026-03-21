@@ -85,7 +85,17 @@ export const modelCardStyles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'flex-end',
+    gap: spacing.sm,
+  },
+  deleteIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
   },
   progressBarBackground: {
     height: 6,
@@ -129,15 +139,14 @@ export const modelCardStyles = StyleSheet.create({
   useModelButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
     backgroundColor: 'rgba(255, 66, 11, 0.16)',
-    borderRadius: borderRadius.md,
   },
   useModelText: {
-    ...typography.caption.default,
+    ...typography.button.large,
     color: TEXT_WHITE_80,
-    fontWeight: '600',
   },
 });

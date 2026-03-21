@@ -2,11 +2,11 @@ import { GlassSurface } from '@/src/design-system/components';
 import { WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { useEffect, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 import { sendMessageSvg } from '../../../assets/svgs';
-import { CHAT_MODE_LABELS, type ChatMode } from '../../../domain/entities/ChatMode';
+import { CHAT_MODE_LABELS, CHAT_MODES, type ChatMode } from '../../../domain/entities/ChatMode';
 import { styles, TEXT_INPUT_PLACEHOLDER_COLOR } from './ChatInputBarStyles';
 
 interface ChatInputBarProps {
@@ -15,7 +15,7 @@ interface ChatInputBarProps {
   canSend: boolean;
   selectedMode: ChatMode;
   onChangeText: (text: string) => void;
-  onModePress: () => void;
+  onSelectMode: (mode: ChatMode) => void;
   onSend: () => void;
   onStop: () => void;
 }
@@ -26,7 +26,7 @@ export function ChatInputBar({
   canSend,
   selectedMode,
   onChangeText,
-  onModePress,
+  onSelectMode,
   onSend,
   onStop,
 }: ChatInputBarProps) {
@@ -34,6 +34,16 @@ export function ChatInputBar({
   const minTextInputHeight = 24;
   const maxTextInputHeight = 108;
   const [inputHeight, setInputHeight] = useState<number>(minTextInputHeight);
+  const [isModeModalVisible, setIsModeModalVisible] = useState(false);
+
+  const handleModeButtonPress = () => {
+    setIsModeModalVisible(true);
+  };
+
+  const handleModeSelect = (mode: ChatMode) => {
+    onSelectMode(mode);
+    setIsModeModalVisible(false);
+  };
 
   useEffect(() => {
     if (inputText.length === 0 && inputHeight !== minTextInputHeight) {
@@ -67,7 +77,7 @@ export function ChatInputBar({
           />
 
           <View style={styles.bottomRow}>
-            <TouchableOpacity style={styles.modeButton} onPress={onModePress} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.modeButton} onPress={handleModeButtonPress} activeOpacity={0.8}>
               <Text style={styles.modeButtonText}>{CHAT_MODE_LABELS[selectedMode]}</Text>
               <SymbolView name="chevron.down" size={12} tintColor={WHITE_PRIMARY} />
             </TouchableOpacity>
@@ -89,6 +99,40 @@ export function ChatInputBar({
           </View>
         </View>
       </GlassSurface>
+
+      <Modal
+        transparent
+        visible={isModeModalVisible}
+        animationType="slide"
+        onRequestClose={() => setIsModeModalVisible(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setIsModeModalVisible(false)}>
+          <Pressable style={[styles.modalSheet, { paddingBottom: Math.max(insets.bottom, 12) }]} onPress={() => undefined}>
+            <Text style={styles.modalTitle}>Select Mode</Text>
+            {CHAT_MODES.map((mode) => {
+              const isSelected = mode === selectedMode;
+              return (
+                <TouchableOpacity
+                  key={mode}
+                  style={[styles.modalOption, isSelected && styles.modalOptionSelected]}
+                  onPress={() => handleModeSelect(mode)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalOptionText}>{CHAT_MODE_LABELS[mode]}</Text>
+                  {isSelected ? <View style={styles.modalOptionDot} /> : null}
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setIsModeModalVisible(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

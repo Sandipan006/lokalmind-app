@@ -28,6 +28,8 @@ module.exports = ({ config }: { config: any }) => {
       DOWNLOAD_CONCURRENCY: process.env.DOWNLOAD_CONCURRENCY || '3',
       SUPPORT_PAYPAL_URL: process.env.SUPPORT_PAYPAL_URL || '',
       SUPPORT_OTHER_PAYMENT_URL: process.env.SUPPORT_OTHER_PAYMENT_URL || '',
+      GITHUB_REPO_URL: process.env.GITHUB_REPO_URL || '',
+      DEVELOPER_CONTACT_EMAIL: process.env.DEVELOPER_CONTACT_EMAIL || '',
     },
   };
 };
