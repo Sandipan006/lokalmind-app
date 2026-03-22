@@ -7,6 +7,7 @@ import type { CreateSessionUseCase } from '../../domain/usecases/CreateSessionUs
 import type { GenerateChatTitleUseCase } from '../../domain/usecases/GenerateChatTitleUseCase';
 import type { GetMessagesUseCase } from '../../domain/usecases/GetMessagesUseCase';
 import type { GetSessionUseCase } from '../../domain/usecases/GetSessionUseCase';
+import type { EditMessageUseCase } from '../../domain/usecases/EditMessageUseCase';
 import type { SendMessageUseCase } from '../../domain/usecases/SendMessageUseCase';
 import type { UpdateSessionModelUseCase } from '../../domain/usecases/UpdateSessionModelUseCase';
 
@@ -21,6 +22,8 @@ export class ChatViewModel {
   error: string | null = null;
   inputText = '';
   selectedMode: ChatMode = 'general';
+  /** Non-null while the user is editing a past message. */
+  editingMessage: ChatMessage | null = null;
 
   private abortController: AbortController | null = null;
   private pendingWordFragment = '';
@@ -32,6 +35,7 @@ export class ChatViewModel {
     private readonly getSessionUseCase: GetSessionUseCase,
     private readonly getMessagesUseCase: GetMessagesUseCase,
     private readonly sendMessageUseCase: SendMessageUseCase,
+    private readonly editMessageUseCase: EditMessageUseCase,
     private readonly generateChatTitleUseCase: GenerateChatTitleUseCase,
     private readonly updateSessionModelUseCase: UpdateSessionModelUseCase,
   ) {
@@ -186,6 +190,101 @@ export class ChatViewModel {
       this.nextWordTriggerCount = this.nextWordTriggerCount === 2 ? 1 : 2;
       void Haptics.selectionAsync().catch(() => undefined);
     }
+  }
+
+  startEdit(message: ChatMessage): void {
+    runInAction(() => {
+      this.editingMessage = message;
+      this.inputText = message.content;
+    });
+  }
+
+  cancelEdit(): void {
+    runInAction(() => {
+      this.editingMessage = null;
+      this.inputText = '';
+    });
+  }
+
+  async submitEdit(): Promise<void> {
+    const text = this.inputText.trim();
+    if (!text || this.isStreaming || !this.session || !this.editingMessage) return;
+
+    const targetMessage = this.editingMessage;
+    const currentSessionId = this.session.id;
+    const currentModelId = this.session.modelId;
+
+    runInAction(() => {
+      this.editingMessage = null;
+      this.inputText = '';
+      this.isStreaming = true;
+      this.isModelLoading = true;
+      this.streamingContent = '';
+      this.error = null;
+    });
+
+    const editResult = await this.editMessageUseCase.execute(
+      { message: targetMessage, newContent: text },
+      this.messages,
+    );
+
+    if (!editResult.success) {
+      runInAction(() => {
+        this.isStreaming = false;
+        this.isModelLoading = false;
+        this.error = editResult.error.message;
+      });
+      return;
+    }
+
+    const { updatedMessage, historyBefore } = editResult.data;
+
+    // Trim the in-memory list to everything before the edited message, then add the updated one.
+    runInAction(() => {
+      this.messages = [
+        ...this.messages.filter((m) => m.createdAt < targetMessage.createdAt),
+        updatedMessage,
+      ];
+    });
+
+    this.abortController = new AbortController();
+    this.pendingWordFragment = '';
+    this.wordsSinceLastHaptic = 0;
+    this.nextWordTriggerCount = 2;
+
+    const result = await this.sendMessageUseCase.execute({
+      sessionId: currentSessionId,
+      modelId: currentModelId,
+      userMessage: updatedMessage,
+      history: historyBefore,
+      mode: this.selectedMode,
+      onToken: (token) => {
+        this.triggerStreamHapticByWords(token);
+        runInAction(() => {
+          this.isModelLoading = false;
+          this.streamingContent += token;
+        });
+      },
+      signal: this.abortController.signal,
+    });
+
+    runInAction(() => {
+      this.isStreaming = false;
+      this.isModelLoading = false;
+      this.streamingContent = '';
+
+      if (result.success) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+        this.messages = [
+          ...this.messages.filter((m) => m.role !== 'assistant' || m.status !== 'streaming'),
+          result.data,
+        ];
+        void this.generateChatTitleUseCase.execute(currentSessionId, currentModelId);
+      } else {
+        this.error = result.error.message;
+        this.messages = this.messages.filter((m) => m.status !== 'streaming');
+      }
+    });
   }
 
   stopGeneration(): void {
