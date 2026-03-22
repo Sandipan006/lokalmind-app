@@ -5,8 +5,9 @@ import { ChatViewModel } from '@/src/features/chat/presentation/viewmodels/ChatV
 import { CreateSessionUseCase } from '@/src/features/chat/domain/usecases/CreateSessionUseCase';
 import { GetSessionUseCase } from '@/src/features/chat/domain/usecases/GetSessionUseCase';
 import { GetMessagesUseCase } from '@/src/features/chat/domain/usecases/GetMessagesUseCase';
-import { SendMessageUseCase } from '@/src/features/chat/domain/usecases/SendMessageUseCase';
+import { EditMessageUseCase } from '@/src/features/chat/domain/usecases/EditMessageUseCase';
 import { GenerateChatTitleUseCase } from '@/src/features/chat/domain/usecases/GenerateChatTitleUseCase';
+import { SendMessageUseCase } from '@/src/features/chat/domain/usecases/SendMessageUseCase';
 import { UpdateSessionModelUseCase } from '@/src/features/chat/domain/usecases/UpdateSessionModelUseCase';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -30,6 +31,7 @@ export default function ChatSessionScreen() {
       new GetSessionUseCase(repo),
       new GetMessagesUseCase(repo),
       new SendMessageUseCase(repo, llm, container.appSettingsRepository),
+      new EditMessageUseCase(repo),
       new GenerateChatTitleUseCase(repo, llm),
       new UpdateSessionModelUseCase(repo),
     );

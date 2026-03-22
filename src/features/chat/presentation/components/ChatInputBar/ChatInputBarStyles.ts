@@ -150,6 +150,28 @@ export const styles = StyleSheet.create({
     borderRadius: normalize(4),
     backgroundColor: PRIMARY_ORANGE,
   },
+  // ── Edit mode banner ─────────────────────────────────────────────────────────
+  editBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: borderRadius.md,
+  },
+  editBannerIcon: {
+    opacity: 0.7,
+  },
+  editBannerText: {
+    ...typography.caption.medium,
+    color: WHITE_PRIMARY,
+    opacity: 0.7,
+    flex: 1,
+  },
+  editBannerCancel: {
+    padding: spacing.xxs,
+  },
   /** Model picker body: full-width stack, no inner scroll (sheet grows with content). */
   modalSheetBody: {
     width: '100%',

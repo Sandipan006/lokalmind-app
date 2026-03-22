@@ -16,10 +16,12 @@ interface ChatInputBarProps {
   /** When false (e.g. no GGUF on device), composer is read-only. */
   inputEnabled?: boolean;
   selectedMode: ChatMode;
+  isEditMode?: boolean;
   onChangeText: (text: string) => void;
   onSelectMode: (mode: ChatMode) => void;
   onSend: () => void;
   onStop: () => void;
+  onCancelEdit?: () => void;
 }
 
 export function ChatInputBar({
@@ -28,10 +30,12 @@ export function ChatInputBar({
   canSend,
   inputEnabled = true,
   selectedMode,
+  isEditMode = false,
   onChangeText,
   onSelectMode,
   onSend,
   onStop,
+  onCancelEdit,
 }: ChatInputBarProps) {
   const insets = useSafeAreaInsets();
   const minTextInputHeight = 24;
@@ -58,6 +62,15 @@ export function ChatInputBar({
 
   return (
     <View style={[styles.inputBar, { paddingBottom: Math.max((styles.inputBar.paddingBottom ?? 0) as number, insets.bottom) }]}>
+      {isEditMode && (
+        <View style={styles.editBanner}>
+          <SymbolView name="pencil" size={13} tintColor={WHITE_PRIMARY} style={styles.editBannerIcon} />
+          <Text style={styles.editBannerText}>Editing message</Text>
+          <TouchableOpacity onPress={onCancelEdit} hitSlop={12} style={styles.editBannerCancel}>
+            <SymbolView name="xmark" size={13} tintColor={WHITE_PRIMARY} />
+          </TouchableOpacity>
+        </View>
+      )}
       <GlassSurface tier="medium" style={[styles.inputGlass, composerLocked && styles.inputGlassDisabled]}>
         <View style={styles.inputInner}>
           <TextInput

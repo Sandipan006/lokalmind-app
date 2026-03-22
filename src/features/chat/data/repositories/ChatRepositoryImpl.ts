@@ -221,6 +221,19 @@ export class ChatRepositoryImpl implements IChatRepository {
     }
   }
 
+  async deleteMessagesAfter(sessionId: string, afterCreatedAt: number): Promise<Result<void>> {
+    try {
+      await this.ensureInitialized();
+      await this.sqliteDriver.execute(
+        `DELETE FROM chat_messages WHERE session_id = ? AND created_at > ?`,
+        [sessionId, afterCreatedAt],
+      );
+      return ok(undefined);
+    } catch (e) {
+      return err(createError('STORAGE_ERROR', 'Failed to delete messages after timestamp', e));
+    }
+  }
+
   async getMessages(sessionId: string): Promise<Result<ChatMessage[]>> {
     try {
       await this.ensureInitialized();
