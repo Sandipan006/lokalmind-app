@@ -7,9 +7,11 @@ import { useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActionSheetIOS,
   Animated, Easing,
   FlatList,
   KeyboardAvoidingView, Platform,
+  Pressable,
   Text,
   View,
 } from 'react-native';
@@ -77,17 +79,24 @@ function ThinkingIndicator() {
   );
 }
 
-const MessageBubble = observer(({ message }: { message: ChatMessage }) => {
+const MessageBubble = observer(({ message, onLongPressUser }: {
+  message: ChatMessage;
+  onLongPressUser?: (msg: ChatMessage) => void;
+}) => {
   const isUser = message.role === 'user';
 
   if (isUser) {
     return (
       <View style={[styles.messageRow, styles.userRow]}>
-        <View style={[styles.bubble, styles.userBubble]}>
+        <Pressable
+          style={[styles.bubble, styles.userBubble]}
+          onLongPress={() => onLongPressUser?.(message)}
+          delayLongPress={350}
+        >
           <Text style={[styles.bubbleText, styles.userBubbleText]}>
             {message.content}
           </Text>
-        </View>
+        </Pressable>
       </View>
     );
   }
@@ -159,11 +168,30 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
     : null;
 
   const handleSend = useCallback(() => {
-    viewModel.sendMessage();
+    if (viewModel.editingMessage) {
+      viewModel.submitEdit();
+    } else {
+      viewModel.sendMessage();
+    }
   }, [viewModel]);
 
   const handleStop = useCallback(() => {
     viewModel.stopGeneration();
+  }, [viewModel]);
+
+  const handleLongPressUserBubble = useCallback((message: ChatMessage) => {
+    if (viewModel.isStreaming) return;
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Cancel', 'Edit'], cancelButtonIndex: 0 },
+        (buttonIndex) => {
+          if (buttonIndex === 1) viewModel.startEdit(message);
+        },
+      );
+    } else {
+      // Android fallback — directly start edit (no native action sheet on Android).
+      viewModel.startEdit(message);
+    }
   }, [viewModel]);
 
   const canSend =
@@ -172,8 +200,10 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
     !viewModel.isStreaming;
 
   const renderItem = useCallback(
-    ({ item }: { item: ChatMessage }) => <MessageBubble message={item} />,
-    [],
+    ({ item }: { item: ChatMessage }) => (
+      <MessageBubble message={item} onLongPressUser={handleLongPressUserBubble} />
+    ),
+    [handleLongPressUserBubble],
   );
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
@@ -238,10 +268,12 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
           canSend={canSend}
           inputEnabled={hasDownloadedModel}
           selectedMode={viewModel.selectedMode}
+          isEditMode={viewModel.editingMessage !== null}
           onChangeText={(t) => viewModel.setInputText(t)}
           onSelectMode={(mode) => viewModel.setSelectedMode(mode)}
           onSend={handleSend}
           onStop={handleStop}
+          onCancelEdit={() => viewModel.cancelEdit()}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
