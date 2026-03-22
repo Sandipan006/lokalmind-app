@@ -1,11 +1,22 @@
-import type { Result } from '@/src/core/types';
-import { createError } from '@/src/core/types';
 import type { IAppSettingsRepository } from '@/src/core/ports/IAppSettingsRepository';
 import type { ILLMEngine, LLMMessage } from '@/src/core/ports/ILLMEngine';
-import type { IChatRepository } from '../repositories/IChatRepository';
+import type { Result } from '@/src/core/types';
+import { createError } from '@/src/core/types';
+import { resolveSystemPromptForChat } from '../config/systemPromptResolution';
 import type { ChatMessage } from '../entities/ChatMessage';
 import type { ChatMode } from '../entities/ChatMode';
-import { resolveSystemPromptForChat } from '../config/systemPromptResolution';
+import type { IChatRepository } from '../repositories/IChatRepository';
+
+/** Max user + assistant messages passed to the LLM (system prompt is separate). */
+const MAX_LLM_CONVERSATION_MESSAGES = 20;
+
+function buildCappedLlmTurns(history: ChatMessage[], userMessage: ChatMessage): LLMMessage[] {
+  const turns: LLMMessage[] = [
+    ...history.map((m) => ({ role: m.role as LLMMessage['role'], content: m.content })),
+    { role: 'user', content: userMessage.content },
+  ];
+  return turns.slice(-MAX_LLM_CONVERSATION_MESSAGES);
+}
 
 export interface SendMessageParams {
   sessionId: string;
@@ -50,11 +61,9 @@ export class SendMessageUseCase {
 
       const modeOverride = await this.appSettingsRepository.getModeSystemPromptOverride(mode);
       const systemContent = resolveSystemPromptForChat(mode, modeOverride);
-      // TODO: Trim `history` to last 20 messages total (user + assistant) before mapping — full session currently sent.
       const llmMessages: LLMMessage[] = [
         { role: 'system', content: systemContent },
-        ...history.map((m) => ({ role: m.role as LLMMessage['role'], content: m.content })),
-        { role: 'user', content: userMessage.content },
+        ...buildCappedLlmTurns(history, userMessage),
       ];
       console.log('[Chat][LLM] Mode:', mode);
       console.log('[Chat][LLM] History:', history);
