@@ -11,6 +11,8 @@ import { fonts, fontSizes, typography } from '@/src/design-system/tokens/typogra
 export const styles = StyleSheet.create({
   container: {
     gap: spacing.xs,
+    width: '100%',
+    minWidth: 0,
   },
 
   // ── Body text ──────────────────────────────────────────────────────────────
@@ -18,6 +20,56 @@ export const styles = StyleSheet.create({
     ...typography.body.default,
     color: WHITE_PRIMARY,
     lineHeight: fontSizes.md * 1.6,
+  },
+  bodyTextBold: {
+    ...typography.body.default,
+    color: WHITE_PRIMARY,
+    fontFamily: fonts.figtree.bold,
+    lineHeight: fontSizes.md * 1.6,
+  },
+  bodyTextItalic: {
+    ...typography.body.default,
+    color: WHITE_PRIMARY,
+    fontFamily: fonts.figtree.italic,
+    lineHeight: fontSizes.md * 1.6,
+  },
+
+  /** ATX markdown — `typography.heading` + chat bubble color/line-height/width only. */
+  heading1: {
+    ...typography.heading.h1,
+    color: WHITE_PRIMARY,
+    lineHeight: fontSizes.xxxl * 1.35,
+    width: '100%',
+  },
+  heading2: {
+    ...typography.heading.h2,
+    color: WHITE_PRIMARY,
+    lineHeight: fontSizes.xxl * 1.35,
+    width: '100%',
+  },
+  heading3: {
+    ...typography.heading.h3,
+    color: WHITE_PRIMARY,
+    lineHeight: fontSizes.xl * 1.35,
+    width: '100%',
+  },
+  heading4: {
+    ...typography.heading.h4,
+    color: WHITE_PRIMARY,
+    lineHeight: fontSizes.lg * 1.4,
+    width: '100%',
+  },
+  heading5: {
+    ...typography.heading.h5,
+    color: WHITE_PRIMARY,
+    lineHeight: fontSizes.md * 1.45,
+    width: '100%',
+  },
+  heading6: {
+    ...typography.heading.h6,
+    color: TEXT_WHITE_60,
+    lineHeight: fontSizes.xs * 1.45,
+    width: '100%',
   },
 
   // ── Think block ───────────────────────────────────────────────────────────
@@ -66,6 +118,15 @@ export const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     overflow: 'hidden',
     marginVertical: spacing.xxs,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  /** Horizontal scroll must not expand the FlatList row to the full unwrapped line width. */
+  codeScrollHorizontal: {
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
   },
   codeHeader: {
     flexDirection: 'row',
