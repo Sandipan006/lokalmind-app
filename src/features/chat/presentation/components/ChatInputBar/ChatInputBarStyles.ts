@@ -94,6 +94,11 @@ export const styles = StyleSheet.create({
     backgroundColor: PRIMARY_ORANGE,
     borderRadius: normalize(2),
   },
+  streamingActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

@@ -11,6 +11,15 @@ import type { EditMessageUseCase } from '../../domain/usecases/EditMessageUseCas
 import type { SendMessageUseCase } from '../../domain/usecases/SendMessageUseCase';
 import type { UpdateSessionModelUseCase } from '../../domain/usecases/UpdateSessionModelUseCase';
 
+/** Max outbound messages waiting while the LLM is busy (FIFO). */
+export const MAX_PENDING_MESSAGE_QUEUE = 3;
+
+export interface QueuedMessage {
+  readonly id: string;
+  readonly text: string;
+  readonly mode: ChatMode;
+}
+
 export class ChatViewModel {
   messages: ChatMessage[] = [];
   session: ChatSession | null = null;
@@ -24,6 +33,9 @@ export class ChatViewModel {
   selectedMode: ChatMode = 'general';
   /** Non-null while the user is editing a past message. */
   editingMessage: ChatMessage | null = null;
+
+  /** FIFO: user messages to send after the current generation finishes. */
+  pendingQueue: QueuedMessage[] = [];
 
   private abortController: AbortController | null = null;
   private pendingWordFragment = '';
@@ -42,6 +54,10 @@ export class ChatViewModel {
     makeAutoObservable(this);
   }
 
+  get canAcceptMoreQueuedMessages(): boolean {
+    return this.pendingQueue.length < MAX_PENDING_MESSAGE_QUEUE;
+  }
+
   setInputText(text: string) {
     this.inputText = text;
   }
@@ -57,6 +73,7 @@ export class ChatViewModel {
   }
 
   async loadSession(sessionId: string): Promise<void> {
+    const sessionIdBeforeLoad = this.session?.id;
     runInAction(() => { this.isLoading = true; this.error = null; });
     try {
       const [sessionResult, messagesResult] = await Promise.all([
@@ -66,7 +83,21 @@ export class ChatViewModel {
 
       runInAction(() => {
         if (sessionResult.success) this.session = sessionResult.data;
-        if (messagesResult.success) this.messages = messagesResult.data;
+        // Never replace in-memory transcript while a turn is active — async load can finish mid-generate and wipe bubbles + break tokens.
+        if (messagesResult.success && !this.isStreaming) {
+          this.messages = messagesResult.data;
+        } else if (messagesResult.success && this.isStreaming) {
+          console.log('[Chat][Queue] loadSession: skipped messages overwrite (isStreaming)', { sessionId: sessionId });
+        }
+        // Only clear queue when switching chats — not on a late refresh of the same session (would wipe FIFO while streaming).
+        const loadedSession = sessionResult.success ? sessionResult.data : null;
+        if (
+          sessionIdBeforeLoad !== undefined &&
+          loadedSession !== null &&
+          loadedSession.id !== sessionIdBeforeLoad
+        ) {
+          this.pendingQueue = [];
+        }
       });
     } finally {
       runInAction(() => { this.isLoading = false; });
@@ -96,7 +127,11 @@ export class ChatViewModel {
         runInAction(() => { this.error = result.error.message; });
         return null;
       }
-      runInAction(() => { this.session = result.data; this.messages = []; });
+      runInAction(() => {
+        this.session = result.data;
+        this.messages = [];
+        this.pendingQueue = [];
+      });
       return result.data.id;
     } finally {
       runInAction(() => { this.isLoading = false; });
@@ -105,7 +140,59 @@ export class ChatViewModel {
 
   async sendMessage(): Promise<void> {
     const text = this.inputText.trim();
-    if (!text || this.isStreaming || !this.session) return;
+    if (!text || !this.session) return;
+
+    if (this.isStreaming) {
+      if (!this.canAcceptMoreQueuedMessages) return;
+      const queued: QueuedMessage = {
+        id: `queue_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+        text,
+        mode: this.selectedMode,
+      };
+      console.log('[Chat][Queue] enqueue', { id: queued.id, textPreview: text.slice(0, 80), mode: queued.mode, depthAfter: this.pendingQueue.length + 1 });
+      runInAction(() => {
+        this.pendingQueue = [...this.pendingQueue, queued];
+        this.inputText = '';
+      });
+      return;
+    }
+
+    await this.runSendTurn(text, this.selectedMode, { clearInput: true });
+  }
+
+  cancelQueuedMessage(id: string): void {
+    runInAction(() => {
+      this.pendingQueue = this.pendingQueue.filter((q) => q.id !== id);
+    });
+  }
+
+  /** Updates queued text in place — flush uses whatever is stored when the turn ends. */
+  updateQueuedMessage(id: string, text: string): void {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    runInAction(() => {
+      this.pendingQueue = this.pendingQueue.map((q) =>
+        q.id === id ? { ...q, text: trimmed } : q,
+      );
+    });
+  }
+
+  private async runSendTurn(
+    text: string,
+    mode: ChatMode,
+    options?: { clearInput?: boolean },
+  ): Promise<void> {
+    if (!this.session) return;
+
+    const clearInput = options?.clearInput ?? true;
+    console.log('[Chat][Queue] runSendTurn start', {
+      textPreview: text.slice(0, 80),
+      mode,
+      clearInput,
+      fromQueue: !clearInput,
+      pendingRemaining: this.pendingQueue.length,
+      messagesLenBefore: this.messages.length,
+    });
 
     const userMessage: ChatMessage = {
       id: `msg_${Date.now()}_user`,
@@ -120,55 +207,87 @@ export class ChatViewModel {
 
     runInAction(() => {
       this.messages = [...this.messages, userMessage];
-      this.inputText = '';
+      if (clearInput) this.inputText = '';
       this.isStreaming = true;
       this.isModelLoading = true;
       this.streamingContent = '';
       this.error = null;
     });
+    console.log('[Chat][Queue] user bubble added', { userId: userMessage.id, messagesLen: this.messages.length, isStreaming: this.isStreaming });
 
     this.abortController = new AbortController();
     this.pendingWordFragment = '';
     this.wordsSinceLastHaptic = 0;
     this.nextWordTriggerCount = 2;
 
-    const result = await this.sendMessageUseCase.execute({
-      sessionId: this.session.id,
-      modelId: this.session.modelId,
-      userMessage,
-      history: this.messages.filter((m) => m.role !== 'assistant' || m.status === 'done').slice(0, -1),
-      mode: this.selectedMode,
-      onToken: (token) => {
-        this.triggerStreamHapticByWords(token);
-        runInAction(() => {
-          // First token means model finished loading, generation started.
-          this.isModelLoading = false;
-          this.streamingContent += token;
-        });
-      },
-      signal: this.abortController.signal,
-    });
+    try {
+      const historyForLlm = this.messages.filter((m) => m.role !== 'assistant' || m.status === 'done').slice(0, -1);
+      console.log('[Chat][Queue] calling sendMessageUseCase.execute', { historyLen: historyForLlm.length, userId: userMessage.id });
 
-    runInAction(() => {
-      this.isStreaming = false;
-      this.isModelLoading = false;
-      this.streamingContent = '';
+      const result = await this.sendMessageUseCase.execute({
+        sessionId: this.session.id,
+        modelId: this.session.modelId,
+        userMessage,
+        history: historyForLlm,
+        mode,
+        onToken: (token) => {
+          this.triggerStreamHapticByWords(token);
+          runInAction(() => {
+            // First token means model finished loading, generation started.
+            this.isModelLoading = false;
+            this.streamingContent += token;
+          });
+        },
+        signal: this.abortController.signal,
+      });
 
-      if (result.success) {
-        // Final subtle confirmation when assistant response is committed.
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-        // Replace the placeholder streaming bubble with the final persisted message.
-        this.messages = [
-          ...this.messages.filter((m) => m.role !== 'assistant' || m.status !== 'streaming'),
-          result.data,
-        ];
-        // Title can auto-improve at 3 lifecycle thresholds unless user locked it.
-        void this.generateChatTitleUseCase.execute(currentSessionId, currentModelId);
-      } else {
-        this.error = result.error.message;
+      console.log('[Chat][Queue] sendMessageUseCase finished', { success: result.success, messagesLen: this.messages.length });
+
+      runInAction(() => {
+        this.isStreaming = false;
+        this.isModelLoading = false;
+        this.streamingContent = '';
+
+        if (result.success) {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+          this.messages = [
+            ...this.messages.filter((m) => m.role !== 'assistant' || m.status !== 'streaming'),
+            result.data,
+          ];
+          void this.generateChatTitleUseCase.execute(currentSessionId, currentModelId);
+        } else {
+          console.error('[Chat][Queue] generation failed', result.error.code, result.error.message, result.error.cause);
+          this.error = result.error.message;
+          this.messages = this.messages.filter((m) => m.status !== 'streaming');
+        }
+      });
+    } catch (e) {
+      console.log('[Chat][Queue] sendMessageUseCase threw', e);
+      runInAction(() => {
+        this.isStreaming = false;
+        this.isModelLoading = false;
+        this.streamingContent = '';
+        this.error = e instanceof Error ? e.message : 'Generation failed';
         this.messages = this.messages.filter((m) => m.status !== 'streaming');
-      }
+      });
+    }
+
+    console.log('[Chat][Queue] before flushNextQueuedAfterTurn', { pendingLen: this.pendingQueue.length });
+    await this.flushNextQueuedAfterTurn();
+  }
+
+  /** After a turn fully completes (including thrown errors), send the next queued user message to the LLM. */
+  private async flushNextQueuedAfterTurn(): Promise<void> {
+    const next = this.pendingQueue[0];
+    if (!next) {
+      console.log('[Chat][Queue] flush: empty queue');
+      return;
+    }
+    console.log('[Chat][Queue] flush: dequeuing', { id: next.id, textPreview: next.text.slice(0, 80), mode: next.mode });
+    runInAction(() => {
+      this.pendingQueue = this.pendingQueue.slice(1);
     });
+    await this.runSendTurn(next.text, next.mode, { clearInput: false });
   }
 
   private triggerStreamHapticByWords(token: string): void {
