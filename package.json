@@ -49,6 +49,7 @@
     "react-native-bottom-tabs": "^1.1.0",
     "react-native-device-info": "^15.0.2",
     "react-native-gesture-handler": "~2.28.0",
+    "react-native-keyboard-controller": "1.18.5",
     "react-native-purchases": "^9.10.5",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
