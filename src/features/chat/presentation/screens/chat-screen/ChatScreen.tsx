@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ChatMessage } from '../../../domain/entities/ChatMessage';
 import { ChatHeader } from '../../components/ChatHeader/ChatHeader';
 import { ChatInputBar } from '../../components/ChatInputBar/ChatInputBar';
+import { MessageQueueStrip } from '../../components/MessageQueueStrip/MessageQueueStrip';
 import { MessageRenderer } from '../../components/MessageRenderer/MessageRenderer';
 import type { ChatViewModel } from '../../viewmodels/ChatViewModel';
 import { styles } from './ChatScreenStyles';
@@ -197,7 +198,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
   const canSend =
     hasDownloadedModel &&
     viewModel.inputText.trim().length > 0 &&
-    !viewModel.isStreaming;
+    (!viewModel.isStreaming || viewModel.canAcceptMoreQueuedMessages);
 
   const renderItem = useCallback(
     ({ item }: { item: ChatMessage }) => (
@@ -245,6 +246,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
           removeClippedSubviews={false}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           ListFooterComponent={
@@ -262,10 +264,17 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
           }
         />
 
+        <MessageQueueStrip
+          items={viewModel.pendingQueue}
+          onRemove={(id) => viewModel.cancelQueuedMessage(id)}
+          onUpdate={(id, text) => viewModel.updateQueuedMessage(id, text)}
+        />
+
         <ChatInputBar
           inputText={viewModel.inputText}
           isStreaming={viewModel.isStreaming}
           canSend={canSend}
+          canEnqueueWhileStreaming={viewModel.canAcceptMoreQueuedMessages}
           inputEnabled={hasDownloadedModel}
           selectedMode={viewModel.selectedMode}
           isEditMode={viewModel.editingMessage !== null}
