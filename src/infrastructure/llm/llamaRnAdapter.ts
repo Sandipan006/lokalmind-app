@@ -28,6 +28,8 @@ export class LlamaRnAdapter implements ILLMEngine {
   private currentModelId: string | null = null;
   // Deduplicate concurrent initialize() calls - prevents double-loading during app boot races.
   private initializingPromise: Promise<void> | null = null;
+  /** One completion at a time — native throws "Context is busy" if a new completion starts before the last fully unwinds. */
+  private completionEnd: Promise<void> = Promise.resolve();
 
   async initialize(modelId: string, config: LLMConfig): Promise<void> {
     if (this.context && this.currentModelId === modelId) return;
@@ -104,6 +106,13 @@ export class LlamaRnAdapter implements ILLMEngine {
       throw new Error('[LlamaRnAdapter] Model not loaded. Call initialize() first.');
     }
 
+    await this.completionEnd;
+
+    let releaseCompletion!: () => void;
+    this.completionEnd = new Promise<void>((resolve) => {
+      releaseCompletion = resolve;
+    });
+
     const modelConfig = this.currentModelId ? getModelConfig(this.currentModelId) : null;
 
     const oaiMessages = messages.map((m) => ({ role: m.role, content: m.content }));
@@ -143,6 +152,8 @@ export class LlamaRnAdapter implements ILLMEngine {
       };
     } finally {
       signal?.removeEventListener('abort', stopCompletion);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      releaseCompletion();
     }
   }
 
@@ -153,6 +164,7 @@ export class LlamaRnAdapter implements ILLMEngine {
     }
     this.currentModelId = null;
     this.initializingPromise = null;
+    this.completionEnd = Promise.resolve();
   }
 
   isModelLoaded(): boolean {
@@ -169,5 +181,6 @@ export class LlamaRnAdapter implements ILLMEngine {
     this.context = null;
     this.currentModelId = null;
     this.initializingPromise = null;
+    this.completionEnd = Promise.resolve();
   }
 }

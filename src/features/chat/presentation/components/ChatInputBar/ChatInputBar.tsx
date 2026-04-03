@@ -13,6 +13,8 @@ interface ChatInputBarProps {
   inputText: string;
   isStreaming: boolean;
   canSend: boolean;
+  /** When streaming, allow typing/sending to add to the pending queue (up to cap). */
+  canEnqueueWhileStreaming?: boolean;
   /** When false (e.g. no GGUF on device), composer is read-only. */
   inputEnabled?: boolean;
   selectedMode: ChatMode;
@@ -28,6 +30,7 @@ export function ChatInputBar({
   inputText,
   isStreaming,
   canSend,
+  canEnqueueWhileStreaming = false,
   inputEnabled = true,
   selectedMode,
   isEditMode = false,
@@ -59,6 +62,7 @@ export function ChatInputBar({
   }, [inputHeight, inputText, minTextInputHeight]);
 
   const composerLocked = !inputEnabled;
+  const allowComposerWhileStreaming = canEnqueueWhileStreaming;
 
   return (
     <View style={[styles.inputBar, { paddingBottom: Math.max((styles.inputBar.paddingBottom ?? 0) as number, insets.bottom) }]}>
@@ -81,7 +85,7 @@ export function ChatInputBar({
             onChangeText={onChangeText}
             multiline
             returnKeyType="default"
-            editable={inputEnabled && !isStreaming}
+            editable={inputEnabled && (!isStreaming || allowComposerWhileStreaming)}
             textAlignVertical="top"
             underlineColorAndroid="transparent"
             scrollEnabled={inputHeight >= maxTextInputHeight}
@@ -108,9 +112,21 @@ export function ChatInputBar({
             </TouchableOpacity>
 
             {isStreaming ? (
-              <TouchableOpacity style={styles.stopButton} onPress={onStop} activeOpacity={0.7}>
-                <View style={styles.stopSquare} />
-              </TouchableOpacity>
+              <View style={styles.streamingActionsRow}>
+                {canSend ? (
+                  <TouchableOpacity
+                    style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
+                    onPress={onSend}
+                    disabled={!canSend}
+                    activeOpacity={0.8}
+                  >
+                    <SvgXml xml={sendMessageSvg} width={18} height={18} />
+                  </TouchableOpacity>
+                ) : null}
+                <TouchableOpacity style={styles.stopButton} onPress={onStop} activeOpacity={0.7}>
+                  <View style={styles.stopSquare} />
+                </TouchableOpacity>
+              </View>
             ) : (
               <TouchableOpacity
                 style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}

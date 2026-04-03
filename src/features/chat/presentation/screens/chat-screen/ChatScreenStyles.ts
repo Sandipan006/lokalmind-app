@@ -22,6 +22,7 @@ export const styles = StyleSheet.create({
   // ── Message list ────────────────────────────────────────────────────────────
   messageList: {
     flex: 1,
+    width: '100%',
     // marginBottom: spacing.md,
   },
   messageListContent: {
@@ -33,6 +34,8 @@ export const styles = StyleSheet.create({
   // ── Bubbles ─────────────────────────────────────────────────────────────────
   messageRow: {
     marginBottom: spacing.xl,
+    width: '100%',
+    minWidth: 0,
   },
   userRow: {
     alignItems: 'flex-end',
@@ -42,9 +45,9 @@ export const styles = StyleSheet.create({
   },
   bubble: {
     maxWidth: '80%',
+    minWidth: 0,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.xl,
   },
   userBubble: {
     backgroundColor: CHAT_BUBBLE_USER_BG,
@@ -55,6 +58,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: 0,
     maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
+    alignSelf: 'stretch',
   },
   bubbleText: {
     ...typography.body.default,

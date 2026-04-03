@@ -98,6 +98,10 @@ export const typography = {
       fontFamily: fonts.figtree.medium,
       fontSize: fontSizes.md,
     } as TextStyle,
+    h6: {
+      fontFamily: fonts.figtree.medium,
+      fontSize: fontSizes.xs,
+    } as TextStyle,
   },
   body: {
     large: {
