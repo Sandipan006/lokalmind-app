@@ -72,3 +72,4 @@ Examples:
 - Never commit `.env` or any file containing secrets or API keys
 - Serial number `#N` must be unique across the entire commit history — check the last commit before pushing
 - PR title must match the commit message format
+- **Always stage and commit ALL modified and untracked files** (`git add -A`) — never cherry-pick only the files changed in the current session. Every dirty file in the working tree goes into the commit.
