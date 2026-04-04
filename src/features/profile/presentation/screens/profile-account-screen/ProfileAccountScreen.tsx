@@ -77,7 +77,8 @@ export const ProfileAccountScreen = observer(() => {
       );
       return;
     }
-    const mailto = `mailto:${email}?subject=${encodeURIComponent('LokalMind')}`;
+    const subject = 'LokalMind Support Request';
+    const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
     try {
       await Linking.openURL(mailto);
     } catch {

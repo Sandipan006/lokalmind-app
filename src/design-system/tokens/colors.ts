@@ -51,6 +51,10 @@ export const CHAT_BUBBLE_USER_BG    = palette.orange[500];
 export const CHAT_BUBBLE_AI_BG      = palette.white[900];
 export const CHAT_BUBBLE_USER_TEXT  = palette.white[1000];
 export const CHAT_BUBBLE_AI_TEXT    = palette.black[950];
+/** Subtle reply strip on user orange bubble (WhatsApp-like scrim, not a solid second box). */
+export const CHAT_USER_REPLY_SCRIM = '#5D1601';
+/** Thin vertical bar for quoted reply. */
+export const CHAT_USER_REPLY_BAR = '#E89880';
 
 // Status
 export const ERROR_RED              = palette.red[500];
