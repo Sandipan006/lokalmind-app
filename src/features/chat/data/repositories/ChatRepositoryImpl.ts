@@ -1,9 +1,9 @@
-import { ok, err, createError } from '@/src/core/types';
 import type { Result } from '@/src/core/types';
-import type { IChatRepository } from '../../domain/repositories/IChatRepository';
+import { createError, err, ok } from '@/src/core/types';
+import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
 import type { ChatMessage } from '../../domain/entities/ChatMessage';
 import type { ChatSession } from '../../domain/entities/ChatSession';
-import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
+import type { IChatRepository } from '../../domain/repositories/IChatRepository';
 
 export class ChatRepositoryImpl implements IChatRepository {
   private initialized = false;
@@ -48,6 +48,18 @@ export class ChatRepositoryImpl implements IChatRepository {
     }
     if (!names.has('last_title_bucket')) {
       await this.sqliteDriver.execute('ALTER TABLE chat_sessions ADD COLUMN last_title_bucket INTEGER NOT NULL DEFAULT 0');
+    }
+
+    const msgColumns = await this.sqliteDriver.query<{ name: string }>('PRAGMA table_info(chat_messages)');
+    const msgNames = new Set(msgColumns.map((c) => c.name));
+    if (!msgNames.has('reply_to_message_id')) {
+      await this.sqliteDriver.execute('ALTER TABLE chat_messages ADD COLUMN reply_to_message_id TEXT');
+    }
+    if (!msgNames.has('reply_preview')) {
+      await this.sqliteDriver.execute('ALTER TABLE chat_messages ADD COLUMN reply_preview TEXT');
+    }
+    if (!msgNames.has('reply_to_role')) {
+      await this.sqliteDriver.execute('ALTER TABLE chat_messages ADD COLUMN reply_to_role TEXT');
     }
 
     this.initialized = true;
@@ -185,9 +197,22 @@ export class ChatRepositoryImpl implements IChatRepository {
       await this.ensureInitialized();
       await this.sqliteDriver.transaction(async (driver) => {
         await driver.execute(
-          `INSERT OR REPLACE INTO chat_messages (id, session_id, role, content, status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [message.id, message.sessionId, message.role, message.content, message.status, message.createdAt],
+          `INSERT OR REPLACE INTO chat_messages (
+             id, session_id, role, content, status, created_at,
+             reply_to_message_id, reply_preview, reply_to_role
+           )
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            message.id,
+            message.sessionId,
+            message.role,
+            message.content,
+            message.status,
+            message.createdAt,
+            message.replyToMessageId ?? null,
+            message.replyPreview ?? null,
+            message.replyToRole ?? null,
+          ],
         );
         await driver.execute(
           `UPDATE chat_sessions SET updated_at = ? WHERE id = ?`,
@@ -238,17 +263,45 @@ export class ChatRepositoryImpl implements IChatRepository {
     try {
       await this.ensureInitialized();
       const rows = await this.sqliteDriver.query<{
-        id: string; session_id: string; role: string; content: string; status: string; created_at: number;
+        id: string;
+        session_id: string;
+        role: string;
+        content: string;
+        status: string;
+        created_at: number;
+        reply_to_message_id: string | null;
+        reply_preview: string | null;
+        reply_to_role: string | null;
       }>(`SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC`, [sessionId]);
 
-      const messages: ChatMessage[] = rows.map((r) => ({
-        id: r.id,
-        sessionId: r.session_id,
-        role: r.role as ChatMessage['role'],
-        content: r.content,
-        status: r.status as ChatMessage['status'],
-        createdAt: r.created_at,
-      }));
+      const messages: ChatMessage[] = rows.map((r): ChatMessage => {
+        const base: ChatMessage = {
+          id: r.id,
+          sessionId: r.session_id,
+          role: r.role as ChatMessage['role'],
+          content: r.content,
+          status: r.status as ChatMessage['status'],
+          createdAt: r.created_at,
+        };
+
+        if (r.reply_to_message_id == null || r.reply_to_message_id.length === 0) {
+          return base;
+        }
+
+        const replyToRole =
+          r.reply_to_role === 'assistant' || r.reply_to_role === 'user'
+            ? r.reply_to_role
+            : undefined;
+
+        return {
+          ...base,
+          replyToMessageId: r.reply_to_message_id,
+          ...(r.reply_preview != null && r.reply_preview !== ''
+            ? { replyPreview: r.reply_preview }
+            : {}),
+          ...(replyToRole != null ? { replyToRole } : {}),
+        };
+      });
 
       return ok(messages);
     } catch (e) {

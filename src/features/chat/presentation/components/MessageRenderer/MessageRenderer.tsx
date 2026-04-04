@@ -4,6 +4,17 @@ import type { TextStyle } from 'react-native';
 import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 import { styles } from './MessageRendererStyles';
 
+/** Bold/italic for `**` / `_` / `*` segments; base style stays on the parent `Text`. */
+export interface InlineMarkdownStyleSet {
+  bold: TextStyle;
+  italic: TextStyle;
+}
+
+const defaultInlineMarkdownStyles: InlineMarkdownStyleSet = {
+  bold: styles.bodyTextBold,
+  italic: styles.bodyTextItalic,
+};
+
 /**
  * Clipboard uses `expo-clipboard` native code. If the dev client was built without it, `require` fails here
  * and we fall back to Share — rebuild with `eas build --profile development` (or add the module) for real copy.
@@ -25,7 +36,11 @@ async function copyTextBestEffort(text: string): Promise<'clipboard' | 'share' |
 }
 
 /** `**bold**`, `_italic_`, `*italic*` (not `* list` — opening * must be followed by non-whitespace). Bold inner can contain italic. */
-function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+export function renderInlineMarkdown(
+  text: string,
+  keyPrefix: string,
+  styleSet: InlineMarkdownStyleSet = defaultInlineMarkdownStyles,
+): ReactNode[] {
   if (!text) return [];
   const nodes: ReactNode[] = [];
   const re = /(\*\*([\s\S]*?)\*\*)|(_([^_\n]+)_)|(\*(\S[^*\n]*)\*)/g;
@@ -37,19 +52,19 @@ function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
     }
     if (m[2] !== undefined) {
       nodes.push(
-        <Text key={`${keyPrefix}B${m.index}`} style={styles.bodyTextBold}>
-          {renderInlineMarkdown(m[2], `${keyPrefix}n${m.index}`)}
+        <Text key={`${keyPrefix}B${m.index}`} style={styleSet.bold}>
+          {renderInlineMarkdown(m[2], `${keyPrefix}n${m.index}`, styleSet)}
         </Text>,
       );
     } else if (m[4] !== undefined) {
       nodes.push(
-        <Text key={`${keyPrefix}U${m.index}`} style={styles.bodyTextItalic}>
+        <Text key={`${keyPrefix}U${m.index}`} style={styleSet.italic}>
           {m[4]}
         </Text>,
       );
     } else if (m[6] !== undefined) {
       nodes.push(
-        <Text key={`${keyPrefix}A${m.index}`} style={styles.bodyTextItalic}>
+        <Text key={`${keyPrefix}A${m.index}`} style={styleSet.italic}>
           {m[6]}
         </Text>,
       );

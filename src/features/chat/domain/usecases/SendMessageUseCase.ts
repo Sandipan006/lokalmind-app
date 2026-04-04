@@ -5,6 +5,7 @@ import { createError } from '@/src/core/types';
 import { resolveSystemPromptForChat } from '../config/systemPromptResolution';
 import type { ChatMessage } from '../entities/ChatMessage';
 import type { ChatMode } from '../entities/ChatMode';
+import { composeTurnContentForLlm } from '../utils/messageReply';
 import type { IChatRepository } from '../repositories/IChatRepository';
 
 /** Max user + assistant messages passed to the LLM (system prompt is separate). */
@@ -27,9 +28,12 @@ function buildCappedLlmTurns(history: ChatMessage[], userMessage: ChatMessage): 
   const turns: LLMMessage[] = [
     ...history.map((m) => ({
       role: m.role as LLMMessage['role'],
-      content: truncateMessageContentForLlm(m.content),
+      content: composeTurnContentForLlm(m, truncateMessageContentForLlm),
     })),
-    { role: 'user', content: truncateMessageContentForLlm(userMessage.content) },
+    {
+      role: 'user',
+      content: composeTurnContentForLlm(userMessage, truncateMessageContentForLlm),
+    },
   ];
   return turns.slice(-MAX_LLM_CONVERSATION_MESSAGES);
 }
