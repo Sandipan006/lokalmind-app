@@ -196,6 +196,8 @@ export function ModelCard({
               <Text style={styles.progressText}>
                 {displayProgress.bytesWritten <= 0
                   ? 'Starting…'
+                  : displayProgress.progressFraction >= 1
+                  ? 'Finalizing…'
                   : `${formatSpeed(Math.max(displayProgress.speedBytesPerSecond, 0))} · ETA ${
                       displayProgress.etaSeconds > 0 ? formatETA(displayProgress.etaSeconds) : '--'
                     }`}

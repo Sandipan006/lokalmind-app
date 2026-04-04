@@ -44,12 +44,43 @@ export interface IDownloadService {
   cancelAllDownloads(): Promise<void>;
   getDownloadState(modelId: string): DownloadState | null;
   hydratePersistedStates(): Promise<void>;
+  /**
+   * Subscribe to live progress updates for an active download.
+   * Safe to call even if the download hasn't started yet — listener fires on next tick.
+   * Returns an unsubscribe function.
+   */
+  subscribeToProgress(modelId: string, listener: (progress: DownloadProgress) => void): () => void;
+  /** Returns model IDs that currently have an active (downloading or paused) download context. */
+  getActiveDownloadIds(): string[];
 }
 
 export class DownloadService implements IDownloadService {
   private readonly activeDownloads = new Map<string, DownloadContext>();
+  // External listeners keyed by modelId — survive navigation away and back.
+  private readonly listeners = new Map<string, Set<(progress: DownloadProgress) => void>>();
 
   constructor(private readonly asyncStorageDriver: IAsyncStorageDriver) {}
+
+  subscribeToProgress(modelId: string, listener: (progress: DownloadProgress) => void): () => void {
+    if (!this.listeners.has(modelId)) {
+      this.listeners.set(modelId, new Set());
+    }
+    this.listeners.get(modelId)!.add(listener);
+
+    // Immediately replay last known progress so the UI isn't blank on re-subscribe.
+    const state = this.activeDownloads.get(modelId)?.state;
+    if (state?.progress && (state.status === 'downloading' || state.status === 'paused')) {
+      listener(state.progress);
+    }
+
+    return () => {
+      this.listeners.get(modelId)?.delete(listener);
+    };
+  }
+
+  private notifyListeners(modelId: string, progress: DownloadProgress): void {
+    this.listeners.get(modelId)?.forEach((l) => l(progress));
+  }
 
   async hydratePersistedStates(): Promise<void> {
     const keys = await this.asyncStorageDriver.getAllKeys();
@@ -164,7 +195,12 @@ export class DownloadService implements IDownloadService {
         error: null,
       };
 
-      onProgress(progress);
+      // Only emit when metrics are refreshed — native progress fires much faster than the UI needs
+      // and flooding the JS thread with runInAction calls during navigation causes lag.
+      if (shouldRefreshMetrics) {
+        onProgress(progress);
+        this.notifyListeners(modelId, progress);
+      }
 
       // Log speed every 15s to avoid flooding the console during long downloads.
       if (now - context.lastSpeedLog >= SPEED_LOG_INTERVAL_MS) {
@@ -248,6 +284,7 @@ export class DownloadService implements IDownloadService {
         };
         await this.clearPersistedState(config.modelId);
         this.activeDownloads.delete(config.modelId);
+        this.listeners.delete(config.modelId);
       }
     } catch (e) {
       console.error('[DownloadService] downloadAsync failed:', e);
@@ -259,6 +296,7 @@ export class DownloadService implements IDownloadService {
         error: e instanceof Error ? e.message : 'Download failed',
       };
       await this.persistState(config.modelId, context.state);
+      this.listeners.delete(config.modelId);
       throw e;
     }
   }
@@ -343,6 +381,7 @@ export class DownloadService implements IDownloadService {
         };
         await this.clearPersistedState(config.modelId);
         this.activeDownloads.delete(config.modelId);
+        this.listeners.delete(config.modelId);
       }
     } catch (e) {
       context.state = {
@@ -353,6 +392,7 @@ export class DownloadService implements IDownloadService {
         error: e instanceof Error ? e.message : 'Resume failed',
       };
       await this.persistState(config.modelId, context.state);
+      this.listeners.delete(config.modelId);
       throw e;
     }
   }
@@ -367,6 +407,7 @@ export class DownloadService implements IDownloadService {
       await context.resumable.cancelAsync();
       await this.clearPersistedState(modelId);
       this.activeDownloads.delete(modelId);
+      this.listeners.delete(modelId);
 
       const fileInfo = await getInfoAsync(context.config.destinationPath);
       if (fileInfo.exists) {
@@ -392,5 +433,9 @@ export class DownloadService implements IDownloadService {
   getDownloadState(modelId: string): DownloadState | null {
     const context = this.activeDownloads.get(modelId);
     return context?.state ?? null;
+  }
+
+  getActiveDownloadIds(): string[] {
+    return [...this.activeDownloads.keys()];
   }
 }

@@ -74,7 +74,6 @@ export class LlamaRnAdapter implements ILLMEngine {
       modelConfig.sizeBytes,
       config.contextSize ?? modelConfig.contextSize,
     );
-    console.log(`[LlamaRnAdapter] resolved n_ctx=${n_ctx} for model=${modelId}`);
 
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
     const timeoutPromise = new Promise<never>((_, reject) => {

@@ -1,9 +1,10 @@
 import { container } from '@/src/core/di/container';
 import { PRIMARY_ORANGE } from '@/src/design-system/tokens/colors';
 import { spacing } from '@/src/design-system/tokens/spacing';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -13,6 +14,7 @@ import {
   PauseDownloadUseCase,
   ResumeDownloadUseCase,
   StartDownloadUseCase,
+  SubscribeToDownloadProgressUseCase,
 } from '../../../domain/usecases';
 import { ModelCard } from '../../components/ModelCard';
 import { ModelSetupViewModel } from '../../viewmodels/ModelSetupViewModel';
@@ -29,6 +31,7 @@ export const ModelBrowserScreen = observer(() => {
       new ResumeDownloadUseCase(container.modelRepository),
       new CancelDownloadUseCase(container.modelRepository),
       new DeleteDownloadedModelUseCase(container.modelRepository),
+      new SubscribeToDownloadProgressUseCase(container.modelRepository),
     )
   ).current;
 
@@ -36,14 +39,17 @@ export const ModelBrowserScreen = observer(() => {
     viewModel.loadModels();
   }, [viewModel]);
 
-  const downloadedModels = useMemo(
-    () => viewModel.models.filter((model) => model.isDownloaded),
-    [viewModel.models]
+  // Re-attach listeners to any in-flight downloads whenever the tab is focused.
+  // This restores live progress UI after navigating to chat and back.
+  useFocusEffect(
+    useCallback(() => {
+      const cleanup = viewModel.reattachDownloadListeners();
+      return cleanup;
+    }, [viewModel]),
   );
-  const availableModels = useMemo(
-    () => viewModel.models.filter((model) => !model.isDownloaded),
-    [viewModel.models]
-  );
+
+  const downloadedModels = viewModel.models.filter((model) => model.isDownloaded);
+  const availableModels = viewModel.models.filter((model) => !model.isDownloaded);
 
   if (viewModel.isLoading) {
     return (
