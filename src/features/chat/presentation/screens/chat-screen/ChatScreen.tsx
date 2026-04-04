@@ -6,7 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { TextInput } from 'react-native';
 import {
   ActionSheetIOS,
@@ -34,6 +34,7 @@ import {
   renderInlineMarkdown,
   type InlineMarkdownStyleSet,
 } from '../../components/MessageRenderer/MessageRenderer';
+import { RegenerateControls } from '../../components/RegenerateControls/RegenerateControls';
 import type { ChatViewModel } from '../../viewmodels/ChatViewModel';
 import { styles } from './ChatScreenStyles';
 
@@ -98,10 +99,23 @@ function ThinkingIndicator({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
-const MessageBubble = observer(({ message, onLongPressMessage, onDismissKeyboard }: {
+const MessageBubble = observer(({
+  message,
+  onLongPressMessage,
+  onDismissKeyboard,
+  displayContent,
+  regenerateControls,
+  isStreaming: isStreamingInPlace,
+}: {
   message: ChatMessage;
   onLongPressMessage?: (msg: ChatMessage) => void;
   onDismissKeyboard: () => void;
+  /** Overrides the displayed text (used when paging through alternates). */
+  displayContent?: string;
+  /** If provided, rendered below the assistant bubble. */
+  regenerateControls?: ReactNode;
+  /** Enables streaming cursor inside the bubble (for in-place regeneration). */
+  isStreaming?: boolean;
 }) => {
   const isUser = message.role === 'user';
   const hasReply =
@@ -168,9 +182,13 @@ const MessageBubble = observer(({ message, onLongPressMessage, onDismissKeyboard
         delayLongPress={350}
       >
         <View style={[styles.bubble, styles.assistantBubble]}>
-          <MessageRenderer content={message.content} />
+          <MessageRenderer
+            content={displayContent ?? message.content}
+            {...(isStreamingInPlace ? { isStreaming: true, trailingElement: <StreamingCursor /> } : {})}
+          />
         </View>
       </Pressable>
+      {regenerateControls}
     </View>
   );
 });
@@ -190,12 +208,18 @@ const ChatMessageSwipeable = observer(
     onSwipeReply,
     onLongPressMessage,
     onDismissKeyboard,
+    displayContent,
+    regenerateControls,
+    isStreaming,
   }: {
     item: ChatMessage;
     swipeEnabled: boolean;
     onSwipeReply: (msg: ChatMessage) => void;
     onLongPressMessage: (msg: ChatMessage) => void;
     onDismissKeyboard: () => void;
+    displayContent?: string;
+    regenerateControls?: ReactNode;
+    isStreaming?: boolean;
   }) => {
     const swipeRef = useRef<SwipeableMethods | null>(null);
 
@@ -219,6 +243,9 @@ const ChatMessageSwipeable = observer(
           message={item}
           onLongPressMessage={onLongPressMessage}
           onDismissKeyboard={onDismissKeyboard}
+          {...(displayContent !== undefined ? { displayContent } : {})}
+          {...(regenerateControls !== undefined ? { regenerateControls } : {})}
+          {...(isStreaming ? { isStreaming } : {})}
         />
       </ReanimatedSwipeable>
     );
@@ -230,6 +257,8 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
   const listRef = useRef<FlatList>(null);
   const composerInputRef = useRef<TextInput>(null);
   const [hasDownloadedModel, setHasDownloadedModel] = useState(true);
+  // 1-based index of which alternate is currently displayed, keyed by message id.
+  const [alternateViewIndexMap, setAlternateViewIndexMap] = useState<Record<string, number>>({});
 
   const dismissKeyboard = useCallback(() => {
     composerInputRef.current?.blur();
@@ -349,17 +378,121 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
     viewModel.inputText.trim().length > 0 &&
     (!viewModel.isStreaming || viewModel.canAcceptMoreQueuedMessages);
 
+  const lastAssistantId = (() => {
+    for (let i = viewModel.messages.length - 1; i >= 0; i--) {
+      const m = viewModel.messages[i];
+      if (m && m.role === 'assistant' && m.status === 'done') return m.id;
+    }
+    return null;
+  })();
+
   const renderItem = useCallback(
-    ({ item }: { item: ChatMessage }) => (
-      <ChatMessageSwipeable
-        item={item}
-        swipeEnabled={!viewModel.isStreaming}
-        onSwipeReply={(msg) => viewModel.setReplyTargetFromMessage(msg)}
-        onLongPressMessage={handleLongPressMessage}
-        onDismissKeyboard={dismissKeyboard}
-      />
-    ),
-    [dismissKeyboard, handleLongPressMessage, viewModel],
+    ({ item }: { item: ChatMessage }) => {
+      const isLastAssistant =
+        item.role === 'assistant' && item.status === 'done' && item.id === lastAssistantId;
+
+      let displayContent: string | undefined;
+      let regenerateControls: ReactNode | undefined;
+
+      if (item.role === 'assistant') {
+        // During regeneration, stream the new content in-place on this bubble.
+        const isRegenerating = item.id === viewModel.regeneratingMessageId;
+        if (isRegenerating) {
+          // Stream in-place: override bubble content + show cursor inside the bubble text.
+          const streamingDisplay = viewModel.isModelLoading
+            ? item.content
+            : viewModel.streamingContent || item.content;
+          return (
+            <ChatMessageSwipeable
+              item={item}
+              swipeEnabled={false}
+              onSwipeReply={() => {}}
+              onLongPressMessage={handleLongPressMessage}
+              onDismissKeyboard={dismissKeyboard}
+              displayContent={streamingDisplay}
+              {...(!viewModel.isModelLoading ? { isStreaming: true } : {})}
+            />
+          );
+        }
+
+        const alternates = item.alternateContents;
+        // totalVersions = number of versions stored in alternates (which includes all, current last).
+        const totalVersions = alternates ? alternates.length : 1;
+        // activeIndex: which version is the user looking at (1-based).
+        const activeIndex = alternateViewIndexMap[item.id] ?? totalVersions;
+
+        if (alternates && activeIndex <= alternates.length) {
+          displayContent = alternates[activeIndex - 1];
+        }
+
+        if (isLastAssistant) {
+          regenerateControls = (
+            <RegenerateControls
+              totalVersions={totalVersions}
+              activeIndex={activeIndex}
+              disabled={viewModel.isStreaming}
+              onPrev={() =>
+                setAlternateViewIndexMap((prev) => ({
+                  ...prev,
+                  [item.id]: Math.max(1, (prev[item.id] ?? totalVersions) - 1),
+                }))
+              }
+              onNext={() =>
+                setAlternateViewIndexMap((prev) => ({
+                  ...prev,
+                  [item.id]: Math.min(totalVersions, (prev[item.id] ?? totalVersions) + 1),
+                }))
+              }
+              onRegenerate={() => {
+                void viewModel.regenerateLastReply().then(() => {
+                  // After regeneration, the updated message in viewModel.messages has the new
+                  // alternateContents length — jump to the last version automatically.
+                  const updatedMsg = viewModel.messages.find((m) => m.id === item.id);
+                  const newTotal = updatedMsg?.alternateContents?.length ?? totalVersions + 1;
+                  setAlternateViewIndexMap((prev) => ({ ...prev, [item.id]: newTotal }));
+                });
+              }}
+            />
+          );
+        } else if (alternates && totalVersions > 1) {
+          // Non-last assistant messages: show pager only, no Regenerate button.
+          regenerateControls = (
+            <RegenerateControls
+              totalVersions={totalVersions}
+              activeIndex={activeIndex}
+              showRegenerate={false}
+              disabled={false}
+              onPrev={() =>
+                setAlternateViewIndexMap((prev) => ({
+                  ...prev,
+                  [item.id]: Math.max(1, (prev[item.id] ?? totalVersions) - 1),
+                }))
+              }
+              onNext={() =>
+                setAlternateViewIndexMap((prev) => ({
+                  ...prev,
+                  [item.id]: Math.min(totalVersions, (prev[item.id] ?? totalVersions) + 1),
+                }))
+              }
+              onRegenerate={() => {}}
+            />
+          );
+        }
+      }
+
+      return (
+        <ChatMessageSwipeable
+          item={item}
+          swipeEnabled={!viewModel.isStreaming}
+          onSwipeReply={(msg) => viewModel.setReplyTargetFromMessage(msg)}
+          onLongPressMessage={handleLongPressMessage}
+          onDismissKeyboard={dismissKeyboard}
+          {...(displayContent !== undefined ? { displayContent } : {})}
+          {...(regenerateControls !== undefined ? { regenerateControls } : {})}
+        />
+      );
+    },
+    [dismissKeyboard, handleLongPressMessage, viewModel, lastAssistantId, alternateViewIndexMap],
   );
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
@@ -409,8 +542,8 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           ListFooterComponent={
             <>
-              {viewModel.isModelLoading && <ThinkingIndicator onDismiss={dismissKeyboard} />}
-              {viewModel.isStreaming && !viewModel.isModelLoading && viewModel.streamingContent !== '' && (
+              {viewModel.isModelLoading && !viewModel.regeneratingMessageId && <ThinkingIndicator onDismiss={dismissKeyboard} />}
+              {viewModel.isStreaming && !viewModel.isModelLoading && viewModel.streamingContent !== '' && !viewModel.regeneratingMessageId && (
                 <StreamingBubble content={viewModel.streamingContent} onDismiss={dismissKeyboard} />
               )}
               {viewModel.error && (
