@@ -75,14 +75,6 @@ export class ModelRepositoryImpl implements IModelRepository {
         };
       });
 
-      const toGB = (b: number) => (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-      console.log(`[ModelRepository] total RAM: ${toGB(totalRam)}`);
-      models.forEach((m) => {
-        console.log(
-          `[ModelRepository] ${m.id} | minRam: ${toGB(m.minRamBytes)} | size: ${toGB(m.sizeBytes)} | compatible: ${m.isCompatibleWithDevice} | downloaded: ${m.isDownloaded}`,
-        );
-      });
-
       return ok(models);
     } catch (e) {
       return err(createError('STORAGE_ERROR', 'Failed to fetch models', e));
@@ -338,5 +330,27 @@ export class ModelRepositoryImpl implements IModelRepository {
     } catch (e) {
       return err(createError('UNKNOWN_ERROR', 'Failed to get download status', e));
     }
+  }
+
+  getActiveDownloadIds(): string[] {
+    return this.downloadService.getActiveDownloadIds();
+  }
+
+  subscribeToDownloadProgress(
+    modelId: string,
+    listener: (progress: DownloadProgressInfo) => void
+  ): () => void {
+    return this.downloadService.subscribeToProgress(modelId, (p) => {
+      listener({
+        modelId: p.modelId,
+        bytesWritten: p.bytesWritten,
+        totalBytes: p.totalBytes,
+        progressFraction: p.progressFraction,
+        speedBytesPerSecond: p.speedBytesPerSecond,
+        etaSeconds: p.etaSeconds,
+        // Status comes from the active download context, not the progress snapshot.
+        status: this.downloadService.getDownloadState(modelId)?.status ?? 'downloading',
+      });
+    });
   }
 }
