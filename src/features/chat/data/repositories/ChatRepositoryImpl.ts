@@ -62,6 +62,20 @@ export class ChatRepositoryImpl implements IChatRepository {
       await this.sqliteDriver.execute('ALTER TABLE chat_messages ADD COLUMN reply_to_role TEXT');
     }
 
+    // Alternate (regenerated) assistant message versions — ordered by seq ASC (oldest first).
+    await this.sqliteDriver.execute(`
+      CREATE TABLE IF NOT EXISTS message_alternates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message_id TEXT NOT NULL,
+        content TEXT NOT NULL,
+        seq INTEGER NOT NULL,
+        FOREIGN KEY (message_id) REFERENCES chat_messages(id) ON DELETE CASCADE
+      );
+    `);
+    await this.sqliteDriver.execute(
+      `CREATE INDEX IF NOT EXISTS idx_alternates_message ON message_alternates(message_id, seq);`
+    );
+
     this.initialized = true;
   }
 
@@ -274,6 +288,22 @@ export class ChatRepositoryImpl implements IChatRepository {
         reply_to_role: string | null;
       }>(`SELECT * FROM chat_messages WHERE session_id = ? ORDER BY created_at ASC`, [sessionId]);
 
+      // Load all alternates for this session in one query, keyed by message_id.
+      const alternateRows = await this.sqliteDriver.query<{ message_id: string; content: string }>(
+        `SELECT a.message_id, a.content
+         FROM message_alternates a
+         INNER JOIN chat_messages m ON a.message_id = m.id
+         WHERE m.session_id = ?
+         ORDER BY a.message_id, a.seq ASC`,
+        [sessionId],
+      );
+      const alternatesMap = new Map<string, string[]>();
+      for (const a of alternateRows) {
+        const list = alternatesMap.get(a.message_id) ?? [];
+        list.push(a.content);
+        alternatesMap.set(a.message_id, list);
+      }
+
       const messages: ChatMessage[] = rows.map((r): ChatMessage => {
         const base: ChatMessage = {
           id: r.id,
@@ -284,8 +314,10 @@ export class ChatRepositoryImpl implements IChatRepository {
           createdAt: r.created_at,
         };
 
+        const alternates = alternatesMap.get(r.id);
+
         if (r.reply_to_message_id == null || r.reply_to_message_id.length === 0) {
-          return base;
+          return alternates ? { ...base, alternateContents: alternates } : base;
         }
 
         const replyToRole =
@@ -300,12 +332,53 @@ export class ChatRepositoryImpl implements IChatRepository {
             ? { replyPreview: r.reply_preview }
             : {}),
           ...(replyToRole != null ? { replyToRole } : {}),
+          ...(alternates ? { alternateContents: alternates } : {}),
         };
       });
 
       return ok(messages);
     } catch (e) {
       return err(createError('STORAGE_ERROR', 'Failed to get messages', e));
+    }
+  }
+
+  async addMessageAlternate(messageId: string, previousContent: string, newContent: string): Promise<Result<void>> {
+    try {
+      await this.ensureInitialized();
+      await this.sqliteDriver.transaction(async (driver) => {
+        // Determine next seq value.
+        const rows = await driver.query<{ max_seq: number | null }>(
+          `SELECT MAX(seq) as max_seq FROM message_alternates WHERE message_id = ?`,
+          [messageId],
+        );
+        const nextSeq = (rows[0]?.max_seq ?? -1) + 1;
+
+        if (nextSeq === 0) {
+          // First regeneration: archive the original content first.
+          await driver.execute(
+            `INSERT INTO message_alternates (message_id, content, seq) VALUES (?, ?, 0)`,
+            [messageId, previousContent],
+          );
+          await driver.execute(
+            `INSERT INTO message_alternates (message_id, content, seq) VALUES (?, ?, 1)`,
+            [messageId, newContent],
+          );
+        } else {
+          await driver.execute(
+            `INSERT INTO message_alternates (message_id, content, seq) VALUES (?, ?, ?)`,
+            [messageId, newContent, nextSeq],
+          );
+        }
+
+        // Update the active content on the message row itself.
+        await driver.execute(
+          `UPDATE chat_messages SET content = ? WHERE id = ?`,
+          [newContent, messageId],
+        );
+      });
+      return ok(undefined);
+    } catch (e) {
+      return err(createError('STORAGE_ERROR', 'Failed to add message alternate', e));
     }
   }
 

@@ -7,6 +7,7 @@ import { GetSessionUseCase } from '@/src/features/chat/domain/usecases/GetSessio
 import { GetMessagesUseCase } from '@/src/features/chat/domain/usecases/GetMessagesUseCase';
 import { EditMessageUseCase } from '@/src/features/chat/domain/usecases/EditMessageUseCase';
 import { GenerateChatTitleUseCase } from '@/src/features/chat/domain/usecases/GenerateChatTitleUseCase';
+import { RegenerateReplyUseCase } from '@/src/features/chat/domain/usecases/RegenerateReplyUseCase';
 import { SendMessageUseCase } from '@/src/features/chat/domain/usecases/SendMessageUseCase';
 import { UpdateSessionModelUseCase } from '@/src/features/chat/domain/usecases/UpdateSessionModelUseCase';
 import { useEffect, useMemo, useState } from 'react';
@@ -34,6 +35,7 @@ export default function ChatSessionScreen() {
       new EditMessageUseCase(repo),
       new GenerateChatTitleUseCase(repo, llm),
       new UpdateSessionModelUseCase(repo),
+      new RegenerateReplyUseCase(repo, llm, container.appSettingsRepository),
     );
   }, []);
 

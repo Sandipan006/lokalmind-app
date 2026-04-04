@@ -9,6 +9,7 @@ import type { EditMessageUseCase } from '../../domain/usecases/EditMessageUseCas
 import type { GenerateChatTitleUseCase } from '../../domain/usecases/GenerateChatTitleUseCase';
 import type { GetMessagesUseCase } from '../../domain/usecases/GetMessagesUseCase';
 import type { GetSessionUseCase } from '../../domain/usecases/GetSessionUseCase';
+import type { RegenerateReplyUseCase } from '../../domain/usecases/RegenerateReplyUseCase';
 import type { SendMessageUseCase } from '../../domain/usecases/SendMessageUseCase';
 import type { UpdateSessionModelUseCase } from '../../domain/usecases/UpdateSessionModelUseCase';
 
@@ -42,6 +43,9 @@ export class ChatViewModel {
   /** FIFO: user messages to send after the current generation finishes. */
   pendingQueue: QueuedMessage[] = [];
 
+  /** Set during regeneration so the UI can stream in-place on the existing bubble. */
+  regeneratingMessageId: string | null = null;
+
   private abortController: AbortController | null = null;
   private pendingWordFragment = '';
   private wordsSinceLastHaptic = 0;
@@ -55,6 +59,7 @@ export class ChatViewModel {
     private readonly editMessageUseCase: EditMessageUseCase,
     private readonly generateChatTitleUseCase: GenerateChatTitleUseCase,
     private readonly updateSessionModelUseCase: UpdateSessionModelUseCase,
+    private readonly regenerateReplyUseCase: RegenerateReplyUseCase,
   ) {
     makeAutoObservable(this);
   }
@@ -453,6 +458,66 @@ export class ChatViewModel {
 
   stopGeneration(): void {
     this.abortController?.abort();
+  }
+
+  /**
+   * Regenerate the last assistant message. Keeps all previous versions in `alternateContents`.
+   * The new generation becomes the active content (last in `alternateContents`).
+   */
+  async regenerateLastReply(): Promise<void> {
+    if (this.isStreaming || !this.session) return;
+
+    // Find the last assistant message and the history up to (and including) the user turn before it.
+    const lastAssistant = [...this.messages].reverse().find((m) => m.role === 'assistant' && m.status === 'done');
+    if (!lastAssistant) return;
+
+    const assistantIndex = this.messages.findIndex((m) => m.id === lastAssistant.id);
+    // Everything before the assistant message (user turn + prior history) is the LLM context.
+    const historyUpToUserTurn = this.messages.slice(0, assistantIndex);
+
+    runInAction(() => {
+      this.isStreaming = true;
+      this.isModelLoading = true;
+      this.streamingContent = '';
+      this.regeneratingMessageId = lastAssistant.id;
+      this.error = null;
+    });
+
+    this.abortController = new AbortController();
+    this.pendingWordFragment = '';
+    this.wordsSinceLastHaptic = 0;
+    this.nextWordTriggerCount = 2;
+
+    const result = await this.regenerateReplyUseCase.execute({
+      assistantMessage: lastAssistant,
+      historyUpToUserTurn,
+      modelId: this.session.modelId,
+      mode: this.selectedMode,
+      onToken: (token) => {
+        this.triggerStreamHapticByWords(token);
+        runInAction(() => {
+          this.isModelLoading = false;
+          this.streamingContent += token;
+        });
+      },
+      signal: this.abortController.signal,
+    });
+
+    runInAction(() => {
+      this.isStreaming = false;
+      this.isModelLoading = false;
+      this.streamingContent = '';
+      this.regeneratingMessageId = null;
+
+      if (result.success) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+        this.messages = this.messages.map((m) =>
+          m.id === lastAssistant.id ? result.data : m,
+        );
+      } else {
+        this.error = result.error.message;
+      }
+    });
   }
 
   clearError(): void {
