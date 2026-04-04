@@ -3,11 +3,12 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import type { ChatMessage } from '../../domain/entities/ChatMessage';
 import { CHAT_MODES, type ChatMode } from '../../domain/entities/ChatMode';
 import type { ChatSession } from '../../domain/entities/ChatSession';
+import { buildReplyPreviewSnapshot, type MessageReplyDraft } from '../../domain/utils/messageReply';
 import type { CreateSessionUseCase } from '../../domain/usecases/CreateSessionUseCase';
+import type { EditMessageUseCase } from '../../domain/usecases/EditMessageUseCase';
 import type { GenerateChatTitleUseCase } from '../../domain/usecases/GenerateChatTitleUseCase';
 import type { GetMessagesUseCase } from '../../domain/usecases/GetMessagesUseCase';
 import type { GetSessionUseCase } from '../../domain/usecases/GetSessionUseCase';
-import type { EditMessageUseCase } from '../../domain/usecases/EditMessageUseCase';
 import type { SendMessageUseCase } from '../../domain/usecases/SendMessageUseCase';
 import type { UpdateSessionModelUseCase } from '../../domain/usecases/UpdateSessionModelUseCase';
 
@@ -18,6 +19,7 @@ export interface QueuedMessage {
   readonly id: string;
   readonly text: string;
   readonly mode: ChatMode;
+  readonly reply?: MessageReplyDraft;
 }
 
 export class ChatViewModel {
@@ -33,6 +35,9 @@ export class ChatViewModel {
   selectedMode: ChatMode = 'general';
   /** Non-null while the user is editing a past message. */
   editingMessage: ChatMessage | null = null;
+
+  /** Composer: reply target (WhatsApp-style) until send or dismiss. */
+  replyTarget: MessageReplyDraft | null = null;
 
   /** FIFO: user messages to send after the current generation finishes. */
   pendingQueue: QueuedMessage[] = [];
@@ -97,6 +102,7 @@ export class ChatViewModel {
           loadedSession.id !== sessionIdBeforeLoad
         ) {
           this.pendingQueue = [];
+          this.replyTarget = null;
         }
       });
     } finally {
@@ -131,6 +137,7 @@ export class ChatViewModel {
         this.session = result.data;
         this.messages = [];
         this.pendingQueue = [];
+        this.replyTarget = null;
       });
       return result.data.id;
     } finally {
@@ -138,9 +145,27 @@ export class ChatViewModel {
     }
   }
 
+  setReplyTargetFromMessage(message: ChatMessage): void {
+    runInAction(() => {
+      this.replyTarget = {
+        replyToMessageId: message.id,
+        replyPreview: buildReplyPreviewSnapshot(message.content),
+        replyToRole: message.role,
+      };
+    });
+  }
+
+  clearReplyTarget(): void {
+    runInAction(() => {
+      this.replyTarget = null;
+    });
+  }
+
   async sendMessage(): Promise<void> {
     const text = this.inputText.trim();
     if (!text || !this.session) return;
+
+    const replyDraft = this.replyTarget;
 
     if (this.isStreaming) {
       if (!this.canAcceptMoreQueuedMessages) return;
@@ -148,16 +173,21 @@ export class ChatViewModel {
         id: `queue_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
         text,
         mode: this.selectedMode,
+        ...(replyDraft ? { reply: replyDraft } : {}),
       };
       console.log('[Chat][Queue] enqueue', { id: queued.id, textPreview: text.slice(0, 80), mode: queued.mode, depthAfter: this.pendingQueue.length + 1 });
       runInAction(() => {
         this.pendingQueue = [...this.pendingQueue, queued];
         this.inputText = '';
+        this.replyTarget = null;
       });
       return;
     }
 
-    await this.runSendTurn(text, this.selectedMode, { clearInput: true });
+    await this.runSendTurn(text, this.selectedMode, {
+      clearInput: true,
+      ...(replyDraft ? { reply: replyDraft } : {}),
+    });
   }
 
   cancelQueuedMessage(id: string): void {
@@ -180,11 +210,12 @@ export class ChatViewModel {
   private async runSendTurn(
     text: string,
     mode: ChatMode,
-    options?: { clearInput?: boolean },
+    options?: { clearInput?: boolean; reply?: MessageReplyDraft },
   ): Promise<void> {
     if (!this.session) return;
 
     const clearInput = options?.clearInput ?? true;
+    const reply = options?.reply;
     console.log('[Chat][Queue] runSendTurn start', {
       textPreview: text.slice(0, 80),
       mode,
@@ -201,13 +232,23 @@ export class ChatViewModel {
       content: text,
       status: 'done',
       createdAt: Date.now(),
+      ...(reply
+        ? {
+            replyToMessageId: reply.replyToMessageId,
+            replyPreview: reply.replyPreview,
+            replyToRole: reply.replyToRole,
+          }
+        : {}),
     };
     const currentSessionId = this.session.id;
     const currentModelId = this.session.modelId;
 
     runInAction(() => {
       this.messages = [...this.messages, userMessage];
-      if (clearInput) this.inputText = '';
+      if (clearInput) {
+        this.inputText = '';
+        this.replyTarget = null;
+      }
       this.isStreaming = true;
       this.isModelLoading = true;
       this.streamingContent = '';
@@ -287,7 +328,10 @@ export class ChatViewModel {
     runInAction(() => {
       this.pendingQueue = this.pendingQueue.slice(1);
     });
-    await this.runSendTurn(next.text, next.mode, { clearInput: false });
+    await this.runSendTurn(next.text, next.mode, {
+      clearInput: false,
+      ...(next.reply ? { reply: next.reply } : {}),
+    });
   }
 
   private triggerStreamHapticByWords(token: string): void {
@@ -315,6 +359,7 @@ export class ChatViewModel {
     runInAction(() => {
       this.editingMessage = message;
       this.inputText = message.content;
+      this.replyTarget = null;
     });
   }
 

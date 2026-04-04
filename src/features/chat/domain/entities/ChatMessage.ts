@@ -8,4 +8,8 @@ export interface ChatMessage {
   readonly content: string;
   readonly status: MessageStatus;
   readonly createdAt: number;
+  /** If set, this user message is a reply to another message (snapshot at send time). */
+  readonly replyToMessageId?: string;
+  readonly replyPreview?: string;
+  readonly replyToRole?: MessageRole;
 }

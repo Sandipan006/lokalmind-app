@@ -1,6 +1,7 @@
 // llama.rn is imported here - the ONLY file in the codebase allowed to do so.
 // All LLM calls go through ILLMEngine. Nothing outside this file imports llama.rn.
 import type { ILLMEngine, LLMConfig, LLMMessage, LLMResponse } from '@/src/core/ports';
+import { resolveContextSize } from '@/src/infrastructure/device/deviceCapability';
 import { getModelConfig } from '@/src/infrastructure/downloads/modelConfig';
 import { File, Paths } from 'expo-file-system';
 import type { LlamaContext } from 'llama.rn';
@@ -68,6 +69,13 @@ export class LlamaRnAdapter implements ILLMEngine {
     // Strip file:// prefix - initLlama handles it but being explicit avoids platform edge cases.
     const modelPath = modelFile.uri.replace(/^file:\/\//, '');
 
+    // Compute a context size that fits in available device RAM alongside the model weights.
+    const n_ctx = await resolveContextSize(
+      modelConfig.sizeBytes,
+      config.contextSize ?? modelConfig.contextSize,
+    );
+    console.log(`[LlamaRnAdapter] resolved n_ctx=${n_ctx} for model=${modelId}`);
+
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutHandle = setTimeout(
@@ -80,7 +88,7 @@ export class LlamaRnAdapter implements ILLMEngine {
       this.context = await Promise.race([
         initLlama({
           model: modelPath,
-          n_ctx: config.contextSize ?? modelConfig.contextSize,
+          n_ctx,
           n_threads: N_THREADS,
           n_gpu_layers: 99,   // llama.rn auto-caps at what the device supports
           n_batch: 256,
