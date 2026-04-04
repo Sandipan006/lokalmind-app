@@ -4,8 +4,6 @@ import DeviceInfo from 'react-native-device-info';
 // OS + background apps typically consume 1.5–2 GB; 55% is a conservative usable estimate.
 const USABLE_RAM_FACTOR = 0.55;
 
-const toGB = (bytes: number) => (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-
 let cachedTotalRam: number | null = null;
 
 /**
@@ -15,25 +13,17 @@ let cachedTotalRam: number | null = null;
 export async function getTotalRamBytes(): Promise<number> {
   if (cachedTotalRam !== null) return cachedTotalRam;
   try {
-    const [ram, deviceName, model] = await Promise.all([
-      DeviceInfo.getTotalMemory(),
-      DeviceInfo.getDeviceName(),
-      DeviceInfo.getModel(),
-    ]);
+    const ram = await DeviceInfo.getTotalMemory();
     cachedTotalRam = ram > 0 ? ram : 3 * 1024 * 1024 * 1024;
-    console.log(
-      `[DeviceCapability] Device: "${deviceName}" (${model}) | Total RAM: ${toGB(cachedTotalRam)} | Usable RAM (${Math.round(USABLE_RAM_FACTOR * 100)}%): ${toGB(cachedTotalRam * USABLE_RAM_FACTOR)}`,
-    );
   } catch {
     cachedTotalRam = 3 * 1024 * 1024 * 1024;
-    console.warn('[DeviceCapability] getTotalMemory failed — falling back to 3 GB');
   }
   return cachedTotalRam;
 }
 
 /**
  * Usable RAM = total * USABLE_RAM_FACTOR.
- * Use this to compare against model minRamBytes.
+ * Used by `resolveContextSize` to budget KV cache alongside model weights.
  */
 export async function getUsableRamBytes(): Promise<number> {
   return (await getTotalRamBytes()) * USABLE_RAM_FACTOR;
@@ -57,13 +47,7 @@ export async function resolveContextSize(modelWeightBytes: number, maxContextSiz
 
   // Round down to nearest power of 2 for llama.rn efficiency.
   const snapped = largestPowerOfTwoAtMost(computed);
-  const resolved = Math.max(2048, Math.min(snapped, maxContextSize));
-
-  console.log(
-    `[DeviceCapability] contextSize resolution | usable: ${toGB(usable)} | model weights: ${toGB(modelWeightBytes)} | remaining: ${toGB(remaining)} | computed ctx: ${computed} | snapped: ${snapped} | max: ${maxContextSize} | resolved: ${resolved}`,
-  );
-
-  return resolved;
+  return Math.max(2048, Math.min(snapped, maxContextSize));
 }
 
 function largestPowerOfTwoAtMost(n: number): number {

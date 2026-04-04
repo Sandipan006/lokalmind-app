@@ -15,24 +15,23 @@ import { styles } from './ChatHistoryScreenStyles';
 
 export function ChatHistoryScreen() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [editingSession, setEditingSession] = useState<ChatSession | null>(null);
   const [titleDraft, setTitleDraft] = useState('');
 
   const loadHistory = useCallback(async () => {
-    setIsLoading(true);
     try {
       const result = await container.chatRepository.getSessions();
       setSessions(result.success ? result.data : []);
     } finally {
-      setIsLoading(false);
+      setIsInitialLoad(false);
     }
   }, []);
 
   useFocusEffect(useCallback(() => { loadHistory(); }, [loadHistory]));
 
-  if (isLoading) {
+  if (isInitialLoad) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator color={PRIMARY_ORANGE} />

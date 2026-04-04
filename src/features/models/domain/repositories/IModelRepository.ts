@@ -19,4 +19,15 @@ export interface IModelRepository {
   deleteDownloadedModel(modelId: string): Promise<Result<void>>;
   getDownloadStatus(modelId: string): Promise<Result<DownloadProgressInfo | null>>;
   hasDownloadedModel(): Promise<Result<boolean>>;
+  /**
+   * Subscribe to live progress for an active download — survives navigation away and back.
+   * Immediately replays the last known progress snapshot on subscribe.
+   * Returns an unsubscribe function.
+   */
+  subscribeToDownloadProgress(
+    modelId: string,
+    listener: (progress: DownloadProgressInfo) => void
+  ): () => void;
+  /** Returns model IDs that currently have an active (downloading or paused) context. */
+  getActiveDownloadIds(): string[];
 }
