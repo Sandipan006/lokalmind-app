@@ -126,7 +126,8 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     capabilities: ['chat', 'analysis', 'long-context', 'reasoning', 'coding', 'general'],
     version: '3.0',
     modelType: 'general',
-    contextSize: 131072,
+    // 128K native context causes OOM on mobile; this is the ceiling — actual n_ctx is resolved dynamically at load time.
+    contextSize: 32768,
     isPaid: true,
     stopTokens: ['<end_of_turn>', '<eos>'],
   },

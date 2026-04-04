@@ -1,6 +1,7 @@
 import { env } from '@/src/config/env';
 import type { Result } from '@/src/core/types';
 import { createError, err, ok } from '@/src/core/types';
+import { getTotalRamBytes } from '@/src/infrastructure/device/deviceCapability';
 import type { IDownloadService } from '@/src/infrastructure/downloads/downloadService';
 import { MODEL_CONFIGS } from '@/src/infrastructure/downloads/modelConfig';
 import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
@@ -44,11 +45,14 @@ export class ModelRepositoryImpl implements IModelRepository {
     try {
       await this.ensureInitialized();
 
-      const downloadedModels = await this.sqliteDriver.query<{
-        id: string;
-        is_downloaded: number;
-        file_path: string | null;
-      }>('SELECT id, is_downloaded, file_path FROM models');
+      const [downloadedModels, totalRam] = await Promise.all([
+        this.sqliteDriver.query<{
+          id: string;
+          is_downloaded: number;
+          file_path: string | null;
+        }>('SELECT id, is_downloaded, file_path FROM models'),
+        getTotalRamBytes(),
+      ]);
 
       const downloadedMap = new Map(
         downloadedModels.map((m) => [m.id, { isDownloaded: m.is_downloaded === 1, filePath: m.file_path }])
@@ -63,9 +67,20 @@ export class ModelRepositoryImpl implements IModelRepository {
           sizeBytes: config.sizeBytes,
           description: config.description,
           ramRequirement: config.ramRequirement,
+          minRamBytes: config.minRamBytes,
           isPaid: config.isPaid,
           isDownloaded: downloaded?.isDownloaded ?? false,
+          // minRamBytes is a total-device-RAM threshold, not usable RAM — compare against total.
+          isCompatibleWithDevice: totalRam >= config.minRamBytes,
         };
+      });
+
+      const toGB = (b: number) => (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+      console.log(`[ModelRepository] total RAM: ${toGB(totalRam)}`);
+      models.forEach((m) => {
+        console.log(
+          `[ModelRepository] ${m.id} | minRam: ${toGB(m.minRamBytes)} | size: ${toGB(m.sizeBytes)} | compatible: ${m.isCompatibleWithDevice} | downloaded: ${m.isDownloaded}`,
+        );
       });
 
       return ok(models);
@@ -90,6 +105,7 @@ export class ModelRepositoryImpl implements IModelRepository {
       }>('SELECT id, is_downloaded, file_path FROM models WHERE id = ?', [id]);
 
       const isDownloaded = rows.length > 0 && rows[0]?.is_downloaded === 1;
+      const totalRam = await getTotalRamBytes();
 
       const model: Model = {
         id: config.id,
@@ -98,8 +114,10 @@ export class ModelRepositoryImpl implements IModelRepository {
         sizeBytes: config.sizeBytes,
         description: config.description,
         ramRequirement: config.ramRequirement,
+        minRamBytes: config.minRamBytes,
         isPaid: config.isPaid,
         isDownloaded,
+        isCompatibleWithDevice: totalRam >= config.minRamBytes,
       };
 
       return ok(model);
