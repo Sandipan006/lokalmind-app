@@ -16,4 +16,6 @@ export interface IChatRepository {
   deleteMessagesAfter(sessionId: string, afterCreatedAt: number): Promise<Result<void>>;
   getMessages(sessionId: string): Promise<Result<ChatMessage[]>>;
   searchSessions(query: string): Promise<Result<ChatSession[]>>;
+  /** Push current content to alternates, then store the new generation as the active content. */
+  addMessageAlternate(messageId: string, previousContent: string, newContent: string): Promise<Result<void>>;
 }
