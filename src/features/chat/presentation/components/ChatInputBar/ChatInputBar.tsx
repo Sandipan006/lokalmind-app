@@ -1,13 +1,19 @@
 import { GlassSurface } from '@/src/design-system/components';
 import { TEXT_WHITE_40, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
-import { useEffect, useState } from 'react';
 import { SymbolView } from 'expo-symbols';
+import type { RefObject } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SvgXml } from 'react-native-svg';
 import { sendMessageSvg } from '../../../assets/svgs';
 import { CHAT_MODE_LABELS, CHAT_MODES, type ChatMode } from '../../../domain/entities/ChatMode';
+import type { MessageReplyDraft } from '../../../domain/utils/messageReply';
+import { ReplyDraftBanner } from '../ReplyDraftBanner/ReplyDraftBanner';
 import { styles, TEXT_INPUT_PLACEHOLDER_COLOR } from './ChatInputBarStyles';
+
+/** Links `KeyboardGestureArea` (chat list) to the composer for interactive keyboard on iOS. */
+export const CHAT_COMPOSER_INPUT_NATIVE_ID = 'lokalmind-chat-composer';
 
 interface ChatInputBarProps {
   inputText: string;
@@ -19,11 +25,18 @@ interface ChatInputBarProps {
   inputEnabled?: boolean;
   selectedMode: ChatMode;
   isEditMode?: boolean;
+  /** Composer reply target (swipe/long-press); hidden while editing a message. */
+  replyDraft?: MessageReplyDraft | null;
+  onDismissReply?: () => void;
   onChangeText: (text: string) => void;
   onSelectMode: (mode: ChatMode) => void;
   onSend: () => void;
   onStop: () => void;
   onCancelEdit?: () => void;
+  /** Ref to the composer `TextInput` — blur before dismiss avoids keyboard reopen / KAV desync. */
+  composerRef?: RefObject<TextInput | null>;
+  /** Fires when the composer is focused — parent can scroll the thread. */
+  onComposerFocus?: () => void;
 }
 
 export function ChatInputBar({
@@ -34,11 +47,15 @@ export function ChatInputBar({
   inputEnabled = true,
   selectedMode,
   isEditMode = false,
+  replyDraft = null,
+  onDismissReply,
   onChangeText,
   onSelectMode,
   onSend,
   onStop,
   onCancelEdit,
+  composerRef,
+  onComposerFocus,
 }: ChatInputBarProps) {
   const insets = useSafeAreaInsets();
   const minTextInputHeight = 24;
@@ -64,8 +81,12 @@ export function ChatInputBar({
   const composerLocked = !inputEnabled;
   const allowComposerWhileStreaming = canEnqueueWhileStreaming;
 
+  const baseBarPadding = (styles.inputBar.paddingBottom ?? 0) as number;
+  // `KeyboardAvoidingView` shrinks layout — safe area inset applies when keyboard is closed, bar padding when open.
+  const bottomPad = Math.max(baseBarPadding, insets.bottom);
+
   return (
-    <View style={[styles.inputBar, { paddingBottom: Math.max((styles.inputBar.paddingBottom ?? 0) as number, insets.bottom) }]}>
+    <View style={[styles.inputBar, { paddingBottom: bottomPad }]}>
       {isEditMode && (
         <View style={styles.editBanner}>
           <SymbolView name="pencil" size={13} tintColor={WHITE_PRIMARY} style={styles.editBannerIcon} />
@@ -75,9 +96,14 @@ export function ChatInputBar({
           </TouchableOpacity>
         </View>
       )}
+      {!isEditMode && replyDraft != null ? (
+        <ReplyDraftBanner replyDraft={replyDraft} onDismiss={() => onDismissReply?.()} />
+      ) : null}
       <GlassSurface tier="medium" style={[styles.inputGlass, composerLocked && styles.inputGlassDisabled]}>
         <View style={styles.inputInner}>
           <TextInput
+            ref={composerRef}
+            nativeID={CHAT_COMPOSER_INPUT_NATIVE_ID}
             style={[styles.textInput, { minHeight: inputHeight }]}
             placeholder={composerLocked ? 'Download a model to send messages…' : 'ask LokalMind…'}
             placeholderTextColor={TEXT_INPUT_PLACEHOLDER_COLOR}
@@ -96,6 +122,7 @@ export function ChatInputBar({
                 setInputHeight(nextHeight);
               }
             }}
+            onFocus={() => onComposerFocus?.()}
           />
 
           <View style={styles.bottomRow}>

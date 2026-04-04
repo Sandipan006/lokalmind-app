@@ -1,3 +1,4 @@
+import { getTotalRamBytes } from '@/src/infrastructure/device/deviceCapability';
 import { action, computed, makeObservable, observable, runInAction } from 'mobx';
 import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
 import type { Model } from '../../domain/entities/Model';
@@ -14,6 +15,7 @@ export class ModelSetupViewModel {
   @observable errorMessage: string | null = null;
   @observable downloadProgress = new Map<string, DownloadProgressInfo>();
   @observable expandedModelId: string | null = null;
+  @observable deviceTotalRamBytes: number | null = null;
 
   constructor(
     private readonly getAllModelsUseCase: GetAllModelsUseCase,
@@ -41,9 +43,14 @@ export class ModelSetupViewModel {
     this.isLoading = true;
     this.errorMessage = null;
 
-    const result = await this.getAllModelsUseCase.execute();
+    const [result, totalRam] = await Promise.all([
+      this.getAllModelsUseCase.execute(),
+      getTotalRamBytes(),
+    ]);
 
     runInAction(() => {
+      this.deviceTotalRamBytes = totalRam;
+
       if (!result.success) {
         this.errorMessage = result.error.message;
         this.isLoading = false;
