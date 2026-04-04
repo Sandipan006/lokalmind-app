@@ -12,4 +12,9 @@ export interface ChatMessage {
   readonly replyToMessageId?: string;
   readonly replyPreview?: string;
   readonly replyToRole?: MessageRole;
+  /**
+   * Previous assistant generations for this message (index 0 = original, last = most recent).
+   * Populated only for assistant messages that have been regenerated at least once.
+   */
+  readonly alternateContents?: string[];
 }
