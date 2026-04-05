@@ -6,12 +6,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { ErrorBoundary } from '@/src/design-system/components';
 import { useFontLoader } from '@/src/providers/useFontLoader';
+import { useOtaUpdates } from '@/src/providers/useOtaUpdates';
 import { BLACK_PRIMARY } from '@/src/design-system/tokens/colors';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { fontsLoaded, fontError } = useFontLoader();
+  useOtaUpdates();
 
   useEffect(() => {
     if (fontsLoaded || fontError) {

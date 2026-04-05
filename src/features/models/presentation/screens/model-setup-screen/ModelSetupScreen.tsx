@@ -13,6 +13,7 @@ import {
   PauseDownloadUseCase,
   ResumeDownloadUseCase,
   StartDownloadUseCase,
+  SubscribeToDownloadProgressUseCase,
 } from '../../../domain/usecases';
 import { ModelCard } from '../../components/ModelCard';
 import { ModelSetupViewModel } from '../../viewmodels/ModelSetupViewModel';
@@ -29,6 +30,7 @@ export const ModelSetupScreen = observer(() => {
       new ResumeDownloadUseCase(container.modelRepository),
       new CancelDownloadUseCase(container.modelRepository),
       new DeleteDownloadedModelUseCase(container.modelRepository),
+      new SubscribeToDownloadProgressUseCase(container.modelRepository),
     )
   ).current;
 
