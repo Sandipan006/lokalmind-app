@@ -2,7 +2,7 @@
   "expo": {
     "name": "LokalMind",
     "slug": "lokalmind-app",
-    "version": "2.0.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lokalmind",
@@ -10,9 +10,13 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "4",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["processing", "fetch"],
+        "UIBackgroundModes": [
+          "processing",
+          "fetch"
+        ],
         "BGTaskSchedulerPermittedIdentifiers": [
           "com.lokalmind.download-continuation",
           "com.lokalmind.download-check"
@@ -47,7 +51,8 @@
       ],
       "expo-sqlite",
       "llama.rn",
-      "expo-background-task"
+      "expo-background-task",
+      "expo-updates"
     ],
     "experiments": {
       "typedRoutes": true,
