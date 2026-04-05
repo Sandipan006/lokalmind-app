@@ -16,6 +16,7 @@
 ## Platform / infra
 
 - [x] **Keyboard** — `react-native-keyboard-controller`: `KeyboardProvider` in `app/_layout.tsx`, `KeyboardAvoidingView` from the library in the queue edit modal. **Requires a dev build** (EAS development build or local `prebuild`); **not supported in Expo Go** (native module must be linked).
+- [x] **Expo OTA updates** — Integrate `expo-updates` for over-the-air JS bundle delivery; configure update policy (`runtimeVersion`, channel per EAS profile); show an in-app nudge or silent auto-apply on app foreground.
 
 ## Ideas (later)
 

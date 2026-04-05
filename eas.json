@@ -1,12 +1,13 @@
 {
   "cli": {
     "version": ">= 16.0.0",
-    "appVersionSource": "remote"
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "ios": {
         "simulator": false
       }
@@ -14,15 +15,43 @@
     "development-simulator": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "ios": {
         "simulator": true
       }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "preview"
+    },
+    "testflight": {
+      "distribution": "store",
+      "channel": "testflight",
+      "ios": {
+        "image": "macos-sequoia-15.5-xcode-26.0",
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Release",
+        "simulator": false
+      },
+      "env": {
+        "APP_ENV": "production"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "distribution": "store",
+      "channel": "production",
+      "ios": {
+        "image": "macos-sequoia-15.5-xcode-26.0",
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Release",
+        "simulator": false
+      },
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "APP_ENV": "production"
+      }
     }
   },
   "submit": {
