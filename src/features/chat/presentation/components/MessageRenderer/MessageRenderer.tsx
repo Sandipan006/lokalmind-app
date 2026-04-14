@@ -296,6 +296,16 @@ function CodeBlock({
   trailingElement?: ReactNode;
 }) {
   const [copyLabel, setCopyLabel] = useState<'Copy' | 'Copied!' | 'Shared'>('Copy');
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleCopyLabelReset = useCallback(() => {
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopyLabel('Copy'), 1500);
+  }, []);
+
+  useEffect(() => () => {
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+  }, []);
 
   const handleCopy = () => {
     void (async () => {
@@ -303,16 +313,16 @@ function CodeBlock({
         const result = await copyTextBestEffort(value);
         if (result === 'clipboard') {
           setCopyLabel('Copied!');
-          setTimeout(() => setCopyLabel('Copy'), 1500);
+          scheduleCopyLabelReset();
         } else if (result === 'share') {
           setCopyLabel('Shared');
-          setTimeout(() => setCopyLabel('Copy'), 1500);
+          scheduleCopyLabelReset();
         }
       } catch {
         try {
           await Share.share({ message: value });
           setCopyLabel('Shared');
-          setTimeout(() => setCopyLabel('Copy'), 1500);
+          scheduleCopyLabelReset();
         } catch {
           /* ignore */
         }
