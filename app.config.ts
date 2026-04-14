@@ -19,8 +19,6 @@ module.exports = ({ config }: { config: any }) => {
       },
       HETZNER_BASE_URL: process.env.HETZNER_BASE_URL || '',
       HETZNER_WEBDAV_URL: process.env.HETZNER_WEBDAV_URL || '',
-      HETZNER_WEBDAV_USERNAME: process.env.HETZNER_WEBDAV_USERNAME || '',
-      HETZNER_WEBDAV_PASSWORD: process.env.HETZNER_WEBDAV_PASSWORD || '',
       MODEL_METADATA_PATH: process.env.MODEL_METADATA_PATH || '',
       CTX_SIZE_DEFAULT: process.env.CTX_SIZE_DEFAULT || '2048',
       CHAT_MAX_TOKENS: process.env.CHAT_MAX_TOKENS || '512',

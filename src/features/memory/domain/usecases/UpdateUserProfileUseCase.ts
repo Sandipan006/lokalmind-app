@@ -166,10 +166,7 @@ export class UpdateUserProfileUseCase {
     const deterministicProfile = buildDeterministicProfile(currentProfile, userMessages);
     if (deterministicProfile && deterministicProfile !== currentProfile) {
       await this.appSettingsRepository.saveUserProfile(deterministicProfile);
-      console.log('[Memory] User profile updated (deterministic)', {
-        chars: deterministicProfile.length,
-        content: deterministicProfile,
-      });
+      if (__DEV__) console.log('[Memory] User profile updated (deterministic)', { chars: deterministicProfile.length });
       return ok(undefined);
     }
 
@@ -196,12 +193,12 @@ export class UpdateUserProfileUseCase {
       // when the session added nothing new. If the update would lose >20% of characters,
       // the model likely dropped facts rather than learned anything — keep the current profile.
       if (currentProfile && updated.length < currentProfile.length * 0.8) {
-        console.log('[Memory] Profile update skipped — new profile shorter than current (likely lost facts)');
+        if (__DEV__) console.log('[Memory] Profile update skipped — new profile shorter than current (likely lost facts)');
         return ok(undefined);
       }
 
       await this.appSettingsRepository.saveUserProfile(updated);
-      console.log('[Memory] User profile updated', { chars: updated.length, content: updated });
+      if (__DEV__) console.log('[Memory] User profile updated', { chars: updated.length });
       return ok(undefined);
     } catch (e) {
       return err(createError('GENERATION_ERROR', 'Failed to update user profile', e));

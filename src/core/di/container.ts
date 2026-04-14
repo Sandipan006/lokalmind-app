@@ -57,7 +57,7 @@ async function initializeContainer() {
   getPinnedFactsUseCase = new GetPinnedFactsUseCase(appSettingsRepository);
   savePinnedFactsUseCase = new SavePinnedFactsUseCase(appSettingsRepository);
   void embeddingService.initialize().catch((e) => {
-    console.warn('[EmbeddingService] Boot init failed:', e);
+    if (__DEV__) console.warn('[EmbeddingService] Boot init failed:', e);
   });
   localDataReset = new LocalDataResetAdapter(
     llmEngine,

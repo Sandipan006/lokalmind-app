@@ -1,96 +1,146 @@
+<div align="center">
+
 # LokalMind
 
-**On-device AI for your phone** — private, offline-capable chat and tooling built with **Expo** and **React Native**. Inference runs locally via **llama.rn**; speech uses **whisper.rn**. The app uses **Clean Architecture**, **MobX** view models, and **expo-router** for navigation.
+**Private AI chat that runs entirely on your phone.**  
+No cloud. No subscriptions for core chat. Your data never leaves your device.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-iOS-lightgrey)](#)
+[![Built with Expo](https://img.shields.io/badge/built%20with-Expo%2054-black?logo=expo)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81-61DAFB?logo=react)](https://reactnative.dev)
+
+</div>
 
 ---
 
-## Highlights
+## What is LokalMind?
 
-| | |
-| :--- | :--- |
-| **Privacy** | Models and data stay on device; no cloud inference required for core chat |
-| **Stack** | Expo 54 · RN 0.81 · React 19 · Expo Router 6 |
-| **Patterns** | Domain / data / presentation · `Result<T>` flows · DI in `src/core/di/container.ts` |
+LokalMind brings large language models directly onto your phone. Pick a model, download it once, and chat completely offline — no API keys, no data leaving your device, no servers listening in.
+
+- **Local inference** via [llama.rn](https://github.com/mybigday/llama.rn) (GGUF models)
+- **On-device memory** — the app remembers facts across conversations using semantic search, entirely local
+- **Streaming UI** with haptic feedback as the model generates
+- **Multiple models** — swap between Qwen, DeepSeek, Gemma and more
+- **Chat modes** — General, Code, Reasoning, Creative, and more
+
+---
+
+## Models
+
+| Model | Size | RAM | Best for | Free |
+|-------|------|-----|----------|------|
+| Qwen 3.5 — 0.8B | 550 MB | 2 GB+ | Fast everyday chat | ✓ |
+| Qwen 3.5 — 2B | 1.3 GB | 3 GB+ | Summaries, multilingual | ✓ |
+| DeepSeek R1 — 1.5B | 1.1 GB | 3 GB+ | Coding, math, reasoning | ✓ |
+| Qwen 3.5 — 4B | 2.9 GB | 5 GB+ | Complex tasks, creative | Pro |
+| Qwen 3 — 4B | 2.5 GB | 5 GB+ | Thinking mode, coding | Pro |
+| Gemma 3 — 4B | 2.5 GB | 5 GB+ | Long context, analysis | Pro |
 
 ---
 
 ## Tech stack
 
-- **Runtime:** Expo ~54, React Native 0.81, React 19  
-- **Navigation:** Expo Router ~6  
-- **State (UI):** MobX 6, mobx-react-lite  
-- **AI:** llama.rn (GGUF), whisper.rn (STT)  
-- **Storage:** expo-sqlite, AsyncStorage  
-- **Monetization / misc:** RevenueCat, design-system tokens under `src/design-system/`
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Expo ~54 · React Native 0.81 · React 19 |
+| Navigation | Expo Router ~6 |
+| State | MobX 6 · mobx-react-lite |
+| Inference | llama.rn (GGUF) |
+| Storage | expo-sqlite · AsyncStorage |
+| Architecture | Clean Architecture · `Result<T>` flows · DI container |
 
 ---
 
 ## Quick start
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Sandipan006/lokalmind-app.git
 cd lokalmind-app
 npm install
-npx expo start
-```
-
-**Native modules** (`llama.rn`, `whisper.rn`, dev client): use a dev build, not only Expo Go.
-
-```bash
-npx expo run:android
-# or
+cp .env.example .env
 npx expo run:ios
 ```
+
+> Expo Go is **not supported** — native modules (`llama.rn`) require a dev build.
+
+The `.env.example` ships with all public defaults pre-filled. Model downloads work out of the box — no credentials needed.
 
 ---
 
 ## Environment
 
-1. Copy `.env.example` → `.env` and fill values.  
-2. `app.config.ts` exposes values via Expo `extra`; runtime reads from `src/config/env.ts`.
+`app.config.ts` injects env vars at build time via Expo `extra`. Runtime reads them from `src/config/env.ts`.
 
-Key variables include `EAS_PROJECT_ID`, bundle IDs, Hetzner / WebDAV model hosting, `CTX_SIZE_DEFAULT`, `CHAT_MAX_TOKENS`, download tuning, and credentials as needed.
+```bash
+cp .env.example .env
+# Fill in:
+#   IOS_BUNDLE_IDENTIFIER / ANDROID_PACKAGE  — your bundle ID
+#   EAS_PROJECT_ID / APP_OWNER               — only for EAS cloud builds
+```
+
+Everything else (CDN URL, LLM defaults, download settings) works without changes.
+
+---
+
+## Repository layout
+
+```
+app/                    Expo Router routes (thin — no business logic)
+src/
+  core/                 DI container, ports (interfaces), shared Result<T> type
+  features/             Feature slices
+    chat/               └── domain / data / presentation
+    memory/             └── cross-session memory & embeddings
+    models/             └── download, manage GGUF models
+    onboarding/         └── first-run flow
+    profile/            └── settings, pinned facts, storage
+  infrastructure/       Adapters — llama.rn, whisper.rn, SQLite, downloads
+  design-system/        Tokens (colors, typography, spacing, glass)
+  config/               env.ts — runtime config
+```
+
+---
+
+## Architecture
+
+```
+Presentation  →  Use Cases  →  Domain entities
+                    ↕
+              Repository interfaces
+                    ↕
+           Data layer (implements repos)
+                    ↕
+         Infrastructure (llama.rn, SQLite…)
+```
+
+- **Domain** — pure TypeScript, zero third-party imports
+- **Presentation** — screens + MobX ViewModels, calls use cases only
+- **Data** — implements repository interfaces, receives infra via constructor injection
+- **Infrastructure** — the only layer that imports `llama.rn`, `whisper.rn`, `expo-sqlite`
+- **Composition root** — `src/core/di/container.ts`
 
 ---
 
 ## Scripts
 
 | Command | Purpose |
-|--------|---------|
+|---------|---------|
 | `npm run start` | Expo dev server |
-| `npm run android` / `npm run ios` / `npm run web` | Platform targets |
-| `npm run lint` | ESLint (expo config) |
-| `npm run reset-project` | Reset helper script |
+| `npm run ios` | Run on device / simulator |
+| `npm run lint` | ESLint |
+| `npm run reset-project` | Reset local state |
 
 ---
 
-## Repository layout
+## Contributing
 
-```text
-app/                 Expo Router routes
-src/
-  core/              DI, ports, shared types (e.g. Result)
-  features/          Feature slices — domain / data / presentation
-  infrastructure/    Adapters only (llama, whisper, storage, downloads)
-  design-system/     Tokens and UI primitives
-  config/            Env and app config helpers
-docs/                Architecture, PRD, conventions, feature notes
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, branch conventions, and code style.
 
-Deeper detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/FOLDER-STRUCTURE.md`](docs/FOLDER-STRUCTURE.md), [`docs/LLM-PIPELINE.md`](docs/LLM-PIPELINE.md).
+## Security
 
----
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
-## Architecture (short)
+## License
 
-- **Domain** — pure TypeScript; no React / native SDK imports.  
-- **Presentation** — screens + MobX VMs; calls use cases and repository interfaces only.  
-- **Data** — implements repositories; infra injected via constructors.  
-- **Infrastructure** — only layer that touches llama.rn, whisper.rn, sqlite, etc.  
-- **Composition root** — `src/core/di/container.ts`.
-
----
-
-## Status
-
-Core flows: onboarding, model download/management, local chat with streaming UI, profile and settings surfaces. See `docs/` and issue tracker for roadmap and in-progress work.
+[MIT](LICENSE)

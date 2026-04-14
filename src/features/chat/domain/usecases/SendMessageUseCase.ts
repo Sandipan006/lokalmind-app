@@ -153,10 +153,12 @@ export class SendMessageUseCase {
         currentMessage: currentMsg,
       });
 
-      console.log('[Chat][LLM] Mode:', mode);
-      console.log('[Chat][LLM] Profile injected:', effectiveProfile || '(empty)');
-      console.log('[Chat][LLM] History:', history);
-      console.log('[Chat][LLM] User message:', userMessage);
+      if (__DEV__) {
+        console.log('[Chat][LLM] Mode:', mode);
+        console.log('[Chat][LLM] Profile injected:', effectiveProfile || '(empty)');
+        console.log('[Chat][LLM] History:', history);
+        console.log('[Chat][LLM] User message:', userMessage);
+      }
 
       if (isDismissive(userMessage.content)) {
         const canned = 'Got it.';
@@ -178,7 +180,7 @@ export class SendMessageUseCase {
       const rawFinalContent = response.text || accumulatedContent;
       const finalContent = enforceSecondPersonForSelfQuestion(userMessage.content, rawFinalContent);
       const finalStatus = 'done';
-      console.log('[Chat][LLM] Response:', finalContent);
+      if (__DEV__) console.log('[Chat][LLM] Response:', finalContent);
 
       await this.chatRepository.updateMessageContent(assistantId, finalContent, finalStatus);
 
