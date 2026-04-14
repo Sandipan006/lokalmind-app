@@ -9,7 +9,7 @@
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "buildNumber": "4",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,

@@ -4,135 +4,117 @@
 
 ## SQLite Schema
 
-Database file: `lokalmind.db` — WAL mode, foreign keys ON.
+Database file: `lokalmind.db` (WAL, foreign keys ON). Table names and columns are aligned to `ChatRepositoryImpl`.
 
 ```sql
 PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 
--- Chat sessions
-CREATE TABLE IF NOT EXISTS chats (
-  id            TEXT PRIMARY KEY,
-  title         TEXT NOT NULL,
-  lastMessage   TEXT,
-  timestamp     INTEGER NOT NULL,       -- Unix ms
-  modelId       TEXT NOT NULL,
-  mode          TEXT NOT NULL DEFAULT 'general',
-  sessionPrompt TEXT                    -- per-session system prompt override, nullable
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id TEXT PRIMARY KEY,
+  model_id TEXT NOT NULL,
+  title TEXT NOT NULL DEFAULT 'New Chat',
+  is_title_locked INTEGER NOT NULL DEFAULT 0,
+  last_title_bucket INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
 );
 
--- Messages
-CREATE TABLE IF NOT EXISTS messages (
-  id          TEXT PRIMARY KEY,
-  chatId      TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
-  text        TEXT NOT NULL,
-  isUser      INTEGER NOT NULL,         -- 1 = user, 0 = assistant
-  timestamp   INTEGER NOT NULL,         -- Unix ms
-  imagePath   TEXT,                     -- local file path, nullable
-  replyToId   TEXT                      -- references messages(id), nullable
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'done',
+  created_at INTEGER NOT NULL,
+  reply_to_message_id TEXT,
+  reply_preview TEXT,
+  reply_to_role TEXT,
+  FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
 );
 
--- Global memory facts (persistent across all sessions)
-CREATE TABLE IF NOT EXISTS memory_facts (
-  id           TEXT PRIMARY KEY,
-  fact         TEXT NOT NULL,           -- "User is a React Native developer"
-  sourceChatId TEXT,                    -- which chat this was extracted from, nullable
-  createdAt    INTEGER NOT NULL,        -- Unix ms
-  updatedAt    INTEGER NOT NULL,        -- Unix ms
-  isManual     INTEGER NOT NULL DEFAULT 0  -- 1 = user added manually, 0 = auto-extracted
+CREATE TABLE IF NOT EXISTS message_alternates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  message_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  FOREIGN KEY (message_id) REFERENCES chat_messages(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS session_summaries (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  bucket_index INTEGER NOT NULL,
+  summary TEXT NOT NULL,
+  turn_start INTEGER NOT NULL,
+  turn_end INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS session_memories (
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  session_title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  embedding TEXT,
+  score REAL NOT NULL DEFAULT 0.0,
+  is_pinned INTEGER NOT NULL DEFAULT 0,
+  is_user_edited INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  display_name TEXT NOT NULL,
+  avatar_index INTEGER NOT NULL DEFAULT 1,
+  onboarding_complete INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+);
+
+CREATE TABLE IF NOT EXISTS models (
+  id TEXT PRIMARY KEY,
+  filename TEXT NOT NULL,
+  is_downloaded INTEGER NOT NULL DEFAULT 0,
+  downloaded_at INTEGER,
+  file_path TEXT,
+  created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+  updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 ```
 
 ### Notes
 
-- `chats.sessionPrompt` — nullable. When set, overrides the global system prompt for that session only. See [LLM-PIPELINE.md](./LLM-PIPELINE.md) for priority chain.
-- `messages.replyToId` — nullable. When set, `BuildPromptUseCase` injects `[Replying to: "{quoted text}"]` into the AI context.
-- `messages.imagePath` — local file URI. Only valid for vision-capable models. Path is relative to `expo-file-system` document directory.
-- `memory_facts.isManual = 1` — user-created facts are never auto-deleted by the extraction pipeline.
+- `chat_messages.reply_*` stores reply threading metadata.
+- `message_alternates` keeps regenerate history in order (`seq` ascending).
+- `session_summaries` stores rolling in-session summary buckets.
+- `session_memories.embedding` stores JSON-serialized embedding vectors when available.
+- `users` stores local profile + onboarding state.
+- `models` stores download/install status for local GGUF files.
+- Some columns are added via migration guards (`ALTER TABLE ... ADD COLUMN`) when older DBs are opened.
 
 ---
 
 ## AsyncStorage Key Registry
 
-All keys are defined as constants in `src/infrastructure/storage/asyncStorageDriver.ts`. Never use raw string keys outside that file.
+Source of truth: `src/infrastructure/storage/asyncStorageDriver.ts`.
 
 | Key | Type | Description |
 |---|---|---|
-| `user:displayName` | `string` | User's display name |
-| `user:profileImage` | `string \| null` | URI of selected profile image |
-| `user:joinDate` | `string` | ISO 8601 date string |
-| `models:downloaded` | `JSON → ModelMetadata[]` | Array of all downloaded model metadata |
-| `models:active` | `string` | ID of the currently active model |
-| `whisper:downloaded` | `boolean` | Whether the Whisper base model has been downloaded |
-| `whisper:modelPath` | `string` | Local file path to the Whisper `.bin` model |
-| `settings:contextWindow` | `number` | Context window size — 512, 1024, 2048, or 4096 |
-| `settings:globalSystemPrompt` | `string` | User's global custom system prompt (overrides mode default) |
-| `settings:mode:general:systemPrompt` | `string` | User override for General mode default prompt |
-| `settings:mode:coding:systemPrompt` | `string` | User override for Coding mode default prompt |
-| `settings:mode:creative:systemPrompt` | `string` | User override for Creative mode default prompt |
-| `settings:mode:deep_think:systemPrompt` | `string` | User override for Deep Think mode default prompt |
-| `settings:memoryEnabled` | `boolean` | Global memory on/off toggle |
-| `onboarding:complete` | `boolean` | Whether onboarding flow has been completed |
+| `settings:mode:{mode}:systemPrompt` | `string` | Per-mode system prompt override |
+| `memory:pinnedFacts` | `string` | Always-injected user facts |
+| `memory:userProfile` | `string` | Derived profile summary for memory-aware prompts |
 
-### ModelMetadata shape
-
-```typescript
-interface ModelMetadata {
-  id: string;               // e.g. "qwen3.5-0.8b"
-  displayName: string;      // e.g. "Qwen 3.5 0.8B Q4"
-  filePath: string;         // absolute local path to .gguf file
-  fileSize: number;         // bytes
-  downloadedAt: number;     // Unix ms
-  lastUsedAt: number;       // Unix ms
-}
-```
+Legacy constants still exist in the driver (for backward compatibility / migration safety), but current user/model primary state is persisted in SQLite (`users`, `models`).
 
 ---
 
-## Model Registry
+## Memory Model Snapshot
 
-All models distributed as GGUF from Hetzner CDN. Device RAM detected at runtime via `react-native-device-info`. Model config defined in `src/infrastructure/downloads/modelConfig.ts`.
-
-| Model ID | Display Name | GGUF Filename | Size | Min RAM | Device Tier |
-|---|---|---|---|---|---|
-| `qwen3.5-0.8b` | Qwen 3.5 0.8B Q4 | `Qwen_Qwen3.5-0.8B-Q4_K_M.gguf` | ~500 MB | 3 GB | iPhone 12+ |
-| `qwen3.5-2b` | Qwen 3.5 2B Q4 | `Qwen_Qwen3.5-2B-Q4_K_M.gguf` | ~1.2 GB | 4 GB | iPhone 13+ |
-| `qwen3.5-4b` | Qwen 3.5 4B Q4_K_M | `Qwen_Qwen3.5-4B-Q4_K_M.gguf` | ~2.5 GB | 6 GB | iPhone 15 Pro+ |
-| `gemma3-4b` | Gemma 3 4B Q4_K_M | `gemma-3-4b-it-Q4_K_M.gguf` | ~2.5 GB | 6 GB | iPhone 15 Pro+ |
-| `deepseek-r1-1.5b` | DeepSeek R1 1.5B Q4 | `DeepSeek-R1-Distill-Qwen-1.5B-Q4_K_M.gguf` | ~900 MB | 4 GB | iPhone 13+ |
-
-### Whisper Model
-
-| Model | Format | Size | Languages |
-|---|---|---|---|
-| Whisper Base | `.bin` | 142 MB | 99 languages, auto-detect |
-
-### Model Recommendation Logic
-
-```
-availableRAM = deviceTotalRAM × 0.60   // never use more than 60% of device RAM
-recommend = highest-quality model where modelSize ≤ availableRAM
-```
-
-Applied at onboarding Step 3 (model-setup). User can override the recommendation.
-
-### LLM Runtime Config Defaults
-
-```typescript
-n_ctx:        user-selected (512 | 1024 | 2048 | 4096), default 2048
-n_threads:    Platform.OS === 'ios' ? 6 : 4
-n_gpu_layers: 99 on iOS (Metal), 0 on Android (v2.0)
-maxTokens:    512  // reserved for response, subtracted from n_ctx
-temperature:  0.7
-```
-
-### AI Modes
-
-| Mode ID | Display Name | Default System Prompt Focus |
-|---|---|---|
-| `general` | General | Helpful, concise general assistant |
-| `coding` | Coding | Code-first, technical, structured output, prefer code blocks |
-| `creative` | Creative | Creative writing, storytelling, ideation, open-ended |
-| `deep_think` | Deep Think | Step-by-step reasoning, logic chains, math, show working |
-
-Each mode's default prompt is user-overridable via `settings:mode:{modeName}:systemPrompt`.
+- Long-term memory is not `memory_facts` anymore.
+- Cross-session memory lives in `session_memories`.
+- In-session compression lives in `session_summaries`.
+- Pinned user context lives in `memory:pinnedFacts`.
