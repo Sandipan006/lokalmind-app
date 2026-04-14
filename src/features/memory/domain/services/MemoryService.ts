@@ -40,17 +40,17 @@ export class MemoryService {
     const pinned = all.filter((m) => m.isPinned);
     const nonPinned = all.filter((m) => !m.isPinned);
 
-    console.log(`[Memory] DB: ${all.length} memories (${pinned.length} pinned, ${nonPinned.length} non-pinned)`);
+    if (__DEV__) console.log(`[Memory] DB: ${all.length} memories (${pinned.length} pinned, ${nonPinned.length} non-pinned)`);
 
     if (!requiresMemory(userMessage, sessionTurnCount)) {
-      console.log('[Memory] Short/stateless message — injecting pinned facts only');
+      if (__DEV__) console.log('[Memory] Short/stateless message — injecting pinned facts only');
       return ok(pinned);
     }
 
     // Score-based fallback when embedding model is not ready.
     if (!this.embeddingService?.isReady()) {
       const top5 = [...nonPinned].sort((a, b) => b.score - a.score).slice(0, 5);
-      console.log(`[Memory] Score-based retrieval (embedding not ready) → ${top5.length} non-pinned selected`);
+      if (__DEV__) console.log(`[Memory] Score-based retrieval (embedding not ready) → ${top5.length} non-pinned selected`);
       return ok([...pinned, ...top5]);
     }
 
@@ -58,7 +58,7 @@ export class MemoryService {
     const queryVec = await this.embeddingService.embed(userMessage);
     if (queryVec.length === 0) {
       const top5 = [...nonPinned].sort((a, b) => b.score - a.score).slice(0, 5);
-      console.log('[Memory] Embed returned empty vector — falling back to score-based');
+      if (__DEV__) console.log('[Memory] Embed returned empty vector — falling back to score-based');
       return ok([...pinned, ...top5]);
     }
 
@@ -73,23 +73,23 @@ export class MemoryService {
       .slice(0, 5)
       .map(({ mem }) => mem);
 
-    console.log(`[Memory] Semantic retrieval → top ${ranked.length} non-pinned by cosine+score`);
+    if (__DEV__) console.log(`[Memory] Semantic retrieval → top ${ranked.length} non-pinned by cosine+score`);
     return ok([...pinned, ...ranked]);
   }
 
   /** Embeds summary text and stores the vector. No-op until EmbeddingService is injected and ready. */
   async embedAndSave(memoryId: string, summaryText: string): Promise<void> {
     if (!this.embeddingService?.isReady()) {
-      console.log('[Memory] embedAndSave: embedding not ready, skipping vector write');
+      if (__DEV__) console.log('[Memory] embedAndSave: embedding not ready, skipping vector write');
       return;
     }
-    console.log('[Memory] embedAndSave: embedding summary for', memoryId);
+    if (__DEV__) console.log('[Memory] embedAndSave: embedding summary for', memoryId);
     const vec = await this.embeddingService.embed(summaryText);
     if (vec.length === 0) return;
     await this.memoryRepository.updateSessionMemory(memoryId, {
       embedding: JSON.stringify(vec),
     });
-    console.log('[Memory] embedAndSave: vector written to DB');
+    if (__DEV__) console.log('[Memory] embedAndSave: vector written to DB');
   }
 
   async evictIfNeeded(max = 10): Promise<void> {

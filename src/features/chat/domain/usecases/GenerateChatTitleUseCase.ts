@@ -86,7 +86,7 @@ ${transcript}`,
 
       const nextTitle = sanitizeTitle(response.text);
       if (!nextTitle) return ok(undefined);
-      console.log('[Chat][Title] Generated:', nextTitle);
+      if (__DEV__) console.log('[Chat][Title] Generated:', nextTitle);
 
       return await this.chatRepository.updateAutoSessionTitle(sessionId, nextTitle, bucket);
     } catch (e) {

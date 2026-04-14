@@ -137,11 +137,11 @@ export class SummarizeSessionUseCase {
 
   async execute(params: SummarizeSessionParams): Promise<Result<void>> {
     if (!this.llmEngine.isModelLoaded()) {
-      console.log('[Memory] Skipping summarisation — no model loaded');
+      if (__DEV__) console.log('[Memory] Skipping summarisation — no model loaded');
       return ok(undefined);
     }
     if (this.llmEngine.isGenerating()) {
-      console.log('[Memory] Skipping summarisation — LLM is generating');
+      if (__DEV__) console.log('[Memory] Skipping summarisation — LLM is generating');
       return ok(undefined);
     }
 
@@ -167,10 +167,9 @@ export class SummarizeSessionUseCase {
           };
           const saveResult = await this.memoryRepository.saveSessionMemory(memory);
           if (!saveResult.success) return saveResult;
-          console.log('[Memory] Saved deterministic cross-session memory', {
+          if (__DEV__) console.log('[Memory] Saved deterministic cross-session memory', {
             sessionId,
             userStatementCount: deterministic.userStatementCount,
-            preview: deterministic.summary.slice(0, 180),
           });
           void this.memoryService?.embedAndSave(memory.id, memory.summary).catch((e) => {
             console.warn('[Memory] embedAndSave after cross-session save failed:', e);
@@ -180,7 +179,7 @@ export class SummarizeSessionUseCase {
         }
         // Do not fall back to LLM summarisation for cross-session memory when user facts are absent.
         // This avoids storing assistant-generated noise as long-term memory.
-        console.log('[Memory] Skipping cross-session save — no deterministic user statements found');
+        if (__DEV__) console.log('[Memory] Skipping cross-session save — no deterministic user statements found');
         return ok(undefined);
       }
 
@@ -194,7 +193,7 @@ export class SummarizeSessionUseCase {
         conversationContext = params.messages
           .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.slice(0, 500)}`)
           .join('\n');
-        console.log('[Memory] Using raw messages as summarisation context', { count: params.messages.length });
+        if (__DEV__) console.log('[Memory] Using raw messages as summarisation context', { count: params.messages.length });
       }
 
       const modelId = this.llmEngine.getCurrentModelId();
@@ -218,7 +217,7 @@ export class SummarizeSessionUseCase {
         parsed.open === 'NONE';
 
       if (allNone) {
-        console.warn('[Memory] Summarisation produced all-NONE result — skipping save');
+        if (__DEV__) console.warn('[Memory] Summarisation produced all-NONE result — skipping save');
         return ok(undefined);
       }
 
@@ -253,7 +252,7 @@ export class SummarizeSessionUseCase {
         const saveResult = await this.memoryRepository.saveSessionMemory(memory);
         if (!saveResult.success) return saveResult;
         void this.memoryService?.embedAndSave(memory.id, memory.summary).catch((e) => {
-          console.warn('[Memory] embedAndSave after LLM cross-session save failed:', e);
+          if (__DEV__) console.warn('[Memory] embedAndSave after LLM cross-session save failed:', e);
         });
 
         // Evict lowest-scored non-pinned memory when over the limit.
