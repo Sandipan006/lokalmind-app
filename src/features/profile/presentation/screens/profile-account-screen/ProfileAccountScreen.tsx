@@ -29,6 +29,8 @@ export const ProfileAccountScreen = observer(() => {
     new ProfileAccountViewModel(
       container.userRepository,
       new ResetAllLocalDataUseCase(container.localDataReset),
+      container.getPinnedFactsUseCase,
+      container.savePinnedFactsUseCase,
     ),
   ).current;
 
@@ -89,6 +91,11 @@ export const ProfileAccountScreen = observer(() => {
   const openModePrompts = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/profile/mode-system-prompts');
+  };
+
+  const openMemory = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push('/profile/memory');
   };
 
   const confirmLogout = () => {
@@ -159,6 +166,25 @@ export const ProfileAccountScreen = observer(() => {
               <Text style={styles.loadingText}>{viewModel.loadError}</Text>
             ) : null}
           </View>
+
+          <GlassSurface tier="medium" style={styles.card}>
+            <TouchableOpacity
+              style={styles.cardInner}
+              onPress={openMemory}
+              activeOpacity={0.75}
+              disabled={viewModel.isResetting}
+            >
+              <View style={styles.cardLeft}>
+                <Text style={styles.cardTitle}>Memory</Text>
+                <Text style={styles.cardSubtitle}>
+                  View and manage what LokalMind remembers across your conversations
+                </Text>
+              </View>
+              <View style={styles.cardChevron}>
+                <SymbolView name="chevron.right" size={14} tintColor={TEXT_WHITE_40} />
+              </View>
+            </TouchableOpacity>
+          </GlassSurface>
 
           <GlassSurface tier="medium" style={styles.card}>
             <TouchableOpacity

@@ -21,7 +21,8 @@
           "com.lokalmind.download-continuation",
           "com.lokalmind.download-check"
         ]
-      }
+      },
+      "bundleIdentifier": "com.lokalmind.app"
     },
     "android": {
       "adaptiveIcon": {
