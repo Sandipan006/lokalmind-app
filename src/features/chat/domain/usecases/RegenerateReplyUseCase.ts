@@ -167,7 +167,7 @@ export class RegenerateReplyUseCase {
           data: { ...assistantMessage, content: partial || assistantMessage.content, status: 'done', alternateContents: updatedAlternates },
         };
       }
-      console.error('[Chat][Regen] generation error', e);
+      if (__DEV__) console.error('[Chat][Regen] generation error', e);
       const msg = e instanceof Error ? e.message : String(e);
       return { success: false, error: createError('GENERATION_ERROR', msg || 'LLM regeneration failed', e) };
     }

@@ -279,7 +279,7 @@ export class DownloadService implements IDownloadService {
         this.listeners.delete(config.modelId);
       }
     } catch (e) {
-      console.error('[DownloadService] downloadAsync failed:', e);
+      if (__DEV__) console.error('[DownloadService] downloadAsync failed:', e);
       context.state = {
         modelId: config.modelId,
         status: 'failed',

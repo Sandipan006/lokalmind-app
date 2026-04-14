@@ -32,7 +32,7 @@ export default function ChatSessionScreen() {
         if (mounted) setIsContainerReady(true);
       })
       .catch((e) => {
-        console.error('[ChatRoute] Failed to initialize container', e);
+        if (__DEV__) console.error('[ChatRoute] Failed to initialize container', e);
       });
     return () => {
       mounted = false;

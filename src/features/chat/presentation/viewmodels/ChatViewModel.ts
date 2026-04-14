@@ -321,7 +321,9 @@ export class ChatViewModel {
           ];
           void this.generateChatTitleUseCase.execute(currentSessionId, currentModelId);
         } else {
-          console.error('[Chat][Queue] generation failed', result.error.code, result.error.message, result.error.cause);
+          if (__DEV__) {
+            console.error('[Chat][Queue] generation failed', result.error.code, result.error.message, result.error.cause);
+          }
           this.error = result.error.message;
           this.messages = this.messages.filter((m) => m.status !== 'streaming');
         }
