@@ -141,6 +141,21 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, branch convention
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
+---
+
+## Built by
+
+**Sandipan Bera** — React Native developer & UI/UX designer from India.
+
+LokalMind is an open source project, built in public.  
+If it's useful to you, a ⭐ on GitHub goes a long way.
+
+Follow the journey on X → [@hey_sandipan](https://x.com/hey_sandipan)
+
+Support the project:
+- [PayPal](https://paypal.me/sandipan804)
+- [Other payment options](https://checkout.dodopayments.com/buy/pdt_IEOG0s908rxVulWQVLxkV?quantity=1)
+
 ## License
 
 [MIT](LICENSE)
