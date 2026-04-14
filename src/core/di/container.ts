@@ -70,6 +70,7 @@ async function initializeContainer() {
   localDataReset = new LocalDataResetAdapter(
     llmEngine,
     whisperEngine,
+    embeddingService,
     asyncStorageDriver,
     sqliteDriver,
     downloadService,
@@ -81,7 +82,10 @@ async function initializeContainer() {
 /** Best-effort native llama teardown when app leaves foreground (avoids stale contexts after OS kill). */
 async function releaseAllLlamaContextsIfReady(): Promise<void> {
   if (!isInitialized) return;
-  await llmEngine.releaseAllContexts();
+  await Promise.all([
+    llmEngine.releaseAllContexts(),
+    embeddingService.release(),
+  ]);
 }
 
 export const container = {

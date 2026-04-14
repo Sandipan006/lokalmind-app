@@ -1,8 +1,8 @@
 import type { ILLMEngine } from '@/src/core/ports/ILLMEngine';
+import type { IEmbeddingService } from '@/src/core/ports/IEmbeddingService';
 import type { IMemoryRepository } from '@/src/features/memory/domain/repositories/IMemoryRepository';
 import type { SummarizeSessionUseCase } from '@/src/features/memory/domain/usecases/SummarizeSessionUseCase';
 import type { UpdateUserProfileUseCase } from '@/src/features/memory/domain/usecases/UpdateUserProfileUseCase';
-import type { IEmbeddingService } from '@/src/infrastructure/llm/embeddingService';
 import * as Haptics from 'expo-haptics';
 import { makeAutoObservable, runInAction } from 'mobx';
 import type { ChatMessage } from '../../domain/entities/ChatMessage';
@@ -319,7 +319,7 @@ export class ChatViewModel {
             ...this.messages.filter((m) => m.role !== 'assistant' || m.status !== 'streaming'),
             result.data,
           ];
-          void this.generateChatTitleUseCase.execute(currentSessionId, currentModelId);
+          void this.generateChatTitleUseCase.execute(currentSessionId, currentModelId).catch(() => undefined);
         } else {
           if (__DEV__) {
             console.error('[Chat][Queue] generation failed', result.error.code, result.error.message, result.error.cause);
@@ -340,13 +340,13 @@ export class ChatViewModel {
           bucketIndex,
           turnStart: bucketIndex * 20 + 1,
           turnEnd: bucketIndex * 20 + 20,
-        });
+        }).catch(() => undefined);
       }
 
       // Also attempt cross-session save during active chats so memory exists
       // even if the user starts a new chat without triggering screen cleanup timing.
       if (result.success) {
-        void this.maybeSaveSessionMemory();
+        void this.maybeSaveSessionMemory().catch(() => undefined);
       }
     } catch (e) {
       if (__DEV__) console.log('[Chat][Queue] sendMessageUseCase threw', e);
@@ -493,7 +493,7 @@ export class ChatViewModel {
           ...this.messages.filter((m) => m.role !== 'assistant' || m.status !== 'streaming'),
           result.data,
         ];
-        void this.generateChatTitleUseCase.execute(currentSessionId, currentModelId);
+        void this.generateChatTitleUseCase.execute(currentSessionId, currentModelId).catch(() => undefined);
       } else {
         this.error = result.error.message;
         this.messages = this.messages.filter((m) => m.status !== 'streaming');
@@ -597,7 +597,7 @@ export class ChatViewModel {
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
-    });
+    }).catch(() => undefined);
   }
 
   /** Called from ChatScreen useFocusEffect cleanup when the user leaves the chat. Fire-and-forget. */
@@ -607,7 +607,7 @@ export class ChatViewModel {
     if (!this.llmEngine.isModelLoaded()) return;
     if (this.llmEngine.isGenerating()) return;
     const messages = this.messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-    void this.updateUserProfileUseCase.execute(messages);
+    void this.updateUserProfileUseCase.execute(messages).catch(() => undefined);
   }
 
   clearError(): void {

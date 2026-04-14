@@ -28,6 +28,8 @@ export class WhisperRnAdapter implements IWhisperEngine {
 
   async unload(): Promise<void> {
     // TODO Phase 3: call context.release()
+    // IMPORTANT: If initialize() gets implemented, unload() must release the context
+    // to avoid zombie Whisper contexts (follow llamaRnAdapter release patterns).
     this.isInitialized = false;
   }
 

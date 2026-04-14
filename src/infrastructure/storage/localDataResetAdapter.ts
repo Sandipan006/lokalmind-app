@@ -1,4 +1,5 @@
 import type { ILLMEngine, ILocalDataReset, IWhisperEngine } from '@/src/core/ports';
+import type { IEmbeddingService } from '@/src/core/ports/IEmbeddingService';
 import type { IDownloadService } from '@/src/infrastructure/downloads/downloadService';
 import type { IAsyncStorageDriver } from '@/src/infrastructure/storage/asyncStorageDriver';
 import { deleteDownloadedModelFiles } from '@/src/infrastructure/storage/deleteDownloadedModelFiles';
@@ -8,6 +9,7 @@ export class LocalDataResetAdapter implements ILocalDataReset {
   constructor(
     private readonly llmEngine: ILLMEngine,
     private readonly whisperEngine: IWhisperEngine,
+    private readonly embeddingService: IEmbeddingService,
     private readonly asyncStorageDriver: IAsyncStorageDriver,
     private readonly sqliteDriver: ISQLiteDriver,
     private readonly downloadService: IDownloadService,
@@ -20,6 +22,7 @@ export class LocalDataResetAdapter implements ILocalDataReset {
     if (this.whisperEngine.isModelLoaded()) {
       await this.whisperEngine.unload();
     }
+    await this.embeddingService.release();
 
     await this.downloadService.cancelAllDownloads();
     await this.asyncStorageDriver.clear();

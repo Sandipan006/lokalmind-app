@@ -1,7 +1,6 @@
 import { container } from '@/src/core/di/container';
 import type { Model } from '@/src/features/models/domain/entities/Model';
 import { GetAllModelsUseCase } from '@/src/features/models/domain/usecases/GetAllModelsUseCase';
-import { getModelConfig } from '@/src/infrastructure/downloads/modelConfig';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -252,6 +251,7 @@ const ChatMessageSwipeable = observer(
 export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) => {
   const router = useRouter();
   const listRef = useRef<FlatList>(null);
+  const scrollTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const composerInputRef = useRef<TextInput>(null);
   const [hasDownloadedModel, setHasDownloadedModel] = useState(true);
   // 1-based index of which alternate is currently displayed, keyed by message id.
@@ -301,14 +301,22 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
   );
 
   useEffect(() => {
-    viewModel.loadSession(sessionId);
+    void viewModel.loadSession(sessionId).catch(() => undefined);
   }, [sessionId, viewModel]);
 
+  useEffect(() => () => {
+    for (const timer of scrollTimersRef.current) clearTimeout(timer);
+    scrollTimersRef.current = [];
+  }, []);
+
   const scrollThreadToEnd = useCallback((animated = true) => {
+    for (const timer of scrollTimersRef.current) clearTimeout(timer);
+    scrollTimersRef.current = [];
     listRef.current?.scrollToEnd({ animated });
     // Double-fire after layout settles (content size / KAV resize).
-    setTimeout(() => listRef.current?.scrollToEnd({ animated }), 150);
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: false }), 350);
+    const timerA = setTimeout(() => listRef.current?.scrollToEnd({ animated }), 150);
+    const timerB = setTimeout(() => listRef.current?.scrollToEnd({ animated: false }), 350);
+    scrollTimersRef.current.push(timerA, timerB);
   }, []);
 
   // Scroll to latest when messages arrive or session switches.
@@ -324,9 +332,9 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
     return () => show.remove();
   }, [scrollThreadToEnd]);
 
-  const modelConfig = viewModel.session
-    ? getModelConfig(viewModel.session.modelId)
-    : null;
+  const activeModelName = viewModel.session
+    ? pickerModels.find((m) => m.id === viewModel.session?.modelId)?.displayName
+    : undefined;
 
   const handleSend = useCallback(() => {
     if (viewModel.editingMessage) {
@@ -508,7 +516,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
       >
         <ChatHeader
           hasDownloadedModel={hasDownloadedModel}
-          modelName={modelConfig?.displayName}
+          modelName={activeModelName}
           pickerModels={pickerModels}
           onRequestPickerModels={loadPickerModels}
           currentModelId={viewModel.session?.modelId}
