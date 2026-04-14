@@ -91,7 +91,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     version: '3.5',
     modelType: 'general',
     contextSize: 32768,
-    isPaid: true,
+    isPaid: false,
     stopTokens: ['<|im_end|>', '<|end_of_text|>'],
   },
   {
@@ -109,7 +109,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     version: '3.0',
     modelType: 'reasoning',
     contextSize: 32768,
-    isPaid: true,
+    isPaid: false,
     stopTokens: ['<|im_end|>', '<|end_of_text|>'],
   },
   {
@@ -128,7 +128,7 @@ export const MODEL_CONFIGS: readonly ModelConfig[] = [
     modelType: 'general',
     // 128K native context causes OOM on mobile; this is the ceiling — actual n_ctx is resolved dynamically at load time.
     contextSize: 32768,
-    isPaid: true,
+    isPaid: false,
     stopTokens: ['<end_of_turn>', '<eos>'],
   },
 ] as const;
