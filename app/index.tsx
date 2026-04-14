@@ -5,7 +5,7 @@ export default function Index() {
   try {
     return <SplashScreen />;
   } catch (error) {
-    console.error('Index render error:', error);
+    if (__DEV__) console.error('Index render error:', error);
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
         <Text style={{ color: '#fff' }}>Error: {String(error)}</Text>

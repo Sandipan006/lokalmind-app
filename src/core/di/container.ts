@@ -20,6 +20,7 @@ import { LlamaRnAdapter } from '@/src/infrastructure/llm/llamaRnAdapter';
 import { AsyncStorageDriver } from '@/src/infrastructure/storage/asyncStorageDriver';
 import { LocalDataResetAdapter } from '@/src/infrastructure/storage/localDataResetAdapter';
 import { SQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
+import { ResolveInitialRouteUseCase } from '@/src/features/onboarding/domain/usecases/ResolveInitialRouteUseCase';
 import { WhisperRnAdapter } from '@/src/infrastructure/whisper/whisperRnAdapter';
 
 const sqliteDriver = new SQLiteDriver();
@@ -40,6 +41,7 @@ let getPinnedFactsUseCase: GetPinnedFactsUseCase | null = null;
 let savePinnedFactsUseCase: SavePinnedFactsUseCase | null = null;
 let summarizeSessionUseCase: SummarizeSessionUseCase | null = null;
 let updateUserProfileUseCase: UpdateUserProfileUseCase | null = null;
+let resolveInitialRouteUseCase: ResolveInitialRouteUseCase | null = null;
 let isInitialized = false;
 
 async function initializeContainer() {
@@ -56,6 +58,12 @@ async function initializeContainer() {
   updateUserProfileUseCase = new UpdateUserProfileUseCase(llmEngine, appSettingsRepository);
   getPinnedFactsUseCase = new GetPinnedFactsUseCase(appSettingsRepository);
   savePinnedFactsUseCase = new SavePinnedFactsUseCase(appSettingsRepository);
+  resolveInitialRouteUseCase = new ResolveInitialRouteUseCase(
+    userRepository,
+    modelRepository,
+    chatRepository,
+    embeddingService,
+  );
   void embeddingService.initialize().catch((e) => {
     if (__DEV__) console.warn('[EmbeddingService] Boot init failed:', e);
   });
@@ -68,6 +76,12 @@ async function initializeContainer() {
   );
   await downloadService.hydratePersistedStates();
   isInitialized = true;
+}
+
+/** Best-effort native llama teardown when app leaves foreground (avoids stale contexts after OS kill). */
+async function releaseAllLlamaContextsIfReady(): Promise<void> {
+  if (!isInitialized) return;
+  await llmEngine.releaseAllContexts();
 }
 
 export const container = {
@@ -143,5 +157,12 @@ export const container = {
     }
     return savePinnedFactsUseCase;
   },
+  get resolveInitialRouteUseCase() {
+    if (!resolveInitialRouteUseCase) {
+      throw new Error('Container not initialized. Call initializeContainer() first.');
+    }
+    return resolveInitialRouteUseCase;
+  },
   initializeContainer,
+  releaseAllLlamaContextsIfReady,
 } as const;

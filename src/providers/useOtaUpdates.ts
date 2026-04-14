@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 import * as Updates from 'expo-updates';
 
 export function useOtaUpdates(): void {
@@ -11,7 +11,9 @@ export function useOtaUpdates(): void {
         if (!result.isAvailable) return;
         await Updates.fetchUpdateAsync();
         await Updates.reloadAsync();
-      } catch {}
+      } catch (e) {
+        if (__DEV__) console.warn('[OTA] check/fetch failed:', e);
+      }
     }
     checkAndApply();
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
