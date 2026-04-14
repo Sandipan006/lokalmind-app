@@ -1,16 +1,24 @@
 require('dotenv').config({ path: '.env' });
 
+const iosBundle = (process.env.IOS_BUNDLE_IDENTIFIER || '').trim();
+const androidPkg = (process.env.ANDROID_PACKAGE || '').trim();
+if (!iosBundle || !androidPkg) {
+  console.warn(
+    '[app.config] IOS_BUNDLE_IDENTIFIER and/or ANDROID_PACKAGE are unset — set both in .env for native release builds (use placeholders locally if needed).',
+  );
+}
+
 module.exports = ({ config }: { config: any }) => {
   return {
     ...config,
     owner: process.env.APP_OWNER || '',
     ios: {
       ...(config.ios || {}),
-      bundleIdentifier: process.env.IOS_BUNDLE_IDENTIFIER || '',
+      bundleIdentifier: iosBundle,
     },
     android: {
       ...(config.android || {}),
-      package: process.env.ANDROID_PACKAGE || '',
+      package: androidPkg,
     },
     extra: {
       router: {},

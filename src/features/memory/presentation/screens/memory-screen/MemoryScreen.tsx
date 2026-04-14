@@ -139,6 +139,10 @@ export const MemoryScreen = observer(() => {
     setLocalFacts(viewModel.pinnedFacts);
   }, [viewModel.pinnedFacts]);
 
+  useEffect(() => () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+  }, []);
+
   const handleFactsBlur = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {

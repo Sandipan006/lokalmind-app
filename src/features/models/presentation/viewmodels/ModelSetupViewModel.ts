@@ -130,7 +130,7 @@ export class ModelSetupViewModel {
       this.activeListeners.delete(modelId);
 
       if (!result.success) {
-        console.error('[ModelSetupViewModel] startDownload error:', result.error);
+        if (__DEV__) console.error('[ModelSetupViewModel] startDownload error:', result.error);
         this.errorMessage = result.error.message;
       }
     });

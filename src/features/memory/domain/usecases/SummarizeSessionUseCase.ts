@@ -172,7 +172,7 @@ export class SummarizeSessionUseCase {
             userStatementCount: deterministic.userStatementCount,
           });
           void this.memoryService?.embedAndSave(memory.id, memory.summary).catch((e) => {
-            console.warn('[Memory] embedAndSave after cross-session save failed:', e);
+            if (__DEV__) console.warn('[Memory] embedAndSave after cross-session save failed:', e);
           });
           await this.evictIfNeeded();
           return ok(undefined);
