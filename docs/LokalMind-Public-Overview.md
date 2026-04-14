@@ -65,11 +65,9 @@ LokalMind does not try to replace every cloud AI scenario (largest frontier mode
 
 Planned chat improvements (from the current product roadmap):
 
-- **Reply threading** — Quote-style replies: show a referenced snippet above your message, with a gesture (e.g. swipe or long-press) to reply to a specific bubble—similar to familiar messenger apps.
 - **Share or export chats** — Export a full conversation as **PDF** and/or **Markdown** (exact format and flow to be finalized).
-- **Regenerate with history** — Regenerate an assistant answer while **keeping earlier versions** of that turn; **arrow controls** to move between previous and new replies without losing context.
 
-**Later ideas** — Pin or bookmark important messages; **remember draft text** in the composer per chat session when you leave and come back.
+**Later ideas** — Pin or bookmark important messages; remember draft text in the composer per chat session when you leave and come back.
 
 ---
 

@@ -59,6 +59,14 @@ LokalMind is **not** trying to replace every cloud AI use case (huge frontier mo
 - **Chat modes** (e.g. general, coding-oriented, creative, marketing-style defaults) change **tone and instructions** for the assistant.
 - **Per-mode custom system prompts** in Profile: override the default for each mode so your “coding” or “creative” persona matches how you work.
 
+### Memory
+
+- **Pinned facts**: user-editable memory notes that are always injected into chat context.
+- **Learned profile**: app-maintained user profile summary used for personalization in prompts.
+- **Past conversation memories**: cross-session memory cards are saved from completed chats and retrieved by relevance.
+- **In-session summaries**: long chats are compressed into summary buckets to preserve context under token limits.
+- **Memory screen controls**: view memories, pin/unpin, delete, and edit pinned facts from Profile → Memory.
+
 ### Reading assistant answers
 
 - **Markdown-style** rendering: **bold**, *italic*, **fenced code blocks** with a **language** label, **copy** for code.
@@ -94,7 +102,7 @@ LokalMind is built with **Expo** and **React Native**, **MobX** for screen state
 These are **planned or partially wired**—good to mention honestly so expectations match the build:
 
 - **Voice input** in the composer (Whisper is set up at the engine level; full **hold-to-talk** UX may still be in progress).
-- **Global** system prompt and **persistent memory facts** stored in DB (some keys or docs exist ahead of the full UX).
+- **Global** system prompt (single app-wide override) is not the current shipped model; prompt control is per-mode.
 - **Reply threading** and **image / vision** attachments as first-class message features.
 - **Profile → Storage** screen as a full breakdown (may be a placeholder until Phase 3).
 - **Android** as a first-class target (roadmap; iOS is the current focus in docs).
