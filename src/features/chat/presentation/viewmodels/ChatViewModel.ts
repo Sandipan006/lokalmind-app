@@ -1,9 +1,13 @@
+import type { ILLMEngine } from '@/src/core/ports/ILLMEngine';
+import type { IMemoryRepository } from '@/src/features/memory/domain/repositories/IMemoryRepository';
+import type { SummarizeSessionUseCase } from '@/src/features/memory/domain/usecases/SummarizeSessionUseCase';
+import type { UpdateUserProfileUseCase } from '@/src/features/memory/domain/usecases/UpdateUserProfileUseCase';
+import type { IEmbeddingService } from '@/src/infrastructure/llm/embeddingService';
 import * as Haptics from 'expo-haptics';
 import { makeAutoObservable, runInAction } from 'mobx';
 import type { ChatMessage } from '../../domain/entities/ChatMessage';
 import { CHAT_MODES, type ChatMode } from '../../domain/entities/ChatMode';
 import type { ChatSession } from '../../domain/entities/ChatSession';
-import { buildReplyPreviewSnapshot, type MessageReplyDraft } from '../../domain/utils/messageReply';
 import type { CreateSessionUseCase } from '../../domain/usecases/CreateSessionUseCase';
 import type { EditMessageUseCase } from '../../domain/usecases/EditMessageUseCase';
 import type { GenerateChatTitleUseCase } from '../../domain/usecases/GenerateChatTitleUseCase';
@@ -12,6 +16,7 @@ import type { GetSessionUseCase } from '../../domain/usecases/GetSessionUseCase'
 import type { RegenerateReplyUseCase } from '../../domain/usecases/RegenerateReplyUseCase';
 import type { SendMessageUseCase } from '../../domain/usecases/SendMessageUseCase';
 import type { UpdateSessionModelUseCase } from '../../domain/usecases/UpdateSessionModelUseCase';
+import { buildReplyPreviewSnapshot, type MessageReplyDraft } from '../../domain/utils/messageReply';
 
 /** Max outbound messages waiting while the LLM is busy (FIFO). */
 export const MAX_PENDING_MESSAGE_QUEUE = 3;
@@ -46,6 +51,9 @@ export class ChatViewModel {
   /** Set during regeneration so the UI can stream in-place on the existing bubble. */
   regeneratingMessageId: string | null = null;
 
+  /** Onboarding display name — set externally; used as profile seed before memory builds up. */
+  userDisplayName = '';
+
   private abortController: AbortController | null = null;
   private pendingWordFragment = '';
   private wordsSinceLastHaptic = 0;
@@ -60,6 +68,11 @@ export class ChatViewModel {
     private readonly generateChatTitleUseCase: GenerateChatTitleUseCase,
     private readonly updateSessionModelUseCase: UpdateSessionModelUseCase,
     private readonly regenerateReplyUseCase: RegenerateReplyUseCase,
+    private readonly summarizeSessionUseCase: SummarizeSessionUseCase,
+    private readonly updateUserProfileUseCase: UpdateUserProfileUseCase,
+    private readonly memoryRepository: IMemoryRepository,
+    private readonly llmEngine: ILLMEngine,
+    private readonly embeddingService: IEmbeddingService,
   ) {
     makeAutoObservable(this);
   }
@@ -276,6 +289,12 @@ export class ChatViewModel {
         userMessage,
         history: historyForLlm,
         mode,
+        ...(this.userDisplayName ? { userDisplayName: this.userDisplayName } : {}),
+        // Set busy AFTER memory retrieval (embedding) completes, right before generation starts.
+        onBeforeGenerate: () => {
+          console.log('[Memory] LLM starting — blocking embed queue');
+          this.embeddingService.setLlmBusy(true);
+        },
         onToken: (token) => {
           this.triggerStreamHapticByWords(token);
           runInAction(() => {
@@ -307,6 +326,26 @@ export class ChatViewModel {
           this.messages = this.messages.filter((m) => m.status !== 'streaming');
         }
       });
+
+      // Rolling bucket summarisation — fires every 20 turns, fire-and-forget.
+      const turnCount = this.messages.length;
+      if (turnCount > 0 && turnCount % 20 === 0) {
+        const bucketIndex = Math.floor(turnCount / 20) - 1;
+        void this.summarizeSessionUseCase.execute({
+          sessionId: currentSessionId,
+          sessionTitle: this.session?.title ?? 'Chat',
+          type: 'bucket',
+          bucketIndex,
+          turnStart: bucketIndex * 20 + 1,
+          turnEnd: bucketIndex * 20 + 20,
+        });
+      }
+
+      // Also attempt cross-session save during active chats so memory exists
+      // even if the user starts a new chat without triggering screen cleanup timing.
+      if (result.success) {
+        void this.maybeSaveSessionMemory();
+      }
     } catch (e) {
       console.log('[Chat][Queue] sendMessageUseCase threw', e);
       runInAction(() => {
@@ -316,6 +355,9 @@ export class ChatViewModel {
         this.error = e instanceof Error ? e.message : 'Generation failed';
         this.messages = this.messages.filter((m) => m.status !== 'streaming');
       });
+    } finally {
+      console.log('[Memory] LLM done — releasing embed queue');
+      this.embeddingService.setLlmBusy(false);
     }
 
     console.log('[Chat][Queue] before flushNextQueuedAfterTurn', { pendingLen: this.pendingQueue.length });
@@ -427,6 +469,7 @@ export class ChatViewModel {
       userMessage: updatedMessage,
       history: historyBefore,
       mode: this.selectedMode,
+      ...(this.userDisplayName ? { userDisplayName: this.userDisplayName } : {}),
       onToken: (token) => {
         this.triggerStreamHapticByWords(token);
         runInAction(() => {
@@ -493,6 +536,7 @@ export class ChatViewModel {
       historyUpToUserTurn,
       modelId: this.session.modelId,
       mode: this.selectedMode,
+      ...(this.userDisplayName ? { userDisplayName: this.userDisplayName } : {}),
       onToken: (token) => {
         this.triggerStreamHapticByWords(token);
         runInAction(() => {
@@ -518,6 +562,50 @@ export class ChatViewModel {
         this.error = result.error.message;
       }
     });
+  }
+
+  /** Called from ChatScreen useFocusEffect cleanup when the user leaves the chat. Fire-and-forget. */
+  async maybeSaveSessionMemory(): Promise<void> {
+    const sessionId = this.session?.id;
+    const sessionTitle = this.session?.title ?? 'Chat';
+    const turnCount = this.messages.length;
+    if (!sessionId) {
+      console.log('[Memory] maybeSaveSessionMemory skipped — no session id');
+      return;
+    }
+    if (turnCount < 4) {
+      console.log('[Memory] maybeSaveSessionMemory skipped — not enough turns', { turnCount });
+      return;
+    }
+    if (!this.llmEngine.isModelLoaded() || this.llmEngine.isGenerating()) {
+      console.log('[Memory] maybeSaveSessionMemory skipped — LLM unavailable/busy');
+      return;
+    }
+    const existing = await this.memoryRepository.getSessionMemoryBySessionId(sessionId);
+    if (existing.success && existing.data !== null) {
+      console.log('[Memory] maybeSaveSessionMemory skipped — memory already exists', { sessionId });
+      return;
+    }
+    console.log('[Memory] maybeSaveSessionMemory: creating cross-session memory', { sessionId, turnCount });
+    void this.summarizeSessionUseCase.execute({
+      sessionId,
+      sessionTitle,
+      type: 'cross-session',
+      messages: this.messages.slice(-20).map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
+    });
+  }
+
+  /** Called from ChatScreen useFocusEffect cleanup when the user leaves the chat. Fire-and-forget. */
+  async maybeUpdateUserProfile(turnCount: number): Promise<void> {
+    // Require at least 1 user+assistant exchange.
+    if (turnCount < 2) return;
+    if (!this.llmEngine.isModelLoaded()) return;
+    if (this.llmEngine.isGenerating()) return;
+    const messages = this.messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+    void this.updateUserProfileUseCase.execute(messages);
   }
 
   clearError(): void {

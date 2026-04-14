@@ -127,4 +127,32 @@ export const styles = StyleSheet.create({
     color: PRIMARY_ORANGE,
     fontFamily: fonts.instrumentSerif.italic,
   },
+  pinnedContainer: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+  },
+  pinnedHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pinnedLabel: {
+    fontSize: fontSizes.md,
+    color: WHITE_PRIMARY,
+    fontFamily: fonts.figtree.semiBold,
+  },
+  pinnedCounter: {
+    fontSize: fontSizes.xs,
+    color: TEXT_WHITE_40,
+    fontFamily: fonts.figtree.regular,
+  },
+  pinnedInput: {
+    fontSize: fontSizes.sm,
+    color: WHITE_PRIMARY,
+    fontFamily: fonts.figtree.regular,
+    lineHeight: fontSizes.sm * 1.5,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
 });

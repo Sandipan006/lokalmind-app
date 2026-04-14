@@ -76,6 +76,40 @@ export class ChatRepositoryImpl implements IChatRepository {
       `CREATE INDEX IF NOT EXISTS idx_alternates_message ON message_alternates(message_id, seq);`
     );
 
+    // Rolling in-session summaries — one row per 20-turn bucket per session.
+    await this.sqliteDriver.execute(`
+      CREATE TABLE IF NOT EXISTS session_summaries (
+        id            TEXT PRIMARY KEY,
+        session_id    TEXT NOT NULL,
+        bucket_index  INTEGER NOT NULL,
+        summary       TEXT NOT NULL,
+        turn_start    INTEGER NOT NULL,
+        turn_end      INTEGER NOT NULL,
+        created_at    INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+      );
+    `);
+    await this.sqliteDriver.execute(
+      `CREATE INDEX IF NOT EXISTS idx_summaries_session ON session_summaries(session_id, bucket_index);`
+    );
+
+    // Cross-session long-term memory — one row per completed session (≥ 6 turns).
+    await this.sqliteDriver.execute(`
+      CREATE TABLE IF NOT EXISTS session_memories (
+        id             TEXT PRIMARY KEY,
+        session_id     TEXT NOT NULL,
+        session_title  TEXT NOT NULL,
+        summary        TEXT NOT NULL,
+        embedding      TEXT,
+        score          REAL NOT NULL DEFAULT 0.0,
+        is_pinned      INTEGER NOT NULL DEFAULT 0,
+        is_user_edited INTEGER NOT NULL DEFAULT 0,
+        created_at     INTEGER NOT NULL,
+        updated_at     INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+      );
+    `);
+
     this.initialized = true;
   }
 
