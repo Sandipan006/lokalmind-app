@@ -29,7 +29,7 @@ export class ModelRepositoryImpl implements IModelRepository {
     try {
       const embeddingFile = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
       if (embeddingFile.exists) {
-        console.log('[Embedding] Model already on disk — skipping download, initialising service');
+        if (__DEV__) console.log('[Embedding] Model already on disk — skipping download, initialising service');
         if (this.embeddingService) {
           await this.embeddingService.initialize();
         }
@@ -42,7 +42,7 @@ export class ModelRepositoryImpl implements IModelRepository {
       const url = `${cdnBaseUrl}/models/${EMBEDDING_CONFIG.cdnFolder}/${EMBEDDING_CONFIG.filename}`;
       const destinationPath = embeddingFile.uri;
 
-      console.log('[Embedding] Starting silent download alongside LLM:', url);
+      if (__DEV__) console.log('[Embedding] Starting silent download alongside LLM');
       await this.downloadService.startDownload(
         { modelId: EMBEDDING_CONFIG.id, url, destinationPath, expectedBytes: EMBEDDING_CONFIG.sizeBytes },
         () => { /* silent — no progress reporting */ },
@@ -50,16 +50,16 @@ export class ModelRepositoryImpl implements IModelRepository {
 
       const downloaded = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
       if (downloaded.exists) {
-        console.log('[Embedding] Download complete — initialising service');
+        if (__DEV__) console.log('[Embedding] Download complete — initialising service');
         if (this.embeddingService) {
           await this.embeddingService.initialize();
         }
       } else {
-        console.warn('[Embedding] Download finished but file not found on disk');
+        if (__DEV__) console.warn('[Embedding] Download finished but file not found on disk');
       }
     } catch (e) {
       // Silent failure — score-based retrieval fallback remains active.
-      console.warn('[Embedding] Silent download failed:', e);
+      if (__DEV__) console.warn('[Embedding] Silent download failed:', e);
     }
   }
 

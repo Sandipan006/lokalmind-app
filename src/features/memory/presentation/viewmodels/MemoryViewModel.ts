@@ -33,18 +33,7 @@ export class MemoryViewModel {
         this.appSettingsRepository.getUserProfile(),
       ]);
       const loadedMemories = memoriesResult.success ? memoriesResult.data : [];
-      console.log(
-        '[MemoryScreen] Past conversations loaded:',
-        loadedMemories.map((m) => ({
-          id: m.id,
-          sessionId: m.sessionId,
-          sessionTitle: m.sessionTitle,
-          pinned: m.isPinned,
-          userEdited: m.isUserEdited,
-          score: Number(m.score.toFixed(3)),
-          summaryPreview: m.summary.slice(0, 140),
-        })),
-      );
+      if (__DEV__) console.log('[MemoryScreen] Past conversations loaded:', loadedMemories.length);
       runInAction(() => {
         this.pinnedFacts = factsResult.success ? factsResult.data : '';
         this.memories = loadedMemories;
@@ -82,7 +71,7 @@ export class MemoryViewModel {
 
       // Fire-and-forget re-embed after user edit.
       void this.memoryService.embedAndSave(id, newSummary).catch((e) => {
-        console.warn('[Memory] Re-embed after edit failed:', e);
+        if (__DEV__) console.warn('[Memory] Re-embed after edit failed:', e);
       });
 
       runInAction(() => {
