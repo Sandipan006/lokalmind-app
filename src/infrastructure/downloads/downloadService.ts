@@ -7,7 +7,6 @@ import {
 } from 'expo-file-system/legacy';
 import type { DownloadConfig, DownloadProgress, DownloadState } from './types';
 import type { IAsyncStorageDriver } from '../storage/asyncStorageDriver';
-import { env } from '@/src/config/env';
 
 type DownloadResumable = ReturnType<typeof createDownloadResumable>;
 
@@ -109,7 +108,7 @@ export class DownloadService implements IDownloadService {
             hasPublishedMetrics: false,
           });
         } catch (e) {
-          console.warn(`Failed to parse persisted download state for ${modelId}`, e);
+          if (__DEV__) console.warn(`Failed to parse persisted download state for ${modelId}`, e);
         }
       }
     }
@@ -210,20 +209,13 @@ export class DownloadService implements IDownloadService {
         const totalMB = (progress.totalBytes / (1024 * 1024)).toFixed(1);
         const pct = (progress.progressFraction * 100).toFixed(1);
         const etaMin = progress.etaSeconds > 0 ? (progress.etaSeconds / 60).toFixed(1) : '?';
-        console.log(
+        if (__DEV__) console.log(
           `[Download] ${modelId} | ${pct}% (${writtenMB}/${totalMB} MB) | ${speedMBps} MB/s | ETA ${etaMin} min`
         );
       }
     };
   }
 
-  private buildRequestHeaders(): Record<string, string> {
-    const { username, password } = env.hetzner;
-    if (username && password) {
-      return { Authorization: `Basic ${btoa(`${username}:${password}`)}` };
-    }
-    return {};
-  }
 
   async startDownload(
     config: DownloadConfig,
@@ -240,7 +232,7 @@ export class DownloadService implements IDownloadService {
     const resumable = createDownloadResumable(
       config.url,
       config.destinationPath,
-      { headers: this.buildRequestHeaders() },
+      {},
       callback as Parameters<typeof createDownloadResumable>[3]
     );
 
@@ -256,9 +248,9 @@ export class DownloadService implements IDownloadService {
       },
       speedSamples: [],
       lastSpeedLog: 0,
-        lastMetricsUpdate: 0,
-        lastComputedSpeed: 0,
-        lastComputedEta: 0,
+      lastMetricsUpdate: 0,
+      lastComputedSpeed: 0,
+      lastComputedEta: 0,
       hasPublishedMetrics: false,
     };
 
@@ -336,7 +328,7 @@ export class DownloadService implements IDownloadService {
     const resumable = createDownloadResumable(
       config.url,
       config.destinationPath,
-      { headers: this.buildRequestHeaders() },
+      {},
       callback as Parameters<typeof createDownloadResumable>[3],
       resumeUri
     );
@@ -353,9 +345,9 @@ export class DownloadService implements IDownloadService {
       },
       speedSamples: [],
       lastSpeedLog: 0,
-        lastMetricsUpdate: 0,
-        lastComputedSpeed: 0,
-        lastComputedEta: 0,
+      lastMetricsUpdate: 0,
+      lastComputedSpeed: 0,
+      lastComputedEta: 0,
       hasPublishedMetrics: false,
     };
 

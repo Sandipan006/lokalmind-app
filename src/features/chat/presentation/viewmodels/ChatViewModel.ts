@@ -110,7 +110,7 @@ export class ChatViewModel {
         if (messagesResult.success && !this.isStreaming) {
           this.messages = messagesResult.data;
         } else if (messagesResult.success && this.isStreaming) {
-          console.log('[Chat][Queue] loadSession: skipped messages overwrite (isStreaming)', { sessionId: sessionId });
+          if (__DEV__) console.log('[Chat][Queue] loadSession: skipped messages overwrite (isStreaming)', { sessionId: sessionId });
         }
         // Only clear queue when switching chats — not on a late refresh of the same session (would wipe FIFO while streaming).
         const loadedSession = sessionResult.success ? sessionResult.data : null;
@@ -193,7 +193,7 @@ export class ChatViewModel {
         mode: this.selectedMode,
         ...(replyDraft ? { reply: replyDraft } : {}),
       };
-      console.log('[Chat][Queue] enqueue', { id: queued.id, textPreview: text.slice(0, 80), mode: queued.mode, depthAfter: this.pendingQueue.length + 1 });
+      if (__DEV__) console.log('[Chat][Queue] enqueue', { id: queued.id, textPreview: text.slice(0, 80), mode: queued.mode, depthAfter: this.pendingQueue.length + 1 });
       runInAction(() => {
         this.pendingQueue = [...this.pendingQueue, queued];
         this.inputText = '';
@@ -234,7 +234,7 @@ export class ChatViewModel {
 
     const clearInput = options?.clearInput ?? true;
     const reply = options?.reply;
-    console.log('[Chat][Queue] runSendTurn start', {
+    if (__DEV__) console.log('[Chat][Queue] runSendTurn start', {
       textPreview: text.slice(0, 80),
       mode,
       clearInput,
@@ -272,7 +272,7 @@ export class ChatViewModel {
       this.streamingContent = '';
       this.error = null;
     });
-    console.log('[Chat][Queue] user bubble added', { userId: userMessage.id, messagesLen: this.messages.length, isStreaming: this.isStreaming });
+    if (__DEV__) console.log('[Chat][Queue] user bubble added', { userId: userMessage.id, messagesLen: this.messages.length, isStreaming: this.isStreaming });
 
     this.abortController = new AbortController();
     this.pendingWordFragment = '';
@@ -281,7 +281,7 @@ export class ChatViewModel {
 
     try {
       const historyForLlm = this.messages.filter((m) => m.role !== 'assistant' || m.status === 'done').slice(0, -1);
-      console.log('[Chat][Queue] calling sendMessageUseCase.execute', { historyLen: historyForLlm.length, userId: userMessage.id });
+      if (__DEV__) console.log('[Chat][Queue] calling sendMessageUseCase.execute', { historyLen: historyForLlm.length, userId: userMessage.id });
 
       const result = await this.sendMessageUseCase.execute({
         sessionId: this.session.id,
@@ -292,7 +292,7 @@ export class ChatViewModel {
         ...(this.userDisplayName ? { userDisplayName: this.userDisplayName } : {}),
         // Set busy AFTER memory retrieval (embedding) completes, right before generation starts.
         onBeforeGenerate: () => {
-          console.log('[Memory] LLM starting — blocking embed queue');
+          if (__DEV__) console.log('[Memory] LLM starting — blocking embed queue');
           this.embeddingService.setLlmBusy(true);
         },
         onToken: (token) => {
@@ -306,7 +306,7 @@ export class ChatViewModel {
         signal: this.abortController.signal,
       });
 
-      console.log('[Chat][Queue] sendMessageUseCase finished', { success: result.success, messagesLen: this.messages.length });
+      if (__DEV__) console.log('[Chat][Queue] sendMessageUseCase finished', { success: result.success, messagesLen: this.messages.length });
 
       runInAction(() => {
         this.isStreaming = false;
@@ -347,7 +347,7 @@ export class ChatViewModel {
         void this.maybeSaveSessionMemory();
       }
     } catch (e) {
-      console.log('[Chat][Queue] sendMessageUseCase threw', e);
+      if (__DEV__) console.log('[Chat][Queue] sendMessageUseCase threw', e);
       runInAction(() => {
         this.isStreaming = false;
         this.isModelLoading = false;
@@ -356,11 +356,11 @@ export class ChatViewModel {
         this.messages = this.messages.filter((m) => m.status !== 'streaming');
       });
     } finally {
-      console.log('[Memory] LLM done — releasing embed queue');
+      if (__DEV__) console.log('[Memory] LLM done — releasing embed queue');
       this.embeddingService.setLlmBusy(false);
     }
 
-    console.log('[Chat][Queue] before flushNextQueuedAfterTurn', { pendingLen: this.pendingQueue.length });
+    if (__DEV__) console.log('[Chat][Queue] before flushNextQueuedAfterTurn', { pendingLen: this.pendingQueue.length });
     await this.flushNextQueuedAfterTurn();
   }
 
@@ -368,10 +368,10 @@ export class ChatViewModel {
   private async flushNextQueuedAfterTurn(): Promise<void> {
     const next = this.pendingQueue[0];
     if (!next) {
-      console.log('[Chat][Queue] flush: empty queue');
+      if (__DEV__) console.log('[Chat][Queue] flush: empty queue');
       return;
     }
-    console.log('[Chat][Queue] flush: dequeuing', { id: next.id, textPreview: next.text.slice(0, 80), mode: next.mode });
+    if (__DEV__) console.log('[Chat][Queue] flush: dequeuing', { id: next.id, textPreview: next.text.slice(0, 80), mode: next.mode });
     runInAction(() => {
       this.pendingQueue = this.pendingQueue.slice(1);
     });
@@ -570,23 +570,23 @@ export class ChatViewModel {
     const sessionTitle = this.session?.title ?? 'Chat';
     const turnCount = this.messages.length;
     if (!sessionId) {
-      console.log('[Memory] maybeSaveSessionMemory skipped — no session id');
+      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped — no session id');
       return;
     }
     if (turnCount < 4) {
-      console.log('[Memory] maybeSaveSessionMemory skipped — not enough turns', { turnCount });
+      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped — not enough turns', { turnCount });
       return;
     }
     if (!this.llmEngine.isModelLoaded() || this.llmEngine.isGenerating()) {
-      console.log('[Memory] maybeSaveSessionMemory skipped — LLM unavailable/busy');
+      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped — LLM unavailable/busy');
       return;
     }
     const existing = await this.memoryRepository.getSessionMemoryBySessionId(sessionId);
     if (existing.success && existing.data !== null) {
-      console.log('[Memory] maybeSaveSessionMemory skipped — memory already exists', { sessionId });
+      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped — memory already exists', { sessionId });
       return;
     }
-    console.log('[Memory] maybeSaveSessionMemory: creating cross-session memory', { sessionId, turnCount });
+    if (__DEV__) console.log('[Memory] maybeSaveSessionMemory: creating cross-session memory', { sessionId, turnCount });
     void this.summarizeSessionUseCase.execute({
       sessionId,
       sessionTitle,
