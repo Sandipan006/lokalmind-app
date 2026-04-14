@@ -1,3 +1,4 @@
+import type { IEmbeddingService } from '@/src/core/ports/IEmbeddingService';
 // llama.rn is imported here in embedding mode — isolation same as llamaRnAdapter.ts.
 // No other file may call initLlama for embedding purposes.
 import { File, Paths } from 'expo-file-system';
@@ -8,13 +9,6 @@ import { getUsableRamBytes } from '@/src/infrastructure/device/deviceCapability'
 import { EMBEDDING_CONFIG } from '@/src/infrastructure/downloads/modelConfig';
 
 const EMBED_MODEL_RAM_BYTES = 200 * 1024 * 1024; // 200 MB conservative headroom check
-
-export interface IEmbeddingService {
-  initialize(): Promise<void>;
-  embed(text: string): Promise<number[]>;
-  isReady(): boolean;
-  setLlmBusy(busy: boolean): void;
-}
 
 export class EmbeddingService implements IEmbeddingService {
   private context: LlamaContext | null = null;
@@ -102,5 +96,14 @@ export class EmbeddingService implements IEmbeddingService {
 
   isReady(): boolean {
     return this.context !== null;
+  }
+
+  async release(): Promise<void> {
+    const pending = this.embedQueue.splice(0);
+    pending.forEach((resolve) => resolve());
+    this.isLlmBusy = false;
+    if (!this.context) return;
+    await this.context.release();
+    this.context = null;
   }
 }

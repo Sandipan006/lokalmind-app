@@ -2,3 +2,4 @@ export type { ILLMEngine, LLMMessage, LLMConfig, LLMResponse } from './ILLMEngin
 export type { IWhisperEngine, WhisperTranscribeOptions, WhisperResult } from './IWhisperEngine';
 export type { ILocalDataReset } from './ILocalDataReset';
 export type { IAppSettingsRepository } from './IAppSettingsRepository';
+export type { IEmbeddingService } from './IEmbeddingService';

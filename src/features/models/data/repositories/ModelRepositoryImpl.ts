@@ -1,10 +1,10 @@
 import { env } from '@/src/config/env';
+import type { IEmbeddingService } from '@/src/core/ports/IEmbeddingService';
 import type { Result } from '@/src/core/types';
 import { createError, err, ok } from '@/src/core/types';
 import { getTotalRamBytes } from '@/src/infrastructure/device/deviceCapability';
 import type { IDownloadService } from '@/src/infrastructure/downloads/downloadService';
 import { MODEL_CONFIGS, EMBEDDING_CONFIG } from '@/src/infrastructure/downloads/modelConfig';
-import type { IEmbeddingService } from '@/src/infrastructure/llm/embeddingService';
 import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
 import { File, Paths } from 'expo-file-system';
 import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
