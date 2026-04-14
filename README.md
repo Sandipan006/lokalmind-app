@@ -28,14 +28,14 @@ LokalMind brings large language models directly onto your phone. Pick a model, d
 
 ## Models
 
-| Model | Size | RAM | Best for | Free |
-|-------|------|-----|----------|------|
-| Qwen 3.5 — 0.8B | 550 MB | 2 GB+ | Fast everyday chat | ✓ |
-| Qwen 3.5 — 2B | 1.3 GB | 3 GB+ | Summaries, multilingual | ✓ |
-| DeepSeek R1 — 1.5B | 1.1 GB | 3 GB+ | Coding, math, reasoning | ✓ |
-| Qwen 3.5 — 4B | 2.9 GB | 5 GB+ | Complex tasks, creative | Pro |
-| Qwen 3 — 4B | 2.5 GB | 5 GB+ | Thinking mode, coding | Pro |
-| Gemma 3 — 4B | 2.5 GB | 5 GB+ | Long context, analysis | Pro |
+| Model | Size | RAM | Best for |
+|-------|------|-----|----------|
+| Qwen 3.5 — 0.8B | 550 MB | 2 GB+ | Fast everyday chat |
+| Qwen 3.5 — 2B | 1.3 GB | 3 GB+ | Summaries, multilingual |
+| DeepSeek R1 — 1.5B | 1.1 GB | 3 GB+ | Coding, math, reasoning |
+| Qwen 3.5 — 4B | 2.9 GB | 5 GB+ | Complex tasks, creative |
+| Qwen 3 — 4B | 2.5 GB | 5 GB+ | Thinking mode, coding |
+| Gemma 3 — 4B | 2.5 GB | 5 GB+ | Long context, analysis |
 
 ---
 
