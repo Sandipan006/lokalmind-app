@@ -1,4 +1,4 @@
-import { MODEL_CONFIGS, WHISPER_CONFIG } from '@/src/infrastructure/downloads/modelConfig';
+import { MODEL_CONFIGS, WHISPER_CONFIG, EMBEDDING_CONFIG } from '@/src/infrastructure/downloads/modelConfig';
 import { File, Paths } from 'expo-file-system';
 
 /** Removes GGUF and Whisper binaries from the app documents `models/` folder. */
@@ -13,5 +13,10 @@ export async function deleteDownloadedModelFiles(): Promise<void> {
   const whisperFile = new File(Paths.document, 'models', WHISPER_CONFIG.filename);
   if (whisperFile.exists) {
     await whisperFile.delete();
+  }
+
+  const embeddingFile = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
+  if (embeddingFile.exists) {
+    await embeddingFile.delete();
   }
 }

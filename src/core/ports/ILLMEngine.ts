@@ -28,4 +28,6 @@ export interface ILLMEngine {
   unloadModel(): Promise<void>;
   isModelLoaded(): boolean;
   getCurrentModelId(): string | null;
+  /** True while generateResponse() is active — used by SummarizeSessionUseCase and EmbeddingService. */
+  isGenerating(): boolean;
 }

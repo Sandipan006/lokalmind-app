@@ -23,26 +23,58 @@ export default function ChatSessionScreen() {
   const router = useRouter();
   const { id, modelId: modelIdParam } = useLocalSearchParams<{ id: string; modelId?: string | string[] }>();
   const [resolvedSessionId, setResolvedSessionId] = useState<string | null>(id ?? null);
+  const [isContainerReady, setIsContainerReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    void container.initializeContainer()
+      .then(() => {
+        if (mounted) setIsContainerReady(true);
+      })
+      .catch((e) => {
+        console.error('[ChatRoute] Failed to initialize container', e);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const viewModel = useMemo(() => {
+    if (!isContainerReady) return null;
     const repo = container.chatRepository;
     const llm = container.llmEngine;
+    const settings = container.appSettingsRepository;
+    const memRepo = container.memoryRepository;
+    const memService = container.memoryService;
     return new ChatViewModel(
       new CreateSessionUseCase(repo),
       new GetSessionUseCase(repo),
       new GetMessagesUseCase(repo),
-      new SendMessageUseCase(repo, llm, container.appSettingsRepository),
+      new SendMessageUseCase(repo, llm, settings, memRepo, memService),
       new EditMessageUseCase(repo),
       new GenerateChatTitleUseCase(repo, llm),
       new UpdateSessionModelUseCase(repo),
-      new RegenerateReplyUseCase(repo, llm, container.appSettingsRepository),
+      new RegenerateReplyUseCase(repo, llm, settings, memRepo, memService),
+      container.summarizeSessionUseCase,
+      container.updateUserProfileUseCase,
+      memRepo,
+      llm,
+      container.embeddingService,
     );
-  }, []);
+  }, [isContainerReady]);
+
+  useEffect(() => {
+    if (!isContainerReady || !viewModel) return;
+    container.userRepository.getDisplayName().then((name) => {
+      if (name) viewModel.userDisplayName = name;
+    }).catch(() => undefined);
+  }, [isContainerReady, viewModel]);
 
   useEffect(() => {
     let isMounted = true;
 
     async function resolveSession() {
+      if (!isContainerReady) return;
       if (id !== 'new') {
         if (isMounted) setResolvedSessionId(id);
         return;
@@ -70,9 +102,9 @@ export default function ChatSessionScreen() {
     return () => {
       isMounted = false;
     };
-  }, [id, modelIdParam, router]);
+  }, [id, isContainerReady, modelIdParam, router]);
 
-  if (!resolvedSessionId) {
+  if (!isContainerReady || !viewModel || !resolvedSessionId) {
     return (
       <View style={{ flex: 1, backgroundColor: BLACK_PRIMARY, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator color={PRIMARY_ORANGE} />

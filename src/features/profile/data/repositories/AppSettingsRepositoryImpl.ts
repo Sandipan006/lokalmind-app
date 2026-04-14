@@ -23,4 +23,20 @@ export class AppSettingsRepositoryImpl implements IAppSettingsRepository {
     }
     await this.storage.setString(key, trimmed);
   }
+
+  async getPinnedFacts(): Promise<string> {
+    return (await this.storage.getString(STORAGE_KEYS.MEMORY_PINNED_FACTS)) ?? '';
+  }
+
+  async savePinnedFacts(facts: string): Promise<void> {
+    await this.storage.setString(STORAGE_KEYS.MEMORY_PINNED_FACTS, facts.slice(0, 800));
+  }
+
+  async getUserProfile(): Promise<string> {
+    return (await this.storage.getString(STORAGE_KEYS.MEMORY_USER_PROFILE)) ?? '';
+  }
+
+  async saveUserProfile(profile: string): Promise<void> {
+    await this.storage.setString(STORAGE_KEYS.MEMORY_USER_PROFILE, profile.slice(0, 600));
+  }
 }
