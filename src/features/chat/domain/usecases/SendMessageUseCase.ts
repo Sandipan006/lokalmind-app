@@ -156,8 +156,11 @@ export class SendMessageUseCase {
       if (__DEV__) {
         console.log('[Chat][LLM] Mode:', mode);
         console.log('[Chat][LLM] Profile injected:', effectiveProfile || '(empty)');
-        console.log('[Chat][LLM] History:', history);
-        console.log('[Chat][LLM] User message:', userMessage);
+        console.log('[Chat][LLM] Context stats:', {
+          historyMessages: history.length,
+          llmMessages: llmMessages.length,
+          userChars: userMessage.content.length,
+        });
       }
 
       if (isDismissive(userMessage.content)) {
