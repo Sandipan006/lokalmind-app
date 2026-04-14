@@ -1,4 +1,5 @@
 import { container } from '@/src/core/di/container';
+import { clearLocalData, clearLLMFiles } from '@/scripts/clearLocalData';
 import { Redirect } from 'expo-router';
 import LottieView from 'lottie-react-native';
 import { useEffect, useState } from 'react';
@@ -49,6 +50,10 @@ export function SplashScreen() {
             const downloaded = allModelsResult.data.filter((m) => m.isDownloaded);
             console.log('[SplashScreen] Downloaded models:', downloaded.map((m) => m.id));
           }
+          // User has a model — safe to attempt embedding init now.
+          void container.embeddingService.initialize().catch((e) => {
+            console.warn('[Embedding] Background init failed, score-based fallback active:', e);
+          });
           setRoute('/chat/new');
           return;
         }

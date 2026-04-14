@@ -31,6 +31,7 @@ export class LlamaRnAdapter implements ILLMEngine {
   private initializingPromise: Promise<void> | null = null;
   /** One completion at a time — native throws "Context is busy" if a new completion starts before the last fully unwinds. */
   private completionEnd: Promise<void> = Promise.resolve();
+  private generating = false;
 
   async initialize(modelId: string, config: LLMConfig): Promise<void> {
     if (this.context && this.currentModelId === modelId) return;
@@ -134,6 +135,7 @@ export class LlamaRnAdapter implements ILLMEngine {
 
     signal?.addEventListener('abort', stopCompletion);
 
+    this.generating = true;
     try {
       const result = await this.context.completion(
         {
@@ -158,6 +160,7 @@ export class LlamaRnAdapter implements ILLMEngine {
         finishReason,
       };
     } finally {
+      this.generating = false;
       signal?.removeEventListener('abort', stopCompletion);
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
       releaseCompletion();
@@ -180,6 +183,10 @@ export class LlamaRnAdapter implements ILLMEngine {
 
   getCurrentModelId(): string | null {
     return this.currentModelId;
+  }
+
+  isGenerating(): boolean {
+    return this.generating;
   }
 
   // Releases all llama contexts - call on app teardown.

@@ -10,7 +10,8 @@ export const STORAGE_KEYS = {
   WHISPER_MODEL_PATH: 'whisper:modelPath',
   SETTINGS_CONTEXT_WINDOW: 'settings:contextWindow',
   SETTINGS_GLOBAL_SYSTEM_PROMPT: 'settings:globalSystemPrompt',
-  SETTINGS_MEMORY_ENABLED: 'settings:memoryEnabled',
+  MEMORY_PINNED_FACTS: 'memory:pinnedFacts',
+  MEMORY_USER_PROFILE: 'memory:userProfile',
   ONBOARDING_COMPLETE: 'onboarding:complete',
   modeSystemPrompt: (mode: string) => `settings:mode:${mode}:systemPrompt`,
 } as const;
