@@ -1,0 +1,69 @@
+# EAS Build ignore file
+# Excludes files/folders from being uploaded to EAS build servers.
+
+# Local env files (secrets — never upload)
+.env
+.env.local
+.env.development
+.env.production
+.env*.local
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# GGUF model files — large binaries, never needed for the build
+*.gguf
+models/**/*.gguf
+llm-models/
+
+# Node / Expo build artifacts
+node_modules/
+.expo/
+dist/
+web-build/
+.cache/
+.parcel-cache/
+.metro-health-check*
+
+# TypeScript
+*.tsbuildinfo
+
+# Scripts (upload/CI tooling, not needed by EAS)
+scripts/
+
+# Docs / repo files
+docs/
+*.md
+!README.md
+
+# Editor
+.vscode/
+.idea/
+.cursor/
+*.code-workspace
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Tests
+coverage/
+.nyc_output/
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Old code / internal notes
+lokalmind-oldcode/
+OPEN-SOURCE-SECURITY-AUDIT.md
