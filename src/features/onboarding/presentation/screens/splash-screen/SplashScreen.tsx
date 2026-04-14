@@ -1,18 +1,16 @@
 import { container } from '@/src/core/di/container';
-import { clearLocalData, clearLLMFiles } from '@/scripts/clearLocalData';
 import { Redirect } from 'expo-router';
 import LottieView from 'lottie-react-native';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+import type { InitialAppRoute } from '@/src/features/onboarding/domain/usecases/ResolveInitialRouteUseCase';
 import { splashScreenStyles as styles } from './SplashScreenStyles';
 
 const SPLASH_MIN_DURATION_MS = 2500;
 
-type AppRoute = '/chat/new' | '/(tabs)/chat' | '/onboarding/model-setup' | '/onboarding/welcome';
-
 export function SplashScreen() {
   const [isChecking, setIsChecking] = useState(true);
-  const [route, setRoute] = useState<AppRoute>('/onboarding/welcome');
+  const [route, setRoute] = useState<InitialAppRoute>('/onboarding/welcome');
   const [minimumDurationPassed, setMinimumDurationPassed] = useState(false);
 
   useEffect(() => {
@@ -26,48 +24,11 @@ export function SplashScreen() {
   useEffect(() => {
     async function checkAppState() {
       try {
-        // Dev only: uncomment to reset app state on next launch.
-        // await clearLocalData();   // clears AsyncStorage + SQLite
-        // await clearLLMFiles();    // deletes downloaded GGUF/Whisper files
-
         await container.initializeContainer();
-        const onboardingComplete = await container.userRepository.isOnboardingComplete();
-
-        if (!onboardingComplete) {
-          setRoute('/onboarding/welcome');
-          return;
-        }
-
-        const hasModelResult = await container.modelRepository.hasDownloadedModel();
-        const hasModel = hasModelResult.success ? hasModelResult.data : false;
-
-        const sessionsResult = await container.chatRepository.getSessions();
-        const hasAnyChats = sessionsResult.success && sessionsResult.data.length > 0;
-
-        if (hasModel) {
-          const allModelsResult = await container.modelRepository.getAllModels();
-          if (allModelsResult.success) {
-            const downloaded = allModelsResult.data.filter((m) => m.isDownloaded);
-            console.log('[SplashScreen] Downloaded models:', downloaded.map((m) => m.id));
-          }
-          // User has a model — safe to attempt embedding init now.
-          void container.embeddingService.initialize().catch((e) => {
-            console.warn('[Embedding] Background init failed, score-based fallback active:', e);
-          });
-          setRoute('/chat/new');
-          return;
-        }
-
-        console.log('[SplashScreen] No downloaded models found.');
-
-        // Chats remain after deleting models - open Recents instead of forcing download flow.
-        if (hasAnyChats) {
-          setRoute('/(tabs)/chat');
-        } else {
-          setRoute('/onboarding/model-setup');
-        }
+        const next = await container.resolveInitialRouteUseCase.execute();
+        setRoute(next);
       } catch (error) {
-        console.error('Failed to check app state:', error);
+        if (__DEV__) console.error('[SplashScreen] Failed to resolve initial route:', error);
         setRoute('/onboarding/welcome');
       } finally {
         setIsChecking(false);

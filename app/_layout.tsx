@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,6 +9,7 @@ import { ErrorBoundary } from '@/src/design-system/components';
 import { useFontLoader } from '@/src/providers/useFontLoader';
 import { useOtaUpdates } from '@/src/providers/useOtaUpdates';
 import { BLACK_PRIMARY } from '@/src/design-system/tokens/colors';
+import { container } from '@/src/core/di/container';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +22,17 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'background') {
+        void container.initializeContainer()
+          .then(() => container.releaseAllLlamaContextsIfReady())
+          .catch(() => undefined);
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   if (!fontsLoaded && !fontError) {
     return null;
