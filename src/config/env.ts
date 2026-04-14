@@ -16,8 +16,6 @@ export const env = {
   hetzner: {
     baseUrl: getEnvVar('HETZNER_BASE_URL', ''),
     webdavUrl: getEnvVar('HETZNER_WEBDAV_URL', ''),
-    username: getEnvVar('HETZNER_WEBDAV_USERNAME', ''),
-    password: getEnvVar('HETZNER_WEBDAV_PASSWORD', ''),
   },
   models: {
     metadataPath: getEnvVar('MODEL_METADATA_PATH', 'models/metadata.json'),

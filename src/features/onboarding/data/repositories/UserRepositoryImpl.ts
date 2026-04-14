@@ -90,17 +90,11 @@ export class UserRepositoryImpl implements IUserRepository {
   async isOnboardingComplete(): Promise<boolean> {
     await this.ensureInitialized();
     
-    const allUsers = await this.sqliteDriver.query<{ id: number; display_name: string; onboarding_complete: number }>(
-      'SELECT * FROM users'
-    );
-    console.log('[UserRepository] All users in DB:', JSON.stringify(allUsers, null, 2));
-    
     const rows = await this.sqliteDriver.query<{ onboarding_complete: number }>(
       'SELECT onboarding_complete FROM users WHERE id = 1'
     );
     
     const isComplete = rows.length > 0 && rows[0]?.onboarding_complete === 1;
-    console.log('[UserRepository] isOnboardingComplete:', isComplete);
     return isComplete;
   }
 }
