@@ -91,10 +91,7 @@ function ThinkingIndicator({ onDismiss }: { onDismiss: () => void }) {
   return (
     <Pressable style={styles.thinkingRow} onPress={onDismiss}>
       <Text style={styles.thinkingText}>Thinking...</Text>
-      <Animated.View
-        pointerEvents="none"
-        style={[styles.thinkingShimmer, { transform: [{ translateX: shimmerTranslateX }] }]}
-      />
+
     </Pressable>
   );
 }
