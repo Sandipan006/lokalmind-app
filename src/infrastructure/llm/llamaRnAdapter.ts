@@ -189,8 +189,8 @@ export class LlamaRnAdapter implements ILLMEngine {
     return this.generating;
   }
 
-  // Releases all llama contexts - call on app teardown.
-  async releaseAll(): Promise<void> {
+  // Releases all llama contexts - call on app teardown / background.
+  async releaseAllContexts(): Promise<void> {
     await releaseAllLlama();
     this.context = null;
     this.currentModelId = null;

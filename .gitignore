@@ -3,10 +3,6 @@
 # dependencies
 node_modules/
 
-#old-app
-lokalmind-oldcode
-OPEN-SOURCE-SECURITY-AUDIT.md
-
 #llm-models
 llm-models/
 

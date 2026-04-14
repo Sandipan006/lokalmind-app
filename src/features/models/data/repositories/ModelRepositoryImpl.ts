@@ -228,7 +228,7 @@ export class ModelRepositoryImpl implements IModelRepository {
 
       return await this.markDownloaded(modelId, config.filename, destinationPath);
     } catch (e) {
-      console.error('[ModelRepository] startDownload failed:', e);
+      if (__DEV__) console.error('[ModelRepository] startDownload failed:', e);
       return err(createError('DOWNLOAD_FAILED', 'Failed to start download', e));
     }
   }

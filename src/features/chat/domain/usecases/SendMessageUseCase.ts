@@ -194,7 +194,7 @@ export class SendMessageUseCase {
         await this.chatRepository.updateMessageContent(assistantId, partial, 'done');
         return { success: true, data: { ...assistantMessage, content: partial, status: 'done' } };
       }
-      console.error('[Chat][LLM] generation error', e);
+      if (__DEV__) console.error('[Chat][LLM] generation error', e);
       await this.chatRepository.updateMessageContent(assistantId, '', 'error');
       const msg = e instanceof Error ? e.message : String(e);
       return { success: false, error: createError('GENERATION_ERROR', msg || 'LLM generation failed', e) };
