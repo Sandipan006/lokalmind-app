@@ -6,7 +6,7 @@ alwaysApply: false
 
 Full reference: `docs/CONVENTIONS.md` section 5.
 
-## Use cases return Result — never throw
+## Use cases return Result - never throw
 
 ```typescript
 import { ok, err } from '@/src/core/types';
@@ -35,7 +35,7 @@ runInAction(() => {
 
 ## Rules
 
-- Use cases: MUST return `Result<T>` — never throw
+- Use cases: MUST return `Result<T>` - never throw
 - Infrastructure adapters: MUST catch and wrap exceptions as `AppError`
 - Never use `any` as error type
-- Never swallow silently — every `catch` must re-throw or return `err(...)`
+- Never swallow silently - every `catch` must re-throw or return `err(...)`

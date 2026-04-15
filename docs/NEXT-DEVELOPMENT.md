@@ -1,13 +1,13 @@
 # Next development phases
 
-Short backlog for features not in the current App Store / OSS cut. **Do not add privacy usage strings until the feature ships** — Apple expects `Info.plist` keys to match real permission prompts.
+Short backlog for features not in the current App Store / OSS cut. **Do not add privacy usage strings until the feature ships** - Apple expects `Info.plist` keys to match real permission prompts.
 
 ## Voice input (STT)
 
 - Implement `whisper.rn` in `src/infrastructure/whisper/whisperRnAdapter.ts` (replace Phase 3 stubs).
 - Wire UI (mic button, recording) and pass transcript into chat composer.
 - **When enabling microphone:** add `NSMicrophoneUsageDescription` to `app.json` → `expo.ios.infoPlist` with a clear user-facing reason. Same for Android if using `RECORD_AUDIO`.
-- Revisit `expo-av` usage — any code path that records or session-configures audio may require the same disclosure.
+- Revisit `expo-av` usage - any code path that records or session-configures audio may require the same disclosure.
 
 ## Image / document understanding (OCR & attachments)
 

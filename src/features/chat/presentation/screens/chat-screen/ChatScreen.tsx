@@ -8,20 +8,20 @@ import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { TextInput } from 'react-native';
 import {
-  ActionSheetIOS,
-  Alert,
-  Animated, Easing,
-  FlatList,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text,
-  View,
+    ActionSheetIOS,
+    Alert,
+    Animated, Easing,
+    FlatList,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    Text,
+    View,
 } from 'react-native';
 import ReanimatedSwipeable, {
-  SwipeDirection,
-  type SwipeableMethods,
+    SwipeDirection,
+    type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ChatMessage } from '../../../domain/entities/ChatMessage';
@@ -29,9 +29,9 @@ import { ChatHeader } from '../../components/ChatHeader/ChatHeader';
 import { ChatInputBar } from '../../components/ChatInputBar/ChatInputBar';
 import { MessageQueueStrip } from '../../components/MessageQueueStrip/MessageQueueStrip';
 import {
-  MessageRenderer,
-  renderInlineMarkdown,
-  type InlineMarkdownStyleSet,
+    MessageRenderer,
+    renderInlineMarkdown,
+    type InlineMarkdownStyleSet,
 } from '../../components/MessageRenderer/MessageRenderer';
 import { RegenerateControls } from '../../components/RegenerateControls/RegenerateControls';
 import type { ChatViewModel } from '../../viewmodels/ChatViewModel';
@@ -288,6 +288,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
   useFocusEffect(
     useCallback(() => {
       void refreshDownloadedModel();
+      void loadPickerModels();
       return () => {
         composerInputRef.current?.blur();
         Keyboard.dismiss();
@@ -297,7 +298,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
         // Save a cross-session memory summary if this session is long enough.
         void viewModel.maybeSaveSessionMemory();
       };
-    }, [refreshDownloadedModel, viewModel]),
+    }, [loadPickerModels, refreshDownloadedModel, viewModel]),
   );
 
   useEffect(() => {
@@ -456,7 +457,7 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
               onRegenerate={() => {
                 void viewModel.regenerateLastReply().then(() => {
                   // After regeneration, the updated message in viewModel.messages has the new
-                  // alternateContents length — jump to the last version automatically.
+                  // alternateContents length - jump to the last version automatically.
                   const updatedMsg = viewModel.messages.find((m) => m.id === item.id);
                   const newTotal = updatedMsg?.alternateContents?.length ?? totalVersions + 1;
                   setAlternateViewIndexMap((prev) => ({ ...prev, [item.id]: newTotal }));

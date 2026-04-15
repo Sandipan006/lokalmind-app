@@ -10,7 +10,7 @@ const CONTEXTUAL_MARKERS = [
 ];
 
 function requiresMemory(userMessage: string, sessionTurnCount: number): boolean {
-  // Always inject cross-session memories at the start of a session — history is empty so context must come from memory.
+  // Always inject cross-session memories at the start of a session - history is empty so context must come from memory.
   if (sessionTurnCount < 3) return true;
   const text = userMessage.toLowerCase();
   const hasContextualRef = CONTEXTUAL_MARKERS.some((m) => text.includes(m));
@@ -19,7 +19,7 @@ function requiresMemory(userMessage: string, sessionTurnCount: number): boolean 
 }
 
 export class MemoryService {
-  // embeddingService injected in step 7 — kept as optional to allow step 6 to work without it.
+  // embeddingService injected in step 7 - kept as optional to allow step 6 to work without it.
   private embeddingService: { isReady(): boolean; embed(text: string): Promise<number[]> } | null = null;
 
   constructor(private readonly memoryRepository: IMemoryRepository) {}
@@ -43,7 +43,7 @@ export class MemoryService {
     if (__DEV__) console.log(`[Memory] DB: ${all.length} memories (${pinned.length} pinned, ${nonPinned.length} non-pinned)`);
 
     if (!requiresMemory(userMessage, sessionTurnCount)) {
-      if (__DEV__) console.log('[Memory] Short/stateless message — injecting pinned facts only');
+      if (__DEV__) console.log('[Memory] Short/stateless message - injecting pinned facts only');
       return ok(pinned);
     }
 
@@ -58,7 +58,7 @@ export class MemoryService {
     const queryVec = await this.embeddingService.embed(userMessage);
     if (queryVec.length === 0) {
       const top5 = [...nonPinned].sort((a, b) => b.score - a.score).slice(0, 5);
-      if (__DEV__) console.log('[Memory] Embed returned empty vector — falling back to score-based');
+      if (__DEV__) console.log('[Memory] Embed returned empty vector - falling back to score-based');
       return ok([...pinned, ...top5]);
     }
 

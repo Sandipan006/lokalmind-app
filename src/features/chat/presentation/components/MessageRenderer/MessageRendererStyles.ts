@@ -1,12 +1,12 @@
-import { StyleSheet } from 'react-native';
 import {
-  INPUT_BOX_COLOR,
-  TEXT_WHITE_40,
-  TEXT_WHITE_60,
-  WHITE_PRIMARY,
+    INPUT_BOX_COLOR,
+    TEXT_WHITE_40,
+    TEXT_WHITE_60,
+    WHITE_PRIMARY,
 } from '@/src/design-system/tokens/colors';
 import { borderRadius, normalize, spacing } from '@/src/design-system/tokens/spacing';
 import { fonts, fontSizes, typography } from '@/src/design-system/tokens/typography';
+import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   container: {
@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
     lineHeight: fontSizes.md * 1.6,
   },
 
-  /** ATX markdown — `typography.heading` + chat bubble color/line-height/width only. */
+  /** ATX markdown - `typography.heading` + chat bubble color/line-height/width only. */
   heading1: {
     ...typography.heading.h1,
     color: WHITE_PRIMARY,

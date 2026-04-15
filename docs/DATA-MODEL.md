@@ -1,4 +1,4 @@
-# LokalMind v2 — Data Model
+# LokalMind v2 - Data Model
 
 ---
 

@@ -1,4 +1,4 @@
-# LokalMind v2 — LLM Pipeline
+# LokalMind v2 - LLM Pipeline
 
 Covers current chat generation flow, context assembly, queue behavior, memory integration, and voice/STT boundary contracts.
 

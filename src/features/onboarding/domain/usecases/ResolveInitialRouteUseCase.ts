@@ -13,7 +13,7 @@ interface IEmbeddingInit {
 }
 
 /**
- * Decides first navigation after splash — onboarding state, downloaded models, and chat history.
+ * Decides first navigation after splash - onboarding state, downloaded models, and chat history.
  */
 export class ResolveInitialRouteUseCase {
   constructor(

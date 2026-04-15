@@ -51,7 +51,8 @@
       "expo-sqlite",
       "llama.rn",
       "expo-background-task",
-      "expo-updates"
+      "expo-updates",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,

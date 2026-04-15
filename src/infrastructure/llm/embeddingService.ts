@@ -1,12 +1,12 @@
 import type { IEmbeddingService } from '@/src/core/ports/IEmbeddingService';
-// llama.rn is imported here in embedding mode — isolation same as llamaRnAdapter.ts.
+// llama.rn is imported here in embedding mode - isolation same as llamaRnAdapter.ts.
 // No other file may call initLlama for embedding purposes.
-import { File, Paths } from 'expo-file-system';
-import { initLlama } from 'llama.rn';
-import type { LlamaContext } from 'llama.rn';
-import { Platform } from 'react-native';
 import { getUsableRamBytes } from '@/src/infrastructure/device/deviceCapability';
 import { EMBEDDING_CONFIG } from '@/src/infrastructure/downloads/modelConfig';
+import { File, Paths } from 'expo-file-system';
+import type { LlamaContext } from 'llama.rn';
+import { initLlama } from 'llama.rn';
+import { Platform } from 'react-native';
 
 const EMBED_MODEL_RAM_BYTES = 200 * 1024 * 1024; // 200 MB conservative headroom check
 
@@ -25,11 +25,11 @@ export class EmbeddingService implements IEmbeddingService {
   }
 
   private async _init(): Promise<void> {
-    // Model lives in document directory alongside chat models — downloaded via CDN, not bundled.
+    // Model lives in document directory alongside chat models - downloaded via CDN, not bundled.
     const modelFile = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
     if (!modelFile.exists) {
-      // Not downloaded yet — isReady() stays false, score-based fallback activates.
-      if (__DEV__) console.warn('[Embedding] Model file not found — score-based fallback active');
+      // Not downloaded yet - isReady() stays false, score-based fallback activates.
+      if (__DEV__) console.warn('[Embedding] Model file not found - score-based fallback active');
       return;
     }
 
@@ -37,7 +37,7 @@ export class EmbeddingService implements IEmbeddingService {
     const usable = await getUsableRamBytes();
     const usableMB = Math.round(usable / 1024 / 1024);
     if (usable < EMBED_MODEL_RAM_BYTES) {
-      if (__DEV__) console.warn(`[Embedding] Insufficient RAM (${usableMB} MB free) — score-based fallback active`);
+      if (__DEV__) console.warn(`[Embedding] Insufficient RAM (${usableMB} MB free) - score-based fallback active`);
       return;
     }
 
@@ -51,21 +51,21 @@ export class EmbeddingService implements IEmbeddingService {
       n_gpu_layers: 0,   // embedding models do not benefit from GPU on mobile
       use_mlock: false,
     });
-    if (__DEV__) console.log('[Embedding] MiniLM ready — semantic retrieval active');
+    if (__DEV__) console.log('[Embedding] MiniLM ready - semantic retrieval active');
   }
 
   /** Called by ChatViewModel at generation start/end to prevent concurrent LLM+embed. */
   setLlmBusy(busy: boolean): void {
     this.isLlmBusy = busy;
     if (busy) {
-      if (__DEV__) console.log('[Embedding] LLM busy — embed calls will queue');
+      if (__DEV__) console.log('[Embedding] LLM busy - embed calls will queue');
     } else {
       const drained = this.embedQueue.length;
       const queue = this.embedQueue.splice(0);
       queue.forEach((resolve) => resolve());
       if (__DEV__) {
         if (drained > 0) {
-          console.log(`[Embedding] LLM idle — drained ${drained} queued embed call(s)`);
+          console.log(`[Embedding] LLM idle - drained ${drained} queued embed call(s)`);
         } else {
           console.log('[Embedding] LLM idle');
         }
@@ -90,7 +90,7 @@ export class EmbeddingService implements IEmbeddingService {
       return vec;
     } catch (e) {
       if (__DEV__) console.warn('[Embedding] embed() failed, returning empty vector:', e);
-      return []; // graceful degradation — falls back to score-based retrieval
+      return []; // graceful degradation - falls back to score-based retrieval
     }
   }
 

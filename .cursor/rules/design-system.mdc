@@ -1,5 +1,5 @@
 ---
-description: Design system rules — tokens, glass surfaces, animations for LokalMind v2.
+description: Design system rules - tokens, glass surfaces, animations for LokalMind v2.
 globs: ["src/**/*.tsx", "app/**/*.tsx"]
 alwaysApply: false
 ---
@@ -8,7 +8,7 @@ alwaysApply: false
 
 Full reference: `docs/CONVENTIONS.md` section 8 · `docs/DESIGN-SYSTEM.md`.
 
-## Never hardcode — always use tokens
+## Never hardcode - always use tokens
 
 ```typescript
 // Colors   → import from '@/src/design-system/tokens/colors'
@@ -18,7 +18,7 @@ Full reference: `docs/CONVENTIONS.md` section 8 · `docs/DESIGN-SYSTEM.md`.
 
 No hex literals, no named colors (`'white'`), no raw pixel values in StyleSheet.
 
-## Glass surfaces — always use GlassSurface
+## Glass surfaces - always use GlassSurface
 
 ```typescript
 import { GlassSurface } from '@/src/design-system/components';
@@ -29,9 +29,9 @@ import { GlassSurface } from '@/src/design-system/components';
 
 Tiers: `ultra` (modals) · `heavy` (cards) · `medium` (input bars) · `light` (highlights)
 
-Never import `GlassView` or `BlurView` in feature code — `GlassSurface` handles fallback.
+Never import `GlassView` or `BlurView` in feature code - `GlassSurface` handles fallback.
 
 ## Animations
 
-- `react-native-reanimated` only — never `Animated` from `react-native`
+- `react-native-reanimated` only - never `Animated` from `react-native`
 - Lottie only for splash and specific branded moments
