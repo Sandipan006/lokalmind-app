@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LokalMind - Privacy Policy</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121a33;
+      --text: #eef2ff;
+      --muted: #b7c0e8;
+      --accent: #6ea8ff;
+      --line: #263159;
+      --ok: #7fffd4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #18264f 0%, var(--bg) 45%);
+      line-height: 1.6;
+    }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px 64px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 3vw, 2.4rem); }
+    h2 { margin-top: 28px; font-size: 1.3rem; color: #dbe5ff; }
+    p, li { color: var(--muted); }
+    .meta { margin: 0 0 20px; color: #c9d5ff; font-size: 0.95rem; }
+    .promise {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--ok);
+      background: rgba(127, 255, 212, 0.08);
+      border-radius: 10px;
+      color: #ddfff5;
+    }
+    ul { padding-left: 18px; }
+    hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: rgba(110, 168, 255, 0.14); color: #e8eeff; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer { margin-top: 20px; color: #aab6de; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>LokalMind - Privacy Policy</h1>
+      <p class="meta">Last updated: April 2026</p>
+
+      <h2>The short version</h2>
+      <p>LokalMind is built on a single principle: <strong>your data never leaves your device.</strong></p>
+      <p>No accounts. No tracking. No ads. No cloud inference. Your conversations are yours - stored locally, processed locally, deleted locally.</p>
+      <p class="promise"><strong>Privacy Promise:</strong> Local-first by default. Your chat data is never uploaded.</p>
+
+      <hr />
+      <h2>What we collect</h2>
+      <p><strong>Nothing.</strong></p>
+      <p>LokalMind does not collect, transmit, or store any personal data on external servers.</p>
+
+      <hr />
+      <h2>What stays on your device</h2>
+      <p>The following data is stored <strong>only on your iPhone</strong>, in local SQLite and device storage:</p>
+      <ul>
+        <li>Your chat messages and conversation history</li>
+        <li>Downloaded AI model files (.gguf)</li>
+        <li>Your display name and avatar preference</li>
+        <li>Your custom system prompts</li>
+        <li>Your memory notes and learned profile</li>
+        <li>App settings and preferences</li>
+      </ul>
+      <p>None of this is accessible to us, any third party, or any remote server.</p>
+
+      <hr />
+      <h2>Network usage</h2>
+      <p>LokalMind uses the internet <strong>only</strong> for:</p>
+      <ul>
+        <li>Downloading AI model files from our CDN (Hetzner)</li>
+        <li>Receiving app updates via Expo OTA</li>
+      </ul>
+      <p><strong>Your chat prompts and responses are never sent over the internet.</strong> AI inference happens entirely on your device using downloaded models.</p>
+
+      <hr />
+      <h2>Third-party services</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Purpose</th>
+            <th>Data shared</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hetzner CDN</td>
+            <td>Model file downloads</td>
+            <td>None - anonymous file requests only</td>
+          </tr>
+          <tr>
+            <td>Expo OTA</td>
+            <td>App JS bundle updates</td>
+            <td>None - standard app update mechanism</td>
+          </tr>
+          <tr>
+            <td>RevenueCat</td>
+            <td>In-app purchases (if applicable)</td>
+            <td>Purchase receipt only - no chat data</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr />
+      <h2>Children's privacy</h2>
+      <p>LokalMind does not knowingly collect data from anyone, including children. Since no data is collected at all, there is nothing to protect by age category.</p>
+
+      <hr />
+      <h2>Changes to this policy</h2>
+      <p>If this policy changes, the updated version will be committed to this repository with a new date. Significant changes will be noted in the app release notes.</p>
+
+      <hr />
+      <h2>Contact</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Contact</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Email</td>
+            <td><a href="mailto:hey.sandipanbera@gmail.com">hey.sandipanbera@gmail.com</a></td>
+          </tr>
+          <tr>
+            <td>GitHub Issues</td>
+            <td><a href="https://github.com/Sandipan006/lokalmind-app/issues">github.com/Sandipan006/lokalmind-app/issues</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <footer>
+        <p><em>LokalMind is built and maintained by Sandipan Bera, India.</em><br />
+        <em>This app does not have a corporate entity behind it - it is an independent, open-source project.</em></p>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
