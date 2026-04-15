@@ -3,19 +3,32 @@ import { ok } from '@/src/core/types';
 import type { SessionMemory } from '../entities/SessionMemory';
 import type { IMemoryRepository } from '../repositories/IMemoryRepository';
 
-// Contextual markers that suggest the user wants cross-session context.
-const CONTEXTUAL_MARKERS = [
-  'like before', 'same as', 'we discussed', 'you said', 'remember',
-  'earlier', 'last time', 'that thing', 'as usual', 'my name', 'i told you',
-];
+const DEICTIC_REFERENCE_REGEX = /\b(this|that|those|it|again|earlier|before|previous|same)\b/i;
+const SELF_REFERENCE_REGEX = /\b(i|me|my|mine)\b/i;
+const GENERIC_KNOWLEDGE_OPENING_REGEX =
+  /^(what|who|when|where|why|how)\s+(is|are|was|were|do|does|did|can|could|should|would)\b/i;
+
+// Only inject semantic memories that are clearly related to the current user query.
+const MIN_SEMANTIC_CONFIDENCE = 0.3;
 
 function requiresMemory(userMessage: string, sessionTurnCount: number): boolean {
-  // Always inject cross-session memories at the start of a session - history is empty so context must come from memory.
-  if (sessionTurnCount < 3) return true;
-  const text = userMessage.toLowerCase();
-  const hasContextualRef = CONTEXTUAL_MARKERS.some((m) => text.includes(m));
-  const isShortStateless = text.split(' ').length < 12 && !hasContextualRef;
-  return !isShortStateless;
+  if (!userMessage.trim()) return false;
+  const text = userMessage.toLowerCase().trim();
+  const tokenCount = text.split(/\s+/).filter(Boolean).length;
+  const isQuestion = text.includes('?') || GENERIC_KNOWLEDGE_OPENING_REGEX.test(text);
+  const hasSelfReference = SELF_REFERENCE_REGEX.test(text);
+  const hasContextReference = DEICTIC_REFERENCE_REGEX.test(text);
+
+  // Generic standalone knowledge questions should not pull user memory.
+  if (isQuestion && !hasSelfReference && !hasContextReference) return false;
+
+  // Explicitly self-referential asks can use memory, especially after a few turns.
+  if (hasSelfReference) return sessionTurnCount >= 2 || tokenCount >= 4;
+
+  // Short contextual follow-ups ("same as before", "do that again") may need memory.
+  if (hasContextReference && tokenCount <= 12) return true;
+
+  return false;
 }
 
 export class MemoryService {
@@ -43,8 +56,8 @@ export class MemoryService {
     if (__DEV__) console.log(`[Memory] DB: ${all.length} memories (${pinned.length} pinned, ${nonPinned.length} non-pinned)`);
 
     if (!requiresMemory(userMessage, sessionTurnCount)) {
-      if (__DEV__) console.log('[Memory] Short/stateless message - injecting pinned facts only');
-      return ok(pinned);
+      if (__DEV__) console.log('[Memory] Stateless/generic message - skipping cross-session memory injection');
+      return ok([]);
     }
 
     // Score-based fallback when embedding model is not ready.
@@ -62,19 +75,22 @@ export class MemoryService {
       return ok([...pinned, ...top5]);
     }
 
-    const ranked = nonPinned
+    const rankedWithConfidence = nonPinned
       .map((mem) => {
         const embedding: number[] = mem.embedding ? (JSON.parse(mem.embedding) as number[]) : [];
         const semantic = cosineSimilarity(queryVec, embedding);
         const finalScore = 0.6 * semantic + 0.4 * mem.score;
-        return { mem, finalScore };
+        return { mem, semantic, finalScore };
       })
+      .filter(({ semantic }) => semantic >= MIN_SEMANTIC_CONFIDENCE)
       .sort((a, b) => b.finalScore - a.finalScore)
       .slice(0, 5)
       .map(({ mem }) => mem);
 
-    if (__DEV__) console.log(`[Memory] Semantic retrieval → top ${ranked.length} non-pinned by cosine+score`);
-    return ok([...pinned, ...ranked]);
+    if (__DEV__) {
+      console.log(`[Memory] Semantic retrieval → top ${rankedWithConfidence.length} non-pinned above confidence threshold`);
+    }
+    return ok([...pinned, ...rankedWithConfidence]);
   }
 
   /** Embeds summary text and stores the vector. No-op until EmbeddingService is injected and ready. */
