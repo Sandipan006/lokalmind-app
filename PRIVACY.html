@@ -5,43 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LokalMind - Privacy Policy</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+
     :root {
-      --bg: #0b1020;
-      --card: #121a33;
-      --text: #eef2ff;
-      --muted: #b7c0e8;
-      --accent: #6ea8ff;
-      --line: #263159;
-      --ok: #7fffd4;
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface-2: #2a2a2a;
+      --text: #ffffff;
+      --text-soft: #cfcfcf;
+      --text-muted: #9e9e9e;
+      --line: #333333;
+      --primary: #ff420b;
+      --primary-strong: #400600;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      font-family: Figtree, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: var(--text);
-      background: radial-gradient(circle at top, #18264f 0%, var(--bg) 45%);
-      line-height: 1.6;
+      background: radial-gradient(circle at top, #1f1f1f 0%, var(--bg) 55%);
+      line-height: 1.62;
     }
-    .wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px 64px; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 34px 20px 64px; }
     .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 28px;
-      backdrop-filter: blur(6px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
     }
-    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 3vw, 2.4rem); }
-    h2 { margin-top: 28px; font-size: 1.3rem; color: #dbe5ff; }
-    p, li { color: var(--muted); }
-    .meta { margin: 0 0 20px; color: #c9d5ff; font-size: 0.95rem; }
+    h1 {
+      margin: 0 0 8px;
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(2rem, 3.4vw, 2.7rem);
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+    h2 {
+      margin-top: 28px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    p, li { color: var(--text-soft); }
+    strong { color: var(--text); }
+    .meta {
+      margin: 0 0 20px;
+      color: var(--text-muted);
+      font-size: 0.94rem;
+    }
     .promise {
       margin-top: 16px;
       padding: 14px 16px;
-      border-left: 4px solid var(--ok);
-      background: rgba(127, 255, 212, 0.08);
+      border-left: 4px solid var(--primary);
+      background: rgba(255, 66, 11, 0.12);
       border-radius: 10px;
-      color: #ddfff5;
+      color: #ffe7df;
     }
     ul { padding-left: 18px; }
     hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
@@ -49,8 +68,8 @@
       width: 100%;
       border-collapse: collapse;
       margin: 12px 0;
-      overflow: hidden;
       border-radius: 12px;
+      overflow: hidden;
     }
     th, td {
       border: 1px solid var(--line);
@@ -58,10 +77,22 @@
       text-align: left;
       vertical-align: top;
     }
-    th { background: rgba(110, 168, 255, 0.14); color: #e8eeff; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    footer { margin-top: 20px; color: #aab6de; font-size: 0.95rem; }
+    th {
+      background: rgba(255, 66, 11, 0.14);
+      color: var(--text);
+      font-weight: 600;
+    }
+    td { background: rgba(42, 42, 42, 0.4); }
+    a {
+      color: #ff7b55;
+      text-decoration: none;
+    }
+    a:hover { color: #ff9a7b; text-decoration: underline; }
+    footer {
+      margin-top: 20px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
