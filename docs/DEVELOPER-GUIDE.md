@@ -1,4 +1,4 @@
-# LokalMind — Complete Developer Guide
+# LokalMind - Complete Developer Guide
 
 > **Your mind. Your device. No cloud.**
 >
@@ -26,12 +26,12 @@
    - 6.4 [Downloads](#64-downloads)
    - 6.5 [Storage (SQLite + AsyncStorage)](#65-storage-sqlite--asyncstorage)
    - 6.6 [Device Capability](#66-device-capability)
-7. [Core Layer — Ports, Types, DI](#7-core-layer--ports-types-di)
+7. [Core Layer - Ports, Types, DI](#7-core-layer--ports-types-di)
 8. [Design System](#8-design-system)
 9. [Navigation (expo-router)](#9-navigation-expo-router)
 10. [State Management (MobX)](#10-state-management-mobx)
-11. [LLM Pipeline — End to End](#11-llm-pipeline--end-to-end)
-12. [Memory System — End to End](#12-memory-system--end-to-end)
+11. [LLM Pipeline - End to End](#11-llm-pipeline--end-to-end)
+12. [Memory System - End to End](#12-memory-system--end-to-end)
 13. [Download Pipeline](#13-download-pipeline)
 14. [Environment & Configuration](#14-environment--configuration)
 15. [Build System (EAS)](#15-build-system-eas)
@@ -80,7 +80,7 @@ LokalMind is an **iOS-first, offline-capable AI chat app** built with React Nati
 
 - macOS with Xcode 16+ installed
 - Node.js 20+
-- EAS CLI (`npm install -g eas-cli`) — only needed for cloud builds
+- EAS CLI (`npm install -g eas-cli`) - only needed for cloud builds
 
 ### Steps
 
@@ -94,7 +94,7 @@ cp .env.example .env
 # Fill in IOS_BUNDLE_IDENTIFIER (e.g. com.yourname.lokalmind)
 # Everything else in .env.example works out of the box
 
-# Build a development client (Expo Go is NOT supported — llama.rn needs native linking)
+# Build a development client (Expo Go is NOT supported - llama.rn needs native linking)
 npx expo run:ios
 ```
 
@@ -111,7 +111,7 @@ The app works on both simulator and device. Large models (4B) may be slow or fai
 ```
 lokalmind-app/
 │
-├── app/                          # expo-router routes (thin — zero business logic)
+├── app/                          # expo-router routes (thin - zero business logic)
 │   ├── _layout.tsx               # Root Stack: fonts, OTA updates, app-state listener
 │   ├── index.tsx                 # Entry → SplashScreen
 │   ├── onboarding/
@@ -139,7 +139,7 @@ lokalmind-app/
 │   ├── core/
 │   │   ├── constants/            # Shared constants (USER_AVATAR_COUNT)
 │   │   ├── di/
-│   │   │   └── container.ts      # Single composition root — DI wiring
+│   │   │   └── container.ts      # Single composition root - DI wiring
 │   │   ├── ports/                # App-level interfaces (ILLMEngine, IWhisperEngine, …)
 │   │   └── types/                # Result<T>, AppError, ok(), err()
 │   │
@@ -159,7 +159,7 @@ lokalmind-app/
 │   │   └── tabs/                 # TabsTopHeader component + assets
 │   │
 │   ├── infrastructure/
-│   │   ├── device/               # deviceCapability — RAM detection, n_ctx sizing
+│   │   ├── device/               # deviceCapability - RAM detection, n_ctx sizing
 │   │   ├── downloads/            # DownloadService, modelConfig, types
 │   │   ├── llm/                  # llamaRnAdapter, embeddingService
 │   │   ├── storage/              # sqliteDriver, asyncStorageDriver, localDataResetAdapter
@@ -227,11 +227,11 @@ modelRepository = new ModelRepositoryImpl(downloadService, sqliteDriver, embeddi
 // etc.
 ```
 
-`initializeContainer()` is idempotent — safe to call multiple times, only runs once.
+`initializeContainer()` is idempotent - safe to call multiple times, only runs once.
 
 ### Result Type Pattern
 
-All use cases return `Result<T>` — they never throw.
+All use cases return `Result<T>` - they never throw.
 
 ```typescript
 // src/core/types/Result.ts
@@ -283,7 +283,7 @@ The most complex feature. Handles streaming inference, session management, messa
 | `UpdateSessionModelUseCase` | Switches the model for an existing session |
 | `SearchChatsUseCase` | Full-text search across session titles and message content |
 
-#### ChatViewModel — Key State
+#### ChatViewModel - Key State
 
 ```typescript
 messages: ChatMessage[]          // Full thread
@@ -333,7 +333,7 @@ Built-in prompts live in `domain/config/mode-prompts/`.
 
 Manages the catalog of downloadable GGUF models.
 
-#### Domain Entity — `Model`
+#### Domain Entity - `Model`
 
 ```typescript
 interface Model {
@@ -402,16 +402,16 @@ SessionMemory  { id, sessionId, sessionTitle, summary, embedding (JSON float[]),
 #### SummarizeSessionUseCase
 
 Two modes:
-- `type: 'bucket'` — called every 20 turns within a session. Uses LLM to generate structured `TOPICS / FACTS / DONE / OPEN` summary stored in `session_summaries`.
-- `type: 'cross-session'` — called when leaving a chat (or periodically during long chats). Uses a **deterministic** user-statement extractor first (no LLM call needed for short chats). Falls back to LLM summarisation for sessions with bucket summaries.
+- `type: 'bucket'` - called every 20 turns within a session. Uses LLM to generate structured `TOPICS / FACTS / DONE / OPEN` summary stored in `session_summaries`.
+- `type: 'cross-session'` - called when leaving a chat (or periodically during long chats). Uses a **deterministic** user-statement extractor first (no LLM call needed for short chats). Falls back to LLM summarisation for sessions with bucket summaries.
 
-Both are fire-and-forget — never awaited in the UI path.
+Both are fire-and-forget - never awaited in the UI path.
 
 #### UpdateUserProfileUseCase
 
 Runs on every chat exit (if LLM is loaded and not generating). Uses a deterministic name/fact extractor first. Only calls the LLM if the deterministic pass yields nothing new. A safety guard prevents profile shrinkage (new profile must be ≥ 80% length of old profile).
 
-#### MemoryService — Retrieval
+#### MemoryService - Retrieval
 
 ```
 requiresMemory(userMessage, sessionTurnCount) ?
@@ -456,7 +456,7 @@ onboarding complete:
 
 - Shows user avatar (21 bundled PNGs, assigned randomly at onboarding), display name, "Member since" ring (SVG TextPath).
 - Links to Memory screen, System Prompts screen, GitHub, developer contact email.
-- **Erase all data** — calls `ResetAllLocalDataUseCase` which unloads models, clears AsyncStorage, wipes all SQLite tables, and deletes all downloaded GGUF/bin files.
+- **Erase all data** - calls `ResetAllLocalDataUseCase` which unloads models, clears AsyncStorage, wipes all SQLite tables, and deletes all downloaded GGUF/bin files.
 
 #### ModeSystemPromptsScreen
 
@@ -474,7 +474,7 @@ PayPal and "Other" payment links configured via `.env` (`SUPPORT_PAYPAL_URL`, `S
 
 `TabsTopHeader` renders the logo, a search icon (opens `ChatSearchModal` in a `Modal`), and the user avatar (taps to Profile). Lives outside the tab bar itself, mounted in `(tabs)/_layout.tsx` as a fixed header above the `NativeTabs` navigator.
 
-`NativeTabs` wraps `@bottom-tabs/react-navigation`'s `createNativeBottomTabNavigator` via `withLayoutContext` from expo-router — gives native iOS tab bar appearance with SF Symbols.
+`NativeTabs` wraps `@bottom-tabs/react-navigation`'s `createNativeBottomTabNavigator` via `withLayoutContext` from expo-router - gives native iOS tab bar appearance with SF Symbols.
 
 ---
 
@@ -495,7 +495,7 @@ PayPal and "Other" payment links configured via `.env` (`SUPPORT_PAYPAL_URL`, `S
 - Sets `ctx_shift: false` (avoids context corruption on some models), `n_gpu_layers: 99` (auto-capped by llama.cpp to what the device supports)
 
 **Completion serialisation**
-- `completionEnd: Promise<void>` is a chain lock — new completions wait for the previous to fully unwind before starting. This prevents "Context is busy" native errors.
+- `completionEnd: Promise<void>` is a chain lock - new completions wait for the previous to fully unwind before starting. This prevents "Context is busy" native errors.
 
 **Stop tokens**
 - Per-model stop tokens from `modelConfig.ts` are passed to `context.completion()`. Defaults: `['<|im_end|>', '</s>']`.
@@ -526,7 +526,7 @@ Separate `LlamaContext` loaded with `embedding: true` using the MiniLM L6 Q4_K_M
 
 **File:** `src/infrastructure/whisper/whisperRnAdapter.ts`
 
-Currently a stub — `initialize()` and `transcribe()` throw `TRANSCRIPTION_ERROR`. The `IWhisperEngine` interface is fully defined and the adapter skeleton is in place. Phase 3 work: implement `initWhisper()` from `whisper.rn`, wire mic permissions, hold-to-talk UI in `ChatInputBar`.
+Currently a stub - `initialize()` and `transcribe()` throw `TRANSCRIPTION_ERROR`. The `IWhisperEngine` interface is fully defined and the adapter skeleton is in place. Phase 3 work: implement `initWhisper()` from `whisper.rn`, wire mic permissions, hold-to-talk UI in `ChatInputBar`.
 
 > **Note for contributors:** Adding `NSMicrophoneUsageDescription` to `app.json` must only happen when the mic feature ships.
 
@@ -572,13 +572,13 @@ Wraps `@react-native-async-storage/async-storage` with a simple in-memory write 
 #### SQLite Schema (abbreviated)
 
 ```sql
-chat_sessions       — id, model_id, title, is_title_locked, last_title_bucket
-chat_messages       — id, session_id, role, content, status, created_at, reply_*
-message_alternates  — id, message_id, content, seq   (regeneration history)
-session_summaries   — id, session_id, bucket_index, summary, turn_start, turn_end
-session_memories    — id, session_id, summary, embedding (JSON), score, is_pinned
-users               — id=1, display_name, avatar_index, onboarding_complete
-models              — id, filename, is_downloaded, file_path
+chat_sessions       - id, model_id, title, is_title_locked, last_title_bucket
+chat_messages       - id, session_id, role, content, status, created_at, reply_*
+message_alternates  - id, message_id, content, seq   (regeneration history)
+session_summaries   - id, session_id, bucket_index, summary, turn_start, turn_end
+session_memories    - id, session_id, summary, embedding (JSON), score, is_pinned
+users               - id=1, display_name, avatar_index, onboarding_complete
+models              - id, filename, is_downloaded, file_path
 ```
 
 All tables are created lazily in repository `ensureInitialized()` methods with `CREATE TABLE IF NOT EXISTS`. Migration columns are added via `ALTER TABLE … ADD COLUMN` after checking `PRAGMA table_info`.
@@ -589,13 +589,13 @@ All tables are created lazily in repository `ensureInitialized()` methods with `
 
 **File:** `src/infrastructure/device/deviceCapability.ts`
 
-- `getTotalRamBytes()` — cached after first call. Falls back to 3 GB if native call fails.
-- `getUsableRamBytes()` — total × 0.55 (conservative: OS + background apps consume ~1.5–2 GB).
-- `resolveContextSize(modelWeightBytes, maxContextSize)` — computes safe `n_ctx` based on remaining RAM after subtracting model weights. KV cache estimated at ~500 bytes/token. Result rounded to the nearest power of 2, clamped to [2048, maxContextSize].
+- `getTotalRamBytes()` - cached after first call. Falls back to 3 GB if native call fails.
+- `getUsableRamBytes()` - total × 0.55 (conservative: OS + background apps consume ~1.5–2 GB).
+- `resolveContextSize(modelWeightBytes, maxContextSize)` - computes safe `n_ctx` based on remaining RAM after subtracting model weights. KV cache estimated at ~500 bytes/token. Result rounded to the nearest power of 2, clamped to [2048, maxContextSize].
 
 ---
 
-## 7. Core Layer — Ports, Types, DI
+## 7. Core Layer - Ports, Types, DI
 
 ### Interfaces (Ports)
 
@@ -605,7 +605,7 @@ All tables are created lazily in repository `ensureInitialized()` methods with `
 | `IWhisperEngine` | `ports/IWhisperEngine.ts` | The only STT contract. Implemented by `WhisperRnAdapter`. |
 | `IAppSettingsRepository` | `ports/IAppSettingsRepository.ts` | Mode prompt overrides, pinned facts, user profile. |
 | `IEmbeddingService` | `ports/IEmbeddingService.ts` | `initialize()`, `embed()`, `isReady()`, `setLlmBusy()`, `release()`. |
-| `ILocalDataReset` | `ports/ILocalDataReset.ts` | `resetAllLocalData()` — wipes everything. |
+| `ILocalDataReset` | `ports/ILocalDataReset.ts` | `resetAllLocalData()` - wipes everything. |
 
 ### Result Type
 
@@ -680,7 +680,7 @@ All values are normalised for the device screen width (base width: 393pt, iPhone
 | `medium` | 16px | rgba(255,255,255,0.16) | Input bars, nav |
 | `light` | 8px | rgba(255,255,255,0.20) | Highlights |
 
-Tints: `default` (neutral) · `brand` (rgba(255,66,11,0.15) — orange-warmed, for active/selected states).
+Tints: `default` (neutral) · `brand` (rgba(255,66,11,0.15) - orange-warmed, for active/selected states).
 
 ### GlassSurface Component
 
@@ -728,11 +728,11 @@ All routes are file-based. No `@react-navigation` packages are imported in featu
 ### `app/` File Rules
 
 - **Max 30 lines** per route file
-- **Zero business logic** — only imports one Screen component
+- **Zero business logic** - only imports one Screen component
 - **Default exports only** (expo-router requirement)
 - No state, no use case calls, no repository calls
 
-### `app/chat/[id].tsx` — The Exception
+### `app/chat/[id].tsx` - The Exception
 
 This route is slightly more complex because it must:
 1. Await `container.initializeContainer()` before creating the ViewModel
@@ -778,16 +778,16 @@ export class ExampleViewModel {
 
 ### Hard Rules
 
-1. `makeAutoObservable(this)` — always the **first statement** in constructor
-2. Async mutations — always in `runInAction()`
-3. Computed — getter syntax only, no `@computed` decorator
-4. All screens reading VM state — must be wrapped with `observer()`
-5. MobX only in `presentation/` — never in `domain/`, `data/`, `infrastructure/`
+1. `makeAutoObservable(this)` - always the **first statement** in constructor
+2. Async mutations - always in `runInAction()`
+3. Computed - getter syntax only, no `@computed` decorator
+4. All screens reading VM state - must be wrapped with `observer()`
+5. MobX only in `presentation/` - never in `domain/`, `data/`, `infrastructure/`
 6. No `useState` / `useReducer` for state that belongs in a ViewModel
 
 ---
 
-## 11. LLM Pipeline — End to End
+## 11. LLM Pipeline - End to End
 
 When the user taps Send in `ChatInputBar`:
 
@@ -823,7 +823,7 @@ ChatInputBar.onSend()
 
 #### Token Debouncing
 
-`ChatViewModel` accumulates tokens in `streamingContent` (MobX observable). The `StreamingBubble` component reads this and re-renders. No per-token `runInAction` — the observer re-renders are already batched by MobX's scheduler.
+`ChatViewModel` accumulates tokens in `streamingContent` (MobX observable). The `StreamingBubble` component reads this and re-renders. No per-token `runInAction` - the observer re-renders are already batched by MobX's scheduler.
 
 #### AbortSignal
 
@@ -845,7 +845,7 @@ Total budget: 3800 tokens
 
 ---
 
-## 12. Memory System — End to End
+## 12. Memory System - End to End
 
 ### Write Path
 
@@ -997,7 +997,7 @@ Runtime access point. Reads from `Constants.expoConfig.extra`. All feature code 
 - Strict mode, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitReturns`
 - No `any` (enforced by ESLint rule `@typescript-eslint/no-explicit-any: 'error'`)
 - Use `import type` for all type-only imports
-- Named exports only in `src/` — default exports only in `app/`
+- Named exports only in `src/` - default exports only in `app/`
 
 ### Imports
 
@@ -1015,9 +1015,9 @@ All `console.log` / `console.warn` in production code must be wrapped in `if (__
 
 ### Async Patterns
 
-- Every LLM generation: MUST accept `AbortSignal` — ViewModel MUST expose `cancelGeneration()`
+- Every LLM generation: MUST accept `AbortSignal` - ViewModel MUST expose `cancelGeneration()`
 - Download progress: throttled 250ms
-- Memory extraction: fire-and-forget — `.catch(() => {})` — never await in main pipeline
+- Memory extraction: fire-and-forget - `.catch(() => {})` - never await in main pipeline
 - Never `await` inside MobX `reaction` or `autorun`
 
 ---
@@ -1033,8 +1033,8 @@ SendMessageUseCase.test.ts    ← same directory
 
 ### What Must Be Tested
 
-- **Every UseCase** — no exceptions
-- **Every ViewModel** — initial state, each action, computed, async success + failure
+- **Every UseCase** - no exceptions
+- **Every ViewModel** - initial state, each action, computed, async success + failure
 
 ### Mock at the Interface Boundary
 
@@ -1076,9 +1076,9 @@ Examples:
 ```
 
 - **Date:** DD/MM/YYYY
-- **Serial number:** `#N` — unique, incrementing across entire history
-- **Never commit to `main`** — always branch + PR
-- **Stage everything:** `git add -A` — never cherry-pick files
+- **Serial number:** `#N` - unique, incrementing across entire history
+- **Never commit to `main`** - always branch + PR
+- **Stage everything:** `git add -A` - never cherry-pick files
 
 ### Branch Naming
 
@@ -1096,13 +1096,13 @@ phase/<number>      phase-level branch
 
 See `KNOWN-LIMITATIONS.md` for community-trackable issues.
 
-**Memory retrieval quality variance** — In some chats memory retrieval is relevant and helpful; in others it can be weaker. Depends on model size, prompt structure, and embedding quality.
+**Memory retrieval quality variance** - In some chats memory retrieval is relevant and helpful; in others it can be weaker. Depends on model size, prompt structure, and embedding quality.
 
-**Small model answer quality variance** — 0.8B models produce inconsistent quality on nuanced, multi-step prompts. Expected behaviour at this model size.
+**Small model answer quality variance** - 0.8B models produce inconsistent quality on nuanced, multi-step prompts. Expected behaviour at this model size.
 
-**Context window on low-RAM devices** — `resolveContextSize()` dynamically shrinks `n_ctx` on low-RAM devices. Very old or constrained devices may get a 2048-token context, which can cause earlier truncation of long conversations.
+**Context window on low-RAM devices** - `resolveContextSize()` dynamically shrinks `n_ctx` on low-RAM devices. Very old or constrained devices may get a 2048-token context, which can cause earlier truncation of long conversations.
 
-**Simulator performance** — Large models (4B GGUF) may run slowly or fail on simulators due to simulated RAM limits.
+**Simulator performance** - Large models (4B GGUF) may run slowly or fail on simulators due to simulated RAM limits.
 
 ---
 
@@ -1136,4 +1136,4 @@ By submitting a pull request you agree your contribution will be licensed under 
 
 ---
 
-*Last updated: April 2026 — LokalMind v2*
+*Last updated: April 2026 - LokalMind v2*

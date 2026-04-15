@@ -1,12 +1,12 @@
 import {
-  createDownloadResumable,
-  getInfoAsync,
-  makeDirectoryAsync,
-  deleteAsync,
-  type DownloadProgressData,
+    createDownloadResumable,
+    deleteAsync,
+    getInfoAsync,
+    makeDirectoryAsync,
+    type DownloadProgressData,
 } from 'expo-file-system/legacy';
-import type { DownloadConfig, DownloadProgress, DownloadState } from './types';
 import type { IAsyncStorageDriver } from '../storage/asyncStorageDriver';
+import type { DownloadConfig, DownloadProgress, DownloadState } from './types';
 
 type DownloadResumable = ReturnType<typeof createDownloadResumable>;
 
@@ -45,7 +45,7 @@ export interface IDownloadService {
   hydratePersistedStates(): Promise<void>;
   /**
    * Subscribe to live progress updates for an active download.
-   * Safe to call even if the download hasn't started yet — listener fires on next tick.
+   * Safe to call even if the download hasn't started yet - listener fires on next tick.
    * Returns an unsubscribe function.
    */
   subscribeToProgress(modelId: string, listener: (progress: DownloadProgress) => void): () => void;
@@ -55,7 +55,7 @@ export interface IDownloadService {
 
 export class DownloadService implements IDownloadService {
   private readonly activeDownloads = new Map<string, DownloadContext>();
-  // External listeners keyed by modelId — survive navigation away and back.
+  // External listeners keyed by modelId - survive navigation away and back.
   private readonly listeners = new Map<string, Set<(progress: DownloadProgress) => void>>();
 
   constructor(private readonly asyncStorageDriver: IAsyncStorageDriver) {}
@@ -194,7 +194,7 @@ export class DownloadService implements IDownloadService {
         error: null,
       };
 
-      // Only emit when metrics are refreshed — native progress fires much faster than the UI needs
+      // Only emit when metrics are refreshed - native progress fires much faster than the UI needs
       // and flooding the JS thread with runInAction calls during navigation causes lag.
       if (shouldRefreshMetrics) {
         onProgress(progress);

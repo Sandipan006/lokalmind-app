@@ -11,17 +11,17 @@ alwaysApply: true
 - ZERO third-party dependencies allowed
 - No imports from: `llama.rn`, `whisper.rn`, `expo-sqlite`, `@react-native-async-storage`, `expo-file-system`, `expo-blur`, `expo-glass-effect`, or any npm package
 - Only allowed imports: other domain files, `src/core/ports/`, TypeScript built-ins
-- Entities are plain TypeScript interfaces/classes — no decorators, no MobX, no React
+- Entities are plain TypeScript interfaces/classes - no decorators, no MobX, no React
 
 ### Presentation layer (`src/features/*/presentation/`)
 - NEVER import from `src/infrastructure/` directly
 - NEVER import `llama.rn`, `whisper.rn`, `expo-sqlite`, or `@react-native-async-storage` directly
 - Only calls domain use cases and repository interfaces
-- ViewModels live here — MobX is allowed only in this layer
+- ViewModels live here - MobX is allowed only in this layer
 
 ### Data layer (`src/features/*/data/`)
 - Implements domain repository interfaces
-- Receives infrastructure drivers via constructor injection — never imports them globally
+- Receives infrastructure drivers via constructor injection - never imports them globally
 - Never imported by presentation layer directly
 
 ### Infrastructure layer (`src/infrastructure/`)
@@ -30,8 +30,8 @@ alwaysApply: true
 - Never imported directly from presentation or domain
 
 ## Interface Rules
-- `ILLMEngine` is defined in `src/core/ports/ILLMEngine.ts` — this is the only LLM contract
-- `IWhisperEngine` is defined in `src/core/ports/IWhisperEngine.ts` — this is the only Whisper contract
+- `ILLMEngine` is defined in `src/core/ports/ILLMEngine.ts` - this is the only LLM contract
+- `IWhisperEngine` is defined in `src/core/ports/IWhisperEngine.ts` - this is the only Whisper contract
 - `llamaRnAdapter.ts` and `whisperRnAdapter.ts` are the ONLY files that implement these interfaces
 - No other file may call `initLlama`, `LlamaContext`, or any `llama.rn` / `whisper.rn` API directly
 

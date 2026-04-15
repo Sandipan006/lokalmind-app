@@ -33,9 +33,9 @@ interface ChatInputBarProps {
   onSend: () => void;
   onStop: () => void;
   onCancelEdit?: () => void;
-  /** Ref to the composer `TextInput` — blur before dismiss avoids keyboard reopen / KAV desync. */
+  /** Ref to the composer `TextInput` - blur before dismiss avoids keyboard reopen / KAV desync. */
   composerRef?: RefObject<TextInput | null>;
-  /** Fires when the composer is focused — parent can scroll the thread. */
+  /** Fires when the composer is focused - parent can scroll the thread. */
   onComposerFocus?: () => void;
 }
 
@@ -82,7 +82,7 @@ export function ChatInputBar({
   const allowComposerWhileStreaming = canEnqueueWhileStreaming;
 
   const baseBarPadding = (styles.inputBar.paddingBottom ?? 0) as number;
-  // `KeyboardAvoidingView` shrinks layout — safe area inset applies when keyboard is closed, bar padding when open.
+  // `KeyboardAvoidingView` shrinks layout - safe area inset applies when keyboard is closed, bar padding when open.
   const bottomPad = Math.max(baseBarPadding, insets.bottom);
 
   return (

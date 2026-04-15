@@ -8,6 +8,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { ErrorBoundary } from '@/src/design-system/components';
 import { useFontLoader } from '@/src/providers/useFontLoader';
 import { useOtaUpdates } from '@/src/providers/useOtaUpdates';
+import { useLocalNotificationsBootstrap } from '@/src/providers/useLocalNotificationsBootstrap';
 import { BLACK_PRIMARY } from '@/src/design-system/tokens/colors';
 import { container } from '@/src/core/di/container';
 
@@ -16,6 +17,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { fontsLoaded, fontError } = useFontLoader();
   useOtaUpdates();
+  useLocalNotificationsBootstrap();
 
   useEffect(() => {
     if (fontsLoaded || fontError) {

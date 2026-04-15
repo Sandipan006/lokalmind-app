@@ -22,6 +22,7 @@ import { LocalDataResetAdapter } from '@/src/infrastructure/storage/localDataRes
 import { SQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
 import { ResolveInitialRouteUseCase } from '@/src/features/onboarding/domain/usecases/ResolveInitialRouteUseCase';
 import { WhisperRnAdapter } from '@/src/infrastructure/whisper/whisperRnAdapter';
+import { ExpoNotificationsAdapter } from '@/src/infrastructure/notifications/expoNotificationsAdapter';
 
 const sqliteDriver = new SQLiteDriver();
 const asyncStorageDriver = new AsyncStorageDriver();
@@ -29,6 +30,7 @@ const llmEngine = new LlamaRnAdapter();
 const whisperEngine = new WhisperRnAdapter();
 const downloadService = new DownloadService(asyncStorageDriver);
 const embeddingService = new EmbeddingService();
+const localNotifications = new ExpoNotificationsAdapter(asyncStorageDriver);
 
 let userRepository: UserRepositoryImpl | null = null;
 let modelRepository: ModelRepositoryImpl | null = null;
@@ -54,8 +56,8 @@ async function initializeContainer() {
   memoryRepository = new MemoryRepositoryImpl(sqliteDriver);
   memoryService = new MemoryService(memoryRepository);
   memoryService.setEmbeddingService(embeddingService);
-  summarizeSessionUseCase = new SummarizeSessionUseCase(llmEngine, memoryRepository, memoryService);
-  updateUserProfileUseCase = new UpdateUserProfileUseCase(llmEngine, appSettingsRepository);
+  summarizeSessionUseCase = new SummarizeSessionUseCase(llmEngine, memoryRepository, memoryService, localNotifications);
+  updateUserProfileUseCase = new UpdateUserProfileUseCase(llmEngine, appSettingsRepository, localNotifications);
   getPinnedFactsUseCase = new GetPinnedFactsUseCase(appSettingsRepository);
   savePinnedFactsUseCase = new SavePinnedFactsUseCase(appSettingsRepository);
   resolveInitialRouteUseCase = new ResolveInitialRouteUseCase(
@@ -167,6 +169,8 @@ export const container = {
     }
     return resolveInitialRouteUseCase;
   },
+  /** iOS local notifications adapter (always available; no container init required). */
+  localNotifications,
   initializeContainer,
   releaseAllLlamaContextsIfReady,
 } as const;

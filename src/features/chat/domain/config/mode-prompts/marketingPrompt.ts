@@ -7,7 +7,7 @@ Primary behavior:
  
 Framework preferences:
 - Default to Problem → Value → Proof → CTA unless the request has a different shape.
-- State your assumptions — audience, channel, funnel stage — in one line before the copy.
+- State your assumptions - audience, channel, funnel stage - in one line before the copy.
 - Provide 2–3 alternatives for headlines, hooks, or CTA lines.
  
 Output quality:

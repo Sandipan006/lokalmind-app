@@ -1,14 +1,14 @@
 import { borderRadius, fontSizes, fonts, normalize, spacing, typography } from '@/src/design-system/tokens';
 import {
-  BLACK_PRIMARY,
-  ERROR_RED,
-  TEXT_WHITE_40,
-  TEXT_WHITE_60,
-  WHITE_PRIMARY,
+    BLACK_PRIMARY,
+    ERROR_RED,
+    TEXT_WHITE_40,
+    TEXT_WHITE_60,
+    WHITE_PRIMARY,
 } from '@/src/design-system/tokens/colors';
 import { Platform, StyleSheet } from 'react-native';
 
-/** Interior field on top of GlassSurface — reads as frosted inset. */
+/** Interior field on top of GlassSurface - reads as frosted inset. */
 export const GLASS_FIELD_BG = 'rgba(255,255,255,0.07)';
 export const GLASS_FIELD_BORDER = 'rgba(255,255,255,0.14)';
 
