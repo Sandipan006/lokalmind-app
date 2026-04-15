@@ -3,10 +3,10 @@ name: LokalMind v2 Tech Setup
 overview: Create a full technical architecture document and strict cursor rules for LokalMind v2, then reset the Expo scaffold to a clean base structure ready for development.
 todos:
   - id: tech-doc
-    content: Create docs/ARCHITECTURE.md — full technical architecture document
+    content: Create docs/ARCHITECTURE.md - full technical architecture document
     status: completed
   - id: cursor-rules
-    content: Create .cursor/rules/ — 5 strict cursor rule files (architecture, naming, folder-structure, mobx, design-system)
+    content: Create .cursor/rules/ - 5 strict cursor rule files (architecture, naming, folder-structure, mobx, design-system)
     status: completed
   - id: scaffold-reset
     content: "Delete default boilerplate and create clean folder skeleton with placeholder fileStarting the ui of the "
@@ -14,7 +14,7 @@ todos:
 isProject: false
 ---
 
-# LokalMind v2 — Tech Doc + Cursor Rules + Scaffold Reset
+# LokalMind v2 - Tech Doc + Cursor Rules + Scaffold Reset
 
 ## What gets created
 
@@ -42,11 +42,11 @@ Covers:
 
 Files in `.cursor/rules/`:
 
-- `architecture.mdc` — layer enforcement: no infra imports in domain/presentation, no direct llama.rn/whisper.rn usage outside adapters
-- `naming.mdc` — file naming (PascalCase screens, camelCase hooks, `*UseCase.ts`, `*RepositoryImpl.ts`, `*Adapter.ts`, `I*.ts` for interfaces)
-- `folder-structure.mdc` — where new files must go (feature module layout, shared infra, design-system)
-- `mobx.mdc` — MobX rules: ViewModels only in `presentation/`, `makeAutoObservable` in constructor, no MobX in domain/data layers
-- `design-system.mdc` — no hardcoded colors/fonts outside `design-system/tokens/`, always use `GlassView`/`GlassContainer` from `expo-glass-effect` for glass surfaces (never raw `expo-blur`), always guard with `isGlassEffectAPIAvailable()` + fallback
+- `architecture.mdc` - layer enforcement: no infra imports in domain/presentation, no direct llama.rn/whisper.rn usage outside adapters
+- `naming.mdc` - file naming (PascalCase screens, camelCase hooks, `*UseCase.ts`, `*RepositoryImpl.ts`, `*Adapter.ts`, `I*.ts` for interfaces)
+- `folder-structure.mdc` - where new files must go (feature module layout, shared infra, design-system)
+- `mobx.mdc` - MobX rules: ViewModels only in `presentation/`, `makeAutoObservable` in constructor, no MobX in domain/data layers
+- `design-system.mdc` - no hardcoded colors/fonts outside `design-system/tokens/`, always use `GlassView`/`GlassContainer` from `expo-glass-effect` for glass surfaces (never raw `expo-blur`), always guard with `isGlassEffectAPIAvailable()` + fallback
 
 ### 3. Scaffold Reset
 
@@ -83,8 +83,8 @@ Files in `.cursor/rules/`:
 
 ## Glass Effect Implementation Notes
 
-- **Package**: `expo-glass-effect` (requires Expo SDK 55, not 54 as in PRD — bump needed)
-- **Native glass**: `GlassView` / `GlassContainer` from `expo-glass-effect` — uses iOS 26+ `UIVisualEffectView`
+- **Package**: `expo-glass-effect` (requires Expo SDK 55, not 54 as in PRD - bump needed)
+- **Native glass**: `GlassView` / `GlassContainer` from `expo-glass-effect` - uses iOS 26+ `UIVisualEffectView`
 - **Fallback**: iOS < 26 → `expo-blur` `BlurView` with manual `rgba` background (same token values from PRD)
 - **Guard pattern** (required everywhere before rendering `GlassView`):
 
@@ -97,14 +97,14 @@ Files in `.cursor/rules/`:
 
 - **Tint for active/selected states**: use `tintColor="rgba(255,66,11,0.15)"` on `GlassView` (PRD's orange-warmed glass)
 - `**GlassContainer`**: use for grouped surfaces (e.g. input bar + send button, sidebar header)
-- A shared `GlassSurface` component in `design-system/components/` will wrap this logic — all features use `GlassSurface`, never `GlassView` directly
+- A shared `GlassSurface` component in `design-system/components/` will wrap this logic - all features use `GlassSurface`, never `GlassView` directly
 
 ## Key files to reference from old code
 
-- `lokalmind-oldcode/src/llm/llamaCppBridge.ts` — port ILLMEngine methods from this
-- `lokalmind-oldcode/src/services/db/database.ts` — extend schema with memory_facts
-- `lokalmind-oldcode/src/services/db/storage.ts` — reuse AsyncStorage pattern
-- `lokalmind-oldcode/src/constants/colors.ts` — migrate + extend with v2 Liquid Glass tokens
+- `lokalmind-oldcode/src/llm/llamaCppBridge.ts` - port ILLMEngine methods from this
+- `lokalmind-oldcode/src/services/db/database.ts` - extend schema with memory_facts
+- `lokalmind-oldcode/src/services/db/storage.ts` - reuse AsyncStorage pattern
+- `lokalmind-oldcode/src/constants/colors.ts` - migrate + extend with v2 Liquid Glass tokens
 
 ## Model lineup (as in PRD, GGUF filenames from local files)
 

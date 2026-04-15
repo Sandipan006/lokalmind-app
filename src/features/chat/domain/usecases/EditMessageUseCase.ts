@@ -1,7 +1,6 @@
 import type { Result } from '@/src/core/types';
-import { createError } from '@/src/core/types';
-import type { IChatRepository } from '../repositories/IChatRepository';
 import type { ChatMessage } from '../entities/ChatMessage';
+import type { IChatRepository } from '../repositories/IChatRepository';
 
 export interface EditMessageParams {
   message: ChatMessage;
@@ -10,7 +9,7 @@ export interface EditMessageParams {
 
 export interface EditMessageResult {
   updatedMessage: ChatMessage;
-  /** History to pass to SendMessageUseCase — all messages that came before the edited one. */
+  /** History to pass to SendMessageUseCase - all messages that came before the edited one. */
   historyBefore: ChatMessage[];
 }
 

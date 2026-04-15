@@ -1,5 +1,5 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import type { TextStyle } from 'react-native';
 import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 import { styles } from './MessageRendererStyles';
@@ -17,7 +17,7 @@ const defaultInlineMarkdownStyles: InlineMarkdownStyleSet = {
 
 /**
  * Clipboard uses `expo-clipboard` native code. If the dev client was built without it, `require` fails here
- * and we fall back to Share — rebuild with `eas build --profile development` (or add the module) for real copy.
+ * and we fall back to Share - rebuild with `eas build --profile development` (or add the module) for real copy.
  */
 async function copyTextBestEffort(text: string): Promise<'clipboard' | 'share' | 'none'> {
   try {
@@ -35,7 +35,7 @@ async function copyTextBestEffort(text: string): Promise<'clipboard' | 'share' |
   }
 }
 
-/** `**bold**`, `_italic_`, `*italic*` (not `* list` — opening * must be followed by non-whitespace). Bold inner can contain italic. */
+/** `**bold**`, `_italic_`, `*italic*` (not `* list` - opening * must be followed by non-whitespace). Bold inner can contain italic. */
 export function renderInlineMarkdown(
   text: string,
   keyPrefix: string,
@@ -77,7 +77,7 @@ export function renderInlineMarkdown(
   return nodes;
 }
 
-/** ATX headings (`### Title`) — strip `#` prefix and render title with heading styles (not raw markdown). */
+/** ATX headings (`### Title`) - strip `#` prefix and render title with heading styles (not raw markdown). */
 type ParsedTextBlock =
   | { type: 'heading'; level: 1 | 2 | 3 | 4 | 5 | 6; text: string }
   | { type: 'paragraph'; text: string };
@@ -244,7 +244,7 @@ function parseCodeBlocks(text: string, isStreaming: boolean): Segment[] {
     const newlineIdx = text.indexOf('\n', afterTicks);
 
     if (newlineIdx === -1) {
-      // ``` with no newline yet — show code box (lang line may still be streaming)
+      // ``` with no newline yet - show code box (lang line may still be streaming)
       if (isStreaming) {
         segments.push({ type: 'code', lang: text.slice(afterTicks).trim(), value: '' });
       } else {

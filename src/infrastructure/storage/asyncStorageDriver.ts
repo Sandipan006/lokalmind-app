@@ -13,6 +13,8 @@ export const STORAGE_KEYS = {
   MEMORY_PINNED_FACTS: 'memory:pinnedFacts',
   MEMORY_USER_PROFILE: 'memory:userProfile',
   ONBOARDING_COMPLETE: 'onboarding:complete',
+  /** Last time an inactivity reminder was scheduled (cooldown for reschedule). */
+  NOTIFICATION_INACTIVITY_LAST_SCHEDULED_AT: 'lm:notif:inactivity:lastScheduledAt',
   modeSystemPrompt: (mode: string) => `settings:mode:${mode}:systemPrompt`,
 } as const;
 

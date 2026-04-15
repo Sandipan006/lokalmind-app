@@ -1,15 +1,16 @@
 import type { IAppSettingsRepository } from '@/src/core/ports/IAppSettingsRepository';
 import type { ILLMEngine, LLMMessage } from '@/src/core/ports/ILLMEngine';
+import type { ILocalNotifications } from '@/src/core/ports/ILocalNotifications';
 import type { Result } from '@/src/core/types';
 import { createError } from '@/src/core/types';
+import type { SessionMemory } from '@/src/features/memory/domain/entities/SessionMemory';
+import type { IMemoryRepository } from '@/src/features/memory/domain/repositories/IMemoryRepository';
 import { resolveSystemPromptForChat } from '../config/systemPromptResolution';
 import type { ChatMessage } from '../entities/ChatMessage';
 import type { ChatMode } from '../entities/ChatMode';
+import type { IChatRepository } from '../repositories/IChatRepository';
 import { composeTurnContentForLlm } from '../utils/messageReply';
 import { buildContextMessages } from '../utils/tokenBudget';
-import type { IChatRepository } from '../repositories/IChatRepository';
-import type { IMemoryRepository } from '@/src/features/memory/domain/repositories/IMemoryRepository';
-import type { SessionMemory } from '@/src/features/memory/domain/entities/SessionMemory';
 
 /** Max user + assistant messages passed to the LLM (system prompt is separate). */
 const MAX_LLM_CONVERSATION_MESSAGES = 10;
@@ -76,9 +77,9 @@ export interface SendMessageParams {
   mode: ChatMode;
   onToken: (token: string) => void;
   signal: AbortSignal;
-  /** Fired right before generateResponse() — used to set embeddingService busy AFTER memory retrieval. */
+  /** Fired right before generateResponse() - used to set embeddingService busy AFTER memory retrieval. */
   onBeforeGenerate?: () => void;
-  /** Onboarding display name — used as profile seed when memory profile is still empty. */
+  /** Onboarding display name - used as profile seed when memory profile is still empty. */
   userDisplayName?: string;
 }
 
@@ -91,6 +92,7 @@ export class SendMessageUseCase {
     private readonly memoryService?: {
       getRelevantMemories(message: string, turnCount?: number): Promise<Result<SessionMemory[]>>;
     },
+    private readonly localNotifications?: ILocalNotifications,
   ) {}
 
   async execute(params: SendMessageParams): Promise<Result<ChatMessage>> {
@@ -166,6 +168,7 @@ export class SendMessageUseCase {
       if (isDismissive(userMessage.content)) {
         const canned = 'Got it.';
         await this.chatRepository.updateMessageContent(assistantId, canned, 'done');
+        void this.localNotifications?.notifyChatTurnComplete({ sessionId, success: true });
         return { success: true, data: { ...assistantMessage, content: canned, status: 'done' } };
       }
 
@@ -187,6 +190,7 @@ export class SendMessageUseCase {
 
       await this.chatRepository.updateMessageContent(assistantId, finalContent, finalStatus);
 
+      void this.localNotifications?.notifyChatTurnComplete({ sessionId, success: true });
       return {
         success: true,
         data: { ...assistantMessage, content: finalContent, status: finalStatus },
@@ -200,6 +204,11 @@ export class SendMessageUseCase {
       if (__DEV__) console.error('[Chat][LLM] generation error', e);
       await this.chatRepository.updateMessageContent(assistantId, '', 'error');
       const msg = e instanceof Error ? e.message : String(e);
+      void this.localNotifications?.notifyChatTurnComplete({
+        sessionId,
+        success: false,
+        errorMessage: msg || 'LLM generation failed',
+      });
       return { success: false, error: createError('GENERATION_ERROR', msg || 'LLM generation failed', e) };
     }
   }

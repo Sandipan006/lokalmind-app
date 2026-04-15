@@ -1,6 +1,6 @@
-# LokalMind v2 — Architecture Overview
+# LokalMind v2 - Architecture Overview
 
-Version: 2.0.0 | Platform: iOS (Android — Phase 2) | License: MIT
+Version: 2.0.0 | Platform: iOS (Android - Phase 2) | License: MIT
 
 > **Your mind. Your device. No cloud.**
 
@@ -10,12 +10,12 @@ Version: 2.0.0 | Platform: iOS (Android — Phase 2) | License: MIT
 
 | File | Contents |
 |---|---|
-| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | This file — overview, tech stack, layer rules |
+| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | This file - overview, tech stack, layer rules |
 | **[FOLDER-STRUCTURE.md](./FOLDER-STRUCTURE.md)** | Full folder tree, DI container, dependencies, build phases |
 | **[DATA-MODEL.md](./DATA-MODEL.md)** | SQLite schema, AsyncStorage keys, model registry |
 | **[LLM-PIPELINE.md](./LLM-PIPELINE.md)** | ILLMEngine + IWhisperEngine interfaces, chat turn sequence, memory pipeline, Whisper STT |
 | **[DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md)** | Liquid Glass, color tokens, typography, navigation |
-| **[FEATURES.md](./FEATURES.md)** | Feature showcase — every differentiating capability explained end-to-end |
+| **[FEATURES.md](./FEATURES.md)** | Feature showcase - every differentiating capability explained end-to-end |
 
 ---
 
@@ -64,7 +64,7 @@ Presentation  →  Domain  ←  Data  ←  Infrastructure
 
 3. **Data layer** (`features/*/data/`) implements domain repository interfaces. ViewModels never know SQLite or AsyncStorage exist.
 
-4. **Infrastructure layer** (`infrastructure/`) is injected into data repositories via constructor — never imported globally or from presentation/domain.
+4. **Infrastructure layer** (`infrastructure/`) is injected into data repositories via constructor - never imported globally or from presentation/domain.
 
 5. **`ILLMEngine`** is the only LLM contract. `llama.rn` is swappable. No file outside `infrastructure/llm/` imports `llama.rn`.
 

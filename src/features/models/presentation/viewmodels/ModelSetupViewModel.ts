@@ -103,7 +103,7 @@ export class ModelSetupViewModel {
     });
 
     // After models are loaded, subscribe to any in-flight downloads so progress
-    // is visible immediately — including on initial mount before useFocusEffect fires.
+    // is visible immediately - including on initial mount before useFocusEffect fires.
     this.reattachDownloadListeners();
   }
 

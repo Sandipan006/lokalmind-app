@@ -55,7 +55,7 @@ alwaysApply: false
 - Examples: `useViewModel.ts`, `useResumableDownload.ts`, `useFontLoader.ts`
 
 ### Design System Tokens
-- `colors.ts`, `typography.ts`, `glass.ts`, `spacing.ts` — all lowercase
+- `colors.ts`, `typography.ts`, `glass.ts`, `spacing.ts` - all lowercase
 - Token constants: SCREAMING_SNAKE_CASE
 - Examples: `PRIMARY_ORANGE`, `BLACK_PRIMARY`, `TEXT_WHITE_60`
 
@@ -81,7 +81,7 @@ alwaysApply: false
 - Special: `_layout.tsx`, `index.tsx`
 
 ## Anti-patterns to avoid
-- No `Manager`, `Handler`, `Helper`, `Utils` class names — use specific domain names
+- No `Manager`, `Handler`, `Helper`, `Utils` class names - use specific domain names
 - No `data`, `info`, `stuff` as variable names
 - No abbreviated names unless universally understood (`id`, `url`, `db`, `vm`)
-- No `IInterface` redundancy — `ILLMEngine` not `ILLMEngineInterface`
+- No `IInterface` redundancy - `ILLMEngine` not `ILLMEngineInterface`

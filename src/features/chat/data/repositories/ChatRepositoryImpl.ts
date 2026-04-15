@@ -62,7 +62,7 @@ export class ChatRepositoryImpl implements IChatRepository {
       await this.sqliteDriver.execute('ALTER TABLE chat_messages ADD COLUMN reply_to_role TEXT');
     }
 
-    // Alternate (regenerated) assistant message versions — ordered by seq ASC (oldest first).
+    // Alternate (regenerated) assistant message versions - ordered by seq ASC (oldest first).
     await this.sqliteDriver.execute(`
       CREATE TABLE IF NOT EXISTS message_alternates (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,7 +76,7 @@ export class ChatRepositoryImpl implements IChatRepository {
       `CREATE INDEX IF NOT EXISTS idx_alternates_message ON message_alternates(message_id, seq);`
     );
 
-    // Rolling in-session summaries — one row per 20-turn bucket per session.
+    // Rolling in-session summaries - one row per 20-turn bucket per session.
     await this.sqliteDriver.execute(`
       CREATE TABLE IF NOT EXISTS session_summaries (
         id            TEXT PRIMARY KEY,
@@ -93,7 +93,7 @@ export class ChatRepositoryImpl implements IChatRepository {
       `CREATE INDEX IF NOT EXISTS idx_summaries_session ON session_summaries(session_id, bucket_index);`
     );
 
-    // Cross-session long-term memory — one row per completed session (≥ 6 turns).
+    // Cross-session long-term memory - one row per completed session (≥ 6 turns).
     await this.sqliteDriver.execute(`
       CREATE TABLE IF NOT EXISTS session_memories (
         id             TEXT PRIMARY KEY,
