@@ -32,3 +32,5 @@ jobs:
         env:
           EXPO_APPLE_ID: ${{ secrets.APPLE_ID }}
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          IOS_BUNDLE_IDENTIFIER: ${{ secrets.IOS_BUNDLE_IDENTIFIER }}
+          ANDROID_PACKAGE: ${{ secrets.ANDROID_PACKAGE }}
