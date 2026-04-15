@@ -45,6 +45,7 @@ export function SplashScreen() {
           source={require('../../../assets/animations/splash.json')}
           autoPlay
           loop
+          resizeMode="cover"
           style={styles.animation}
         />
       </View>
