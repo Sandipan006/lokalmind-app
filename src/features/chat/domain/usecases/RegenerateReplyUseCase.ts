@@ -1,15 +1,16 @@
 import type { IAppSettingsRepository } from '@/src/core/ports/IAppSettingsRepository';
 import type { ILLMEngine, LLMMessage } from '@/src/core/ports/ILLMEngine';
+import type { ILocalNotifications } from '@/src/core/ports/ILocalNotifications';
 import type { Result } from '@/src/core/types';
 import { createError } from '@/src/core/types';
+import type { SessionMemory } from '@/src/features/memory/domain/entities/SessionMemory';
+import type { IMemoryRepository } from '@/src/features/memory/domain/repositories/IMemoryRepository';
 import { resolveSystemPromptForChat } from '../config/systemPromptResolution';
 import type { ChatMessage } from '../entities/ChatMessage';
 import type { ChatMode } from '../entities/ChatMode';
+import type { IChatRepository } from '../repositories/IChatRepository';
 import { composeTurnContentForLlm } from '../utils/messageReply';
 import { buildContextMessages } from '../utils/tokenBudget';
-import type { IChatRepository } from '../repositories/IChatRepository';
-import type { IMemoryRepository } from '@/src/features/memory/domain/repositories/IMemoryRepository';
-import type { SessionMemory } from '@/src/features/memory/domain/entities/SessionMemory';
 
 const MAX_LLM_CONVERSATION_MESSAGES = 10;
 const MAX_CHARS_PER_LLM_MESSAGE = 2_000;
@@ -48,7 +49,7 @@ export interface RegenerateReplyParams {
   mode: ChatMode;
   onToken: (token: string) => void;
   signal: AbortSignal;
-  /** Onboarding display name — used as profile seed when memory profile is still empty. */
+  /** Onboarding display name - used as profile seed when memory profile is still empty. */
   userDisplayName?: string;
 }
 
@@ -61,6 +62,7 @@ export class RegenerateReplyUseCase {
     private readonly memoryService?: {
       getRelevantMemories(message: string, turnCount?: number): Promise<Result<SessionMemory[]>>;
     },
+    private readonly localNotifications?: ILocalNotifications,
   ) {}
 
   async execute(params: RegenerateReplyParams): Promise<Result<ChatMessage>> {
@@ -136,6 +138,11 @@ export class RegenerateReplyUseCase {
       );
       if (!addResult.success) return addResult;
 
+      void this.localNotifications?.notifyChatTurnComplete({
+        sessionId: assistantMessage.sessionId,
+        success: true,
+      });
+
       const existingAlternates = assistantMessage.alternateContents ?? [];
       // After save: alternates = [original, ...previous regens]; new content becomes active.
       const updatedAlternates =
@@ -169,6 +176,11 @@ export class RegenerateReplyUseCase {
       }
       if (__DEV__) console.error('[Chat][Regen] generation error', e);
       const msg = e instanceof Error ? e.message : String(e);
+      void this.localNotifications?.notifyChatTurnComplete({
+        sessionId: assistantMessage.sessionId,
+        success: false,
+        errorMessage: msg || 'LLM regeneration failed',
+      });
       return { success: false, error: createError('GENERATION_ERROR', msg || 'LLM regeneration failed', e) };
     }
   }

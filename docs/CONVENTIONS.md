@@ -1,4 +1,4 @@
-# LokalMind v2 — Coding Conventions Reference
+# LokalMind v2 - Coding Conventions Reference
 
 Full reference for all coding conventions. Cursor rules point here for detail.
 
@@ -34,7 +34,7 @@ Full reference for all coding conventions. Cursor rules point here for detail.
 
 ### Anti-patterns
 
-- No `Manager`, `Handler`, `Helper`, `Utils` suffixes — use domain-specific names
+- No `Manager`, `Handler`, `Helper`, `Utils` suffixes - use domain-specific names
 - No `data`, `info`, `stuff` as variable names
 - No `IInterface` redundancy (`ILLMEngine` not `ILLMEngineInterface`)
 
@@ -77,7 +77,7 @@ src/features/{feature}/
 
 ### `app/` rules
 
-- Thin entry points only — no business logic
+- Thin entry points only - no business logic
 - Each route file imports one Screen from `src/features/*/presentation/screens/`
 - Max 30 lines per `app/` file
 - No state, no use cases, no repository calls in `app/` files
@@ -93,7 +93,7 @@ src/features/{feature}/
 import { PRIMARY_ORANGE } from '@/src/design-system/tokens/colors';
 import { GlassSurface } from '@/src/design-system/components';
 
-// Bad — deep relative paths
+// Bad - deep relative paths
 import { PRIMARY_ORANGE } from '../../../design-system/tokens/colors';
 ```
 
@@ -112,13 +112,13 @@ import { Stack } from 'expo-router';
 // 3. Third-party
 import { observer } from 'mobx-react-lite';
 
-// 4. Internal — core/ports/di
+// 4. Internal - core/ports/di
 import type { ILLMEngine } from '@/src/core/ports';
 
-// 5. Internal — features
+// 5. Internal - features
 import type { Chat } from '@/src/features/chat/domain/entities';
 
-// 6. Internal — design system
+// 6. Internal - design system
 import { GlassSurface } from '@/src/design-system/components';
 import { PRIMARY_ORANGE } from '@/src/design-system/tokens/colors';
 ```
@@ -126,7 +126,7 @@ import { PRIMARY_ORANGE } from '@/src/design-system/tokens/colors';
 ### Other rules
 
 - Use `import type` for all type-only imports
-- Named exports only in `src/` — default exports only in `app/` (expo-router requirement)
+- Named exports only in `src/` - default exports only in `app/` (expo-router requirement)
 - No circular imports (domain never imports from data/presentation; design-system never imports from features)
 - Import from barrel `index.ts` when available, not from individual files
 
@@ -166,13 +166,13 @@ export class ChatViewModel {
 
 ### Rules
 
-1. `makeAutoObservable(this)` — always first statement in constructor
-2. Async mutations — always in `runInAction()`
-3. Computed — getter syntax only, no `@computed` decorator
-4. ViewModels receive use cases via constructor — never instantiate inside ViewModel
+1. `makeAutoObservable(this)` - always first statement in constructor
+2. Async mutations - always in `runInAction()`
+3. Computed - getter syntax only, no `@computed` decorator
+4. ViewModels receive use cases via constructor - never instantiate inside ViewModel
 5. No `useState` for ViewModel state, no `useReducer`, no `useContext` for VM state
 6. All screens/components reading VM state must be wrapped with `observer()`
-7. MobX allowed only in `presentation/` — never in `domain/`, `data/`, `infrastructure/`
+7. MobX allowed only in `presentation/` - never in `domain/`, `data/`, `infrastructure/`
 
 ---
 
@@ -187,25 +187,25 @@ type Result<T, E = AppError> = { success: true; data: T } | { success: false; er
 
 ### Rules
 
-- Use cases MUST return `Result<T>` — never throw
+- Use cases MUST return `Result<T>` - never throw
 - ViewModels MUST handle both `success` and `error` branches
 - Infrastructure adapters MUST catch third-party exceptions and wrap as `AppError`
 - Never use `any` as error type
-- Never swallow errors silently — every `catch` must re-throw as `AppError` or return `err(...)`
+- Never swallow errors silently - every `catch` must re-throw as `AppError` or return `err(...)`
 - `AppErrorCode` values: `VALIDATION_ERROR`, `STORAGE_ERROR`, `MODEL_NOT_LOADED`, `MODEL_LOAD_FAILED`, `GENERATION_ERROR`, `GENERATION_CANCELLED`, `DOWNLOAD_FAILED`, `TRANSCRIPTION_ERROR`, `MEMORY_EXTRACTION_ERROR`, `NOT_FOUND`, `UNKNOWN_ERROR`
 
 ---
 
 ## 6. Async Patterns
 
-### LLM generation — required patterns
+### LLM generation - required patterns
 
 ```typescript
 // AbortSignal on every generation call
 const controller = new AbortController();
 await llmEngine.generateResponse(messages, config, onToken, controller.signal);
 
-// Token debounce — 50ms batch window, never per-token runInAction
+// Token debounce - 50ms batch window, never per-token runInAction
 private flushTimer: ReturnType<typeof setTimeout> | null = null;
 appendToken(token: string) {
   this.buffer += token;
@@ -218,7 +218,7 @@ appendToken(token: string) {
 
 ### Rules
 
-- Every LLM generation MUST accept `AbortSignal` — every ViewModel MUST expose `cancelGeneration()`
+- Every LLM generation MUST accept `AbortSignal` - every ViewModel MUST expose `cancelGeneration()`
 - Token updates MUST be debounced (50ms)
 - Download progress MUST be throttled (250ms)
 - Background tasks (memory extraction) MUST be fire-and-forget: `.catch(() => {})`
@@ -241,19 +241,19 @@ SendMessageUseCase.test.ts   ← same directory
 
 | Layer | Required |
 |---|---|
-| Domain — Use Cases | Every UseCase — no exceptions |
-| Presentation — ViewModels | Every ViewModel: initial state, each action, computed, async success + failure |
-| Data — Repositories | Unit tests with mocked infrastructure drivers |
+| Domain - Use Cases | Every UseCase - no exceptions |
+| Presentation - ViewModels | Every ViewModel: initial state, each action, computed, async success + failure |
+| Data - Repositories | Unit tests with mocked infrastructure drivers |
 
 ### Mock at the interface boundary
 
 ```typescript
-// Good — mock the interface
+// Good - mock the interface
 class MockChatRepository implements IChatRepository {
   saveMessage = jest.fn();
 }
 
-// Bad — mock the concrete implementation
+// Bad - mock the concrete implementation
 jest.mock('expo-sqlite');
 ```
 
@@ -270,7 +270,7 @@ jest.mock('expo-sqlite');
 ### Glass surfaces
 
 ```typescript
-// Always use GlassSurface — never GlassView or BlurView directly
+// Always use GlassSurface - never GlassView or BlurView directly
 import { GlassSurface } from '@/src/design-system/components';
 
 <GlassSurface tier="heavy" style={styles.card}>{children}</GlassSurface>
@@ -280,7 +280,7 @@ import { GlassSurface } from '@/src/design-system/components';
 Tiers: `ultra` (40px blur, modals) · `heavy` (24px, cards) · `medium` (16px, input bars) · `light` (8px, highlights)
 Tints: `default` (neutral) · `brand` (orange-warmed, active states)
 
-### Tokens — never hardcode
+### Tokens - never hardcode
 
 ```typescript
 // Colors → @/src/design-system/tokens/colors
@@ -293,7 +293,7 @@ Tints: `default` (neutral) · `brand` (orange-warmed, active states)
 - No hex literals in StyleSheet or inline styles
 - No named colors (`'white'`, `'black'`)
 - No raw pixel values for spacing
-- No `Animated` from `react-native` — use `react-native-reanimated` only
+- No `Animated` from `react-native` - use `react-native-reanimated` only
 - No `GlassView` or `BlurView` imports outside `GlassSurface.tsx`
 
 ---
@@ -308,7 +308,7 @@ DD/MM/YYYY - [description] - #N
 
 - Date: `DD/MM/YYYY`
 - Description: imperative, point-wise with `·` for multiple items
-- Serial: `#N` — incrementing, unique across entire history
+- Serial: `#N` - incrementing, unique across entire history
 
 ### Examples
 
@@ -330,5 +330,5 @@ Examples: `feature/reply-to-message` · `fix/streaming-cursor` · `phase/2-chat-
 
 ### Rules
 
-- Never commit to `main` directly — always branch + PR
+- Never commit to `main` directly - always branch + PR
 - Never commit `node_modules/`, `.expo/`, `*.gguf`, `*.bin`, `.env`

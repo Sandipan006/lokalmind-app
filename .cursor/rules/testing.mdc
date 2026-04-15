@@ -6,7 +6,7 @@ alwaysApply: false
 
 Full reference: `docs/CONVENTIONS.md` section 7.
 
-## File location — co-located with source
+## File location - co-located with source
 
 ```
 SendMessageUseCase.ts
@@ -15,18 +15,18 @@ SendMessageUseCase.test.ts   ← same directory
 
 ## What must be tested
 
-- Every `UseCase` — no exceptions
-- Every `ViewModel` — initial state, each action, computed, async success + failure
+- Every `UseCase` - no exceptions
+- Every `ViewModel` - initial state, each action, computed, async success + failure
 
 ## Mock at the interface boundary
 
 ```typescript
-// Good — mock the interface
+// Good - mock the interface
 class MockChatRepository implements IChatRepository {
   saveMessage = jest.fn().mockResolvedValue({ id: '1', text: 'hi' });
 }
 
-// Bad — mock the concrete implementation
+// Bad - mock the concrete implementation
 jest.mock('expo-sqlite');
 ```
 

@@ -1,12 +1,12 @@
 import {
-  BLACK_PRIMARY, CHAT_BACKGROUND_COLOR,
-  CHAT_BUBBLE_USER_BG,
-  CHAT_BUBBLE_USER_TEXT,
-  CHAT_USER_REPLY_BAR,
-  CHAT_USER_REPLY_SCRIM,
-  ERROR_RED,
-  TEXT_LIGHT,
-  WHITE_PRIMARY
+    BLACK_PRIMARY, CHAT_BACKGROUND_COLOR,
+    CHAT_BUBBLE_USER_BG,
+    CHAT_BUBBLE_USER_TEXT,
+    CHAT_USER_REPLY_BAR,
+    CHAT_USER_REPLY_SCRIM,
+    ERROR_RED,
+    TEXT_LIGHT,
+    WHITE_PRIMARY
 } from '@/src/design-system/tokens/colors';
 import { borderRadius, normalize, spacing } from '@/src/design-system/tokens/spacing';
 import { fonts, typography } from '@/src/design-system/tokens/typography';
@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: CHAT_BACKGROUND_COLOR,
   },
-  /** Footer (queue + composer) — used with `KeyboardStickyView` from keyboard-controller. */
+  /** Footer (queue + composer) - used with `KeyboardStickyView` from keyboard-controller. */
   keyboardFooter: {
     width: '100%',
   },
@@ -61,12 +61,12 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
     alignSelf: 'flex-end',
   },
-  /** User message — plain text only (tune independently from reply bubbles). */
+  /** User message - plain text only (tune independently from reply bubbles). */
   userBubblePaddingSingle: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  /** User message — includes reply strip (tune outer gap vs `replyQuoteContent`). */
+  /** User message - includes reply strip (tune outer gap vs `replyQuoteContent`). */
   userBubblePaddingWithReply: {
     paddingLeft: spacing.xxs,
     paddingRight: spacing.xxs,
@@ -96,16 +96,16 @@ export const styles = StyleSheet.create({
   userBubbleText: {
     color: CHAT_BUBBLE_USER_TEXT,
   },
-  /** Main line — plain user message (tune independently from reply-thread body). */
+  /** Main line - plain user message (tune independently from reply-thread body). */
   userBubbleTextSingle: {
 
   },
-  /** Main line — user message that includes a reply strip above. */
+  /** Main line - user message that includes a reply strip above. */
   userBubbleTextWithReply: {
     marginLeft: normalize(8),
     marginRight: normalize(7),
   },
-  /** Row width follows stretched column (max of quote vs body); no flex:1 here — avoids 3px collapse. */
+  /** Row width follows stretched column (max of quote vs body); no flex:1 here - avoids 3px collapse. */
   replyQuoteRow: {
     flexDirection: 'row',
     alignItems: 'stretch',

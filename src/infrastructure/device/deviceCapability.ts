@@ -1,4 +1,4 @@
-// react-native-device-info is infrastructure-only — never import this outside src/infrastructure/.
+// react-native-device-info is infrastructure-only - never import this outside src/infrastructure/.
 import DeviceInfo from 'react-native-device-info';
 
 // OS + background apps typically consume 1.5–2 GB; 55% is a conservative usable estimate.
@@ -7,7 +7,7 @@ const USABLE_RAM_FACTOR = 0.55;
 let cachedTotalRam: number | null = null;
 
 /**
- * Returns total device RAM in bytes (cached after first call — value never changes at runtime).
+ * Returns total device RAM in bytes (cached after first call - value never changes at runtime).
  * Falls back to 3 GB if the native call fails, which blocks 4B+ models on unknown devices.
  */
 export async function getTotalRamBytes(): Promise<number> {

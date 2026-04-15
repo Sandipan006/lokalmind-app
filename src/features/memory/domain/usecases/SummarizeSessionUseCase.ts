@@ -1,4 +1,5 @@
 import type { ILLMEngine } from '@/src/core/ports/ILLMEngine';
+import type { ILocalNotifications } from '@/src/core/ports/ILocalNotifications';
 import type { Result } from '@/src/core/types';
 import { createError, err, ok } from '@/src/core/types';
 import type { SessionMemory } from '../entities/SessionMemory';
@@ -133,15 +134,16 @@ export class SummarizeSessionUseCase {
     private readonly memoryService?: {
       embedAndSave(memoryId: string, summaryText: string): Promise<void>;
     },
+    private readonly localNotifications?: ILocalNotifications,
   ) {}
 
   async execute(params: SummarizeSessionParams): Promise<Result<void>> {
     if (!this.llmEngine.isModelLoaded()) {
-      if (__DEV__) console.log('[Memory] Skipping summarisation — no model loaded');
+      if (__DEV__) console.log('[Memory] Skipping summarisation - no model loaded');
       return ok(undefined);
     }
     if (this.llmEngine.isGenerating()) {
-      if (__DEV__) console.log('[Memory] Skipping summarisation — LLM is generating');
+      if (__DEV__) console.log('[Memory] Skipping summarisation - LLM is generating');
       return ok(undefined);
     }
 
@@ -167,6 +169,7 @@ export class SummarizeSessionUseCase {
           };
           const saveResult = await this.memoryRepository.saveSessionMemory(memory);
           if (!saveResult.success) return saveResult;
+          void this.localNotifications?.notifySessionMemorySaved({ sessionId, sessionTitle });
           if (__DEV__) console.log('[Memory] Saved deterministic cross-session memory', {
             sessionId,
             userStatementCount: deterministic.userStatementCount,
@@ -179,7 +182,7 @@ export class SummarizeSessionUseCase {
         }
         // Do not fall back to LLM summarisation for cross-session memory when user facts are absent.
         // This avoids storing assistant-generated noise as long-term memory.
-        if (__DEV__) console.log('[Memory] Skipping cross-session save — no deterministic user statements found');
+        if (__DEV__) console.log('[Memory] Skipping cross-session save - no deterministic user statements found');
         return ok(undefined);
       }
 
@@ -217,7 +220,7 @@ export class SummarizeSessionUseCase {
         parsed.open === 'NONE';
 
       if (allNone) {
-        if (__DEV__) console.warn('[Memory] Summarisation produced all-NONE result — skipping save');
+        if (__DEV__) console.warn('[Memory] Summarisation produced all-NONE result - skipping save');
         return ok(undefined);
       }
 
@@ -233,7 +236,11 @@ export class SummarizeSessionUseCase {
           turnEnd: params.turnEnd,
           createdAt: now,
         };
-        return await this.memoryRepository.saveSessionSummary(summary);
+        const bucketSave = await this.memoryRepository.saveSessionSummary(summary);
+        if (bucketSave.success) {
+          void this.localNotifications?.notifySessionMemorySaved({ sessionId, sessionTitle });
+        }
+        return bucketSave;
       } else {
         const turnCount = existingSummaries.length * 20;
         const score = computeScore(now, turnCount);
@@ -251,6 +258,7 @@ export class SummarizeSessionUseCase {
         };
         const saveResult = await this.memoryRepository.saveSessionMemory(memory);
         if (!saveResult.success) return saveResult;
+        void this.localNotifications?.notifySessionMemorySaved({ sessionId, sessionTitle });
         void this.memoryService?.embedAndSave(memory.id, memory.summary).catch((e) => {
           if (__DEV__) console.warn('[Memory] embedAndSave after LLM cross-session save failed:', e);
         });

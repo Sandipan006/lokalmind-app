@@ -1,4 +1,4 @@
-# LokalMind v2 — Folder Structure, DI, Dependencies & Build Phases
+# LokalMind v2 - Folder Structure, DI, Dependencies & Build Phases
 
 ---
 
@@ -91,4 +91,4 @@ mobx, mobx-react-lite, llama.rn, whisper.rn, react-native-purchases, react-nativ
 | **Phase 3** | Week 9–10 | Whisper STT pipeline, profile screen, AI modes, memory pipeline, RevenueCat IAP |
 | **Phase 4** | Week 11–12 | Polish, performance profiling, App Store submission, GitHub public release |
 | **v2.1** | Post-launch | Android support, BYOM (Bring Your Own Model), RAG pipeline |
-| **v2.2** | Future | On-device TTS — English + Hindi via `expo-speech`, Indic languages via AI4Bharat `indic-parler-tts` |
+| **v2.2** | Future | On-device TTS - English + Hindi via `expo-speech`, Indic languages via AI4Bharat `indic-parler-tts` |

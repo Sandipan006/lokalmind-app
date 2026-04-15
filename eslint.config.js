@@ -9,16 +9,16 @@ module.exports = defineConfig([
   },
   {
     rules: {
-      // No explicit any — forces proper typing throughout the codebase
+      // No explicit any - forces proper typing throughout the codebase
       '@typescript-eslint/no-explicit-any': 'error',
 
-      // No unused variables — keeps code clean
+      // No unused variables - keeps code clean
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
 
       // Enforce type-only imports for interfaces and types
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports', fixStyle: 'inline-type-imports' }],
 
-      // No default exports in src/ — named exports only (expo-router app/ files are excluded below)
+      // No default exports in src/ - named exports only (expo-router app/ files are excluded below)
       'no-restricted-exports': ['error', { restrictDefaultExports: { direct: true } }],
 
       // Enforce no direct imports of infrastructure packages from domain or presentation layers
@@ -62,7 +62,7 @@ module.exports = defineConfig([
     },
   },
   {
-    // expo-router requires default exports in app/ — override the restriction there
+    // expo-router requires default exports in app/ - override the restriction there
     files: ['app/**/*.tsx', 'app/**/*.ts'],
     rules: {
       'no-restricted-exports': 'off',

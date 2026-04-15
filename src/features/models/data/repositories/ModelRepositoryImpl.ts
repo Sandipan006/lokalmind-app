@@ -4,7 +4,7 @@ import type { Result } from '@/src/core/types';
 import { createError, err, ok } from '@/src/core/types';
 import { getTotalRamBytes } from '@/src/infrastructure/device/deviceCapability';
 import type { IDownloadService } from '@/src/infrastructure/downloads/downloadService';
-import { MODEL_CONFIGS, EMBEDDING_CONFIG } from '@/src/infrastructure/downloads/modelConfig';
+import { EMBEDDING_CONFIG, MODEL_CONFIGS } from '@/src/infrastructure/downloads/modelConfig';
 import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
 import { File, Paths } from 'expo-file-system';
 import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
@@ -29,7 +29,7 @@ export class ModelRepositoryImpl implements IModelRepository {
     try {
       const embeddingFile = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
       if (embeddingFile.exists) {
-        if (__DEV__) console.log('[Embedding] Model already on disk — skipping download, initialising service');
+        if (__DEV__) console.log('[Embedding] Model already on disk - skipping download, initialising service');
         if (this.embeddingService) {
           await this.embeddingService.initialize();
         }
@@ -45,12 +45,12 @@ export class ModelRepositoryImpl implements IModelRepository {
       if (__DEV__) console.log('[Embedding] Starting silent download alongside LLM');
       await this.downloadService.startDownload(
         { modelId: EMBEDDING_CONFIG.id, url, destinationPath, expectedBytes: EMBEDDING_CONFIG.sizeBytes },
-        () => { /* silent — no progress reporting */ },
+        () => { /* silent - no progress reporting */ },
       );
 
       const downloaded = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
       if (downloaded.exists) {
-        if (__DEV__) console.log('[Embedding] Download complete — initialising service');
+        if (__DEV__) console.log('[Embedding] Download complete - initialising service');
         if (this.embeddingService) {
           await this.embeddingService.initialize();
         }
@@ -58,7 +58,7 @@ export class ModelRepositoryImpl implements IModelRepository {
         if (__DEV__) console.warn('[Embedding] Download finished but file not found on disk');
       }
     } catch (e) {
-      // Silent failure — score-based retrieval fallback remains active.
+      // Silent failure - score-based retrieval fallback remains active.
       if (__DEV__) console.warn('[Embedding] Silent download failed:', e);
     }
   }
@@ -110,7 +110,7 @@ export class ModelRepositoryImpl implements IModelRepository {
           minRamBytes: config.minRamBytes,
           isPaid: config.isPaid,
           isDownloaded: downloaded?.isDownloaded ?? false,
-          // minRamBytes is a total-device-RAM threshold, not usable RAM — compare against total.
+          // minRamBytes is a total-device-RAM threshold, not usable RAM - compare against total.
           isCompatibleWithDevice: totalRam >= config.minRamBytes,
         };
       });
@@ -195,7 +195,7 @@ export class ModelRepositoryImpl implements IModelRepository {
       const url = `${cdnBaseUrl}/models/${config.id}/${config.filename}`;
       const destinationPath = new File(Paths.document, 'models', config.filename).uri;
 
-      // Kick off MiniLM download immediately — runs in parallel with the LLM download.
+      // Kick off MiniLM download immediately - runs in parallel with the LLM download.
       // At 21 MB it will finish long before the LLM (500+ MB), so the embedding service
       // is ready by the time the user starts their first chat.
       void this.maybeDownloadEmbeddingModel();
