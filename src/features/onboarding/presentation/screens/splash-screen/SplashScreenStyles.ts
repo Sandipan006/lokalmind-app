@@ -9,7 +9,7 @@ export const splashScreenStyles = StyleSheet.create({
     alignItems: 'center',
   },
   animation: {
-    width: '100%',
-    height: '100%',
+    width: '125%',
+    height: '125%',
   },
 });
