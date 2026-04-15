@@ -1,6 +1,6 @@
 import type { Result } from '@/src/core/types';
-import type { Model } from '../entities/Model';
 import type { DownloadProgressInfo } from '../entities/DownloadStatus';
+import type { Model } from '../entities/Model';
 
 export interface IModelRepository {
   getAllModels(): Promise<Result<Model[]>>;
@@ -20,7 +20,7 @@ export interface IModelRepository {
   getDownloadStatus(modelId: string): Promise<Result<DownloadProgressInfo | null>>;
   hasDownloadedModel(): Promise<Result<boolean>>;
   /**
-   * Subscribe to live progress for an active download — survives navigation away and back.
+   * Subscribe to live progress for an active download - survives navigation away and back.
    * Immediately replays the last known progress snapshot on subscribe.
    * Returns an unsubscribe function.
    */

@@ -1,4 +1,4 @@
-# LokalMind v2 — Design System
+# LokalMind v2 - Design System
 
 Covers: Liquid Glass implementation, color tokens, typography, spacing, navigation architecture.
 
@@ -6,20 +6,20 @@ Covers: Liquid Glass implementation, color tokens, typography, spacing, navigati
 
 ## Liquid Glass
 
-LokalMind v2 adopts Apple's Liquid Glass design language as its primary visual system. This is not a cosmetic layer — it is the design foundation from which all surfaces are built.
+LokalMind v2 adopts Apple's Liquid Glass design language as its primary visual system. This is not a cosmetic layer - it is the design foundation from which all surfaces are built.
 
 ### Core Principles
 
-- **Translucency over opacity** — surfaces reveal depth through blur, not flat color
-- **Light adapts to context** — tints shift based on underlying content and brand state
-- **Motion is physical** — animations feel like they have mass and inertia
-- **Hierarchy through glass** — deeper (more important) elements are more opaque
+- **Translucency over opacity** - surfaces reveal depth through blur, not flat color
+- **Light adapts to context** - tints shift based on underlying content and brand state
+- **Motion is physical** - animations feel like they have mass and inertia
+- **Hierarchy through glass** - deeper (more important) elements are more opaque
 
 ### Implementation
 
-**Primary**: `expo-glass-effect` — native iOS 26+ `UIVisualEffectView` via `GlassView` / `GlassContainer`.
+**Primary**: `expo-glass-effect` - native iOS 26+ `UIVisualEffectView` via `GlassView` / `GlassContainer`.
 
-**Fallback**: `expo-blur` `BlurView` for iOS < 26 — same visual token values, software blur.
+**Fallback**: `expo-blur` `BlurView` for iOS < 26 - same visual token values, software blur.
 
 **Rule**: Feature code never imports `GlassView` or `BlurView` directly. All glass surfaces use the `GlassSurface` component from `src/design-system/components/GlassSurface.tsx`, which handles the native/fallback decision internally.
 
@@ -53,17 +53,17 @@ All glass surfaces sit over the brand dark backgrounds (`#0F0F0F`, `#1A1A1A`).
 
 | Tint | Value | Usage |
 |---|---|---|
-| `default` | rgba(255,255,255,0.0) | Neutral frosted glass — most surfaces |
-| `brand` | rgba(255,66,11,0.15) | Orange-warmed glass — selected model cards, active mode chips |
+| `default` | rgba(255,255,255,0.0) | Neutral frosted glass - most surfaces |
+| `brand` | rgba(255,66,11,0.15) | Orange-warmed glass - selected model cards, active mode chips |
 
 ### GlassContainer
 
-Use `GlassContainer` (from `expo-glass-effect`) for grouped glass surfaces that should merge visually — e.g. input bar + send button, sidebar header + list. Wrap via `GlassSurface` with `grouped` prop (to be implemented in Phase 2).
+Use `GlassContainer` (from `expo-glass-effect`) for grouped glass surfaces that should merge visually - e.g. input bar + send button, sidebar header + list. Wrap via `GlassSurface` with `grouped` prop (to be implemented in Phase 2).
 
 ### Known Constraints
 
-- Never set `opacity < 1` on a `GlassView` or its parent — causes the glass effect to not render. Use `glassEffectStyle` animate prop for fade transitions instead.
-- `isInteractive` prop on `GlassView` can only be set on mount — cannot be changed dynamically. Remount with a different `key` to toggle.
+- Never set `opacity < 1` on a `GlassView` or its parent - causes the glass effect to not render. Use `glassEffectStyle` animate prop for fade transitions instead.
+- `isInteractive` prop on `GlassView` can only be set on mount - cannot be changed dynamically. Remount with a different `key` to toggle.
 - `GlassView` is iOS-only. On Android (Phase 2), `GlassSurface` falls back to `expo-blur`.
 
 ---
@@ -119,7 +119,7 @@ Never use hex values in component files. Always import from this module.
 
 ## Typography (`src/design-system/tokens/typography.ts`)
 
-Font family: **Figtree** — loaded via `expo-font`. Never hardcode font names in component files.
+Font family: **Figtree** - loaded via `expo-font`. Never hardcode font names in component files.
 
 ```typescript
 FONTS = {

@@ -1,7 +1,7 @@
 # EAS Build ignore file
 # Excludes files/folders from being uploaded to EAS build servers.
 
-# Local env files (secrets — never upload)
+# Local env files (secrets - never upload)
 .env
 .env.local
 .env.development
@@ -13,7 +13,7 @@
 .gitignore
 .gitattributes
 
-# GGUF model files — large binaries, never needed for the build
+# GGUF model files - large binaries, never needed for the build
 *.gguf
 models/**/*.gguf
 llm-models/

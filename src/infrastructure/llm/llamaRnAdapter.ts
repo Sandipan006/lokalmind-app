@@ -29,7 +29,7 @@ export class LlamaRnAdapter implements ILLMEngine {
   private currentModelId: string | null = null;
   // Deduplicate concurrent initialize() calls - prevents double-loading during app boot races.
   private initializingPromise: Promise<void> | null = null;
-  /** One completion at a time — native throws "Context is busy" if a new completion starts before the last fully unwinds. */
+  /** One completion at a time - native throws "Context is busy" if a new completion starts before the last fully unwinds. */
   private completionEnd: Promise<void> = Promise.resolve();
   private generating = false;
   private activeStopCompletion: (() => void) | null = null;

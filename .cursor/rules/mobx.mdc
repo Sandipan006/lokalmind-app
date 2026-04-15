@@ -36,9 +36,9 @@ export class ExampleViewModel {
 
 ## Hard rules
 
-1. `makeAutoObservable(this)` — first statement in constructor, always
-2. Async state mutations — always in `runInAction()`
-3. Computed — getter syntax only, no `@computed`
-4. All screens/components reading VM state — must be wrapped with `observer()`
-5. MobX only in `presentation/` — never in `domain/`, `data/`, `infrastructure/`
+1. `makeAutoObservable(this)` - first statement in constructor, always
+2. Async state mutations - always in `runInAction()`
+3. Computed - getter syntax only, no `@computed`
+4. All screens/components reading VM state - must be wrapped with `observer()`
+5. MobX only in `presentation/` - never in `domain/`, `data/`, `infrastructure/`
 6. No `useState` / `useReducer` for state that belongs in a ViewModel

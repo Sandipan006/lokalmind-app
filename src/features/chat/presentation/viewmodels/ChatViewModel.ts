@@ -1,5 +1,5 @@
-import type { ILLMEngine } from '@/src/core/ports/ILLMEngine';
 import type { IEmbeddingService } from '@/src/core/ports/IEmbeddingService';
+import type { ILLMEngine } from '@/src/core/ports/ILLMEngine';
 import type { IMemoryRepository } from '@/src/features/memory/domain/repositories/IMemoryRepository';
 import type { SummarizeSessionUseCase } from '@/src/features/memory/domain/usecases/SummarizeSessionUseCase';
 import type { UpdateUserProfileUseCase } from '@/src/features/memory/domain/usecases/UpdateUserProfileUseCase';
@@ -51,7 +51,7 @@ export class ChatViewModel {
   /** Set during regeneration so the UI can stream in-place on the existing bubble. */
   regeneratingMessageId: string | null = null;
 
-  /** Onboarding display name — set externally; used as profile seed before memory builds up. */
+  /** Onboarding display name - set externally; used as profile seed before memory builds up. */
   userDisplayName = '';
 
   private abortController: AbortController | null = null;
@@ -106,13 +106,13 @@ export class ChatViewModel {
 
       runInAction(() => {
         if (sessionResult.success) this.session = sessionResult.data;
-        // Never replace in-memory transcript while a turn is active — async load can finish mid-generate and wipe bubbles + break tokens.
+        // Never replace in-memory transcript while a turn is active - async load can finish mid-generate and wipe bubbles + break tokens.
         if (messagesResult.success && !this.isStreaming) {
           this.messages = messagesResult.data;
         } else if (messagesResult.success && this.isStreaming) {
           if (__DEV__) console.log('[Chat][Queue] loadSession: skipped messages overwrite (isStreaming)', { sessionId: sessionId });
         }
-        // Only clear queue when switching chats — not on a late refresh of the same session (would wipe FIFO while streaming).
+        // Only clear queue when switching chats - not on a late refresh of the same session (would wipe FIFO while streaming).
         const loadedSession = sessionResult.success ? sessionResult.data : null;
         if (
           sessionIdBeforeLoad !== undefined &&
@@ -214,7 +214,7 @@ export class ChatViewModel {
     });
   }
 
-  /** Updates queued text in place — flush uses whatever is stored when the turn ends. */
+  /** Updates queued text in place - flush uses whatever is stored when the turn ends. */
   updateQueuedMessage(id: string, text: string): void {
     const trimmed = text.trim();
     if (!trimmed) return;
@@ -292,7 +292,7 @@ export class ChatViewModel {
         ...(this.userDisplayName ? { userDisplayName: this.userDisplayName } : {}),
         // Set busy AFTER memory retrieval (embedding) completes, right before generation starts.
         onBeforeGenerate: () => {
-          if (__DEV__) console.log('[Memory] LLM starting — blocking embed queue');
+          if (__DEV__) console.log('[Memory] LLM starting - blocking embed queue');
           this.embeddingService.setLlmBusy(true);
         },
         onToken: (token) => {
@@ -329,7 +329,7 @@ export class ChatViewModel {
         }
       });
 
-      // Rolling bucket summarisation — fires every 20 turns, fire-and-forget.
+      // Rolling bucket summarisation - fires every 20 turns, fire-and-forget.
       const turnCount = this.messages.length;
       if (turnCount > 0 && turnCount % 20 === 0) {
         const bucketIndex = Math.floor(turnCount / 20) - 1;
@@ -358,7 +358,7 @@ export class ChatViewModel {
         this.messages = this.messages.filter((m) => m.status !== 'streaming');
       });
     } finally {
-      if (__DEV__) console.log('[Memory] LLM done — releasing embed queue');
+      if (__DEV__) console.log('[Memory] LLM done - releasing embed queue');
       this.embeddingService.setLlmBusy(false);
     }
 
@@ -572,20 +572,20 @@ export class ChatViewModel {
     const sessionTitle = this.session?.title ?? 'Chat';
     const turnCount = this.messages.length;
     if (!sessionId) {
-      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped — no session id');
+      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped - no session id');
       return;
     }
     if (turnCount < 4) {
-      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped — not enough turns', { turnCount });
+      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped - not enough turns', { turnCount });
       return;
     }
     if (!this.llmEngine.isModelLoaded() || this.llmEngine.isGenerating()) {
-      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped — LLM unavailable/busy');
+      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped - LLM unavailable/busy');
       return;
     }
     const existing = await this.memoryRepository.getSessionMemoryBySessionId(sessionId);
     if (existing.success && existing.data !== null) {
-      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped — memory already exists', { sessionId });
+      if (__DEV__) console.log('[Memory] maybeSaveSessionMemory skipped - memory already exists', { sessionId });
       return;
     }
     if (__DEV__) console.log('[Memory] maybeSaveSessionMemory: creating cross-session memory', { sessionId, turnCount });

@@ -16,13 +16,13 @@ No cloud. No subscriptions for core chat. Your data never leaves your device.
 
 ## What is LokalMind?
 
-LokalMind brings large language models directly onto your phone. Pick a model, download it once, and chat completely offline — no API keys, no data leaving your device, no servers listening in.
+LokalMind brings large language models directly onto your phone. Pick a model, download it once, and chat completely offline - no API keys, no data leaving your device, no servers listening in.
 
 - **Local inference** via [llama.rn](https://github.com/mybigday/llama.rn) (GGUF models)
-- **On-device memory** — the app remembers facts across conversations using semantic search, entirely local
+- **On-device memory** - the app remembers facts across conversations using semantic search, entirely local
 - **Streaming UI** with haptic feedback as the model generates
-- **Multiple models** — swap between Qwen, DeepSeek, Gemma and more
-- **Chat modes** — General, Code, Reasoning, Creative, and more
+- **Multiple models** - swap between Qwen, DeepSeek, Gemma and more
+- **Chat modes** - General, Code, Reasoning, Creative, and more
 
 ---
 
@@ -30,12 +30,12 @@ LokalMind brings large language models directly onto your phone. Pick a model, d
 
 | Model | Size | RAM | Best for |
 |-------|------|-----|----------|
-| Qwen 3.5 — 0.8B | 550 MB | 2 GB+ | Fast everyday chat |
-| Qwen 3.5 — 2B | 1.3 GB | 3 GB+ | Summaries, multilingual |
-| DeepSeek R1 — 1.5B | 1.1 GB | 3 GB+ | Coding, math, reasoning |
-| Qwen 3.5 — 4B | 2.9 GB | 5 GB+ | Complex tasks, creative |
-| Qwen 3 — 4B | 2.5 GB | 5 GB+ | Thinking mode, coding |
-| Gemma 3 — 4B | 2.5 GB | 5 GB+ | Long context, analysis |
+| Qwen 3.5 - 0.8B | 550 MB | 2 GB+ | Fast everyday chat |
+| Qwen 3.5 - 2B | 1.3 GB | 3 GB+ | Summaries, multilingual |
+| DeepSeek R1 - 1.5B | 1.1 GB | 3 GB+ | Coding, math, reasoning |
+| Qwen 3.5 - 4B | 2.9 GB | 5 GB+ | Complex tasks, creative |
+| Qwen 3 - 4B | 2.5 GB | 5 GB+ | Thinking mode, coding |
+| Gemma 3 - 4B | 2.5 GB | 5 GB+ | Long context, analysis |
 
 ---
 
@@ -62,9 +62,9 @@ cp .env.example .env
 npx expo run:ios
 ```
 
-> Expo Go is **not supported** — native modules (`llama.rn`) require a dev build.
+> Expo Go is **not supported** - native modules (`llama.rn`) require a dev build.
 
-The `.env.example` ships with all public defaults pre-filled. Model downloads work out of the box — no credentials needed.
+The `.env.example` ships with all public defaults pre-filled. Model downloads work out of the box - no credentials needed.
 
 ---
 
@@ -75,8 +75,8 @@ The `.env.example` ships with all public defaults pre-filled. Model downloads wo
 ```bash
 cp .env.example .env
 # Fill in:
-#   IOS_BUNDLE_IDENTIFIER / ANDROID_PACKAGE  — your bundle ID
-#   EAS_PROJECT_ID / APP_OWNER               — only for EAS cloud builds
+#   IOS_BUNDLE_IDENTIFIER / ANDROID_PACKAGE  - your bundle ID
+#   EAS_PROJECT_ID / APP_OWNER               - only for EAS cloud builds
 ```
 
 Everything else (CDN URL, LLM defaults, download settings) works without changes.
@@ -86,7 +86,7 @@ Everything else (CDN URL, LLM defaults, download settings) works without changes
 ## Repository layout
 
 ```
-app/                    Expo Router routes (thin — no business logic)
+app/                    Expo Router routes (thin - no business logic)
 src/
   core/                 DI container, ports (interfaces), shared Result<T> type
   features/             Feature slices
@@ -95,9 +95,9 @@ src/
     models/             └── download, manage GGUF models
     onboarding/         └── first-run flow
     profile/            └── settings, pinned facts, storage
-  infrastructure/       Adapters — llama.rn, whisper.rn, SQLite, downloads
+  infrastructure/       Adapters - llama.rn, whisper.rn, SQLite, downloads
   design-system/        Tokens (colors, typography, spacing, glass)
-  config/               env.ts — runtime config
+  config/               env.ts - runtime config
 ```
 
 ---
@@ -114,11 +114,11 @@ Presentation  →  Use Cases  →  Domain entities
          Infrastructure (llama.rn, SQLite…)
 ```
 
-- **Domain** — pure TypeScript, zero third-party imports
-- **Presentation** — screens + MobX ViewModels, calls use cases only
-- **Data** — implements repository interfaces, receives infra via constructor injection
-- **Infrastructure** — the only layer that imports `llama.rn`, `whisper.rn`, `expo-sqlite`
-- **Composition root** — `src/core/di/container.ts`
+- **Domain** - pure TypeScript, zero third-party imports
+- **Presentation** - screens + MobX ViewModels, calls use cases only
+- **Data** - implements repository interfaces, receives infra via constructor injection
+- **Infrastructure** - the only layer that imports `llama.rn`, `whisper.rn`, `expo-sqlite`
+- **Composition root** - `src/core/di/container.ts`
 
 ---
 
@@ -145,7 +145,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## Built by
 
-**Sandipan Bera** — React Native developer & UI/UX designer from India.
+**Sandipan Bera** - React Native developer & UI/UX designer from India.
 
 LokalMind is an open source project, built in public.  
 If it's useful to you, a ⭐ on GitHub goes a long way.

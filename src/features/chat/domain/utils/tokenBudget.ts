@@ -54,7 +54,7 @@ export interface ContextBudget {
   pinnedFacts: string;
   /** LLM-maintained living document about the user. Injected as a coherent narrative. */
   userProfile: string;
-  /** Cross-session memories retrieved from past conversations. Optional — omit for backward compat. */
+  /** Cross-session memories retrieved from past conversations. Optional - omit for backward compat. */
   crossSessionMemories?: SessionMemory[];
   inSessionSummaries: SessionSummary[];
   history: LLMMessage[];
@@ -71,7 +71,7 @@ const BUDGET_TOTAL = 3800;
 
 /**
  * Assembles the final LLMMessage[] array within the token budget.
- * Pure function — no side effects, no dependencies.
+ * Pure function - no side effects, no dependencies.
  * All memory blocks injected into a single system message; empty blocks are omitted.
  */
 export function buildContextMessages(params: ContextBudget): LLMMessage[] {

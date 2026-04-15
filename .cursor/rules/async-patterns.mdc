@@ -6,14 +6,14 @@ alwaysApply: false
 
 Full reference: `docs/CONVENTIONS.md` section 6.
 
-## LLM generation — required
+## LLM generation - required
 
 ```typescript
 // 1. AbortSignal on every call
 const controller = new AbortController();
 await llmEngine.generateResponse(messages, config, onToken, controller.signal);
 
-// 2. Token debounce — 50ms batch, never per-token runInAction
+// 2. Token debounce - 50ms batch, never per-token runInAction
 private buffer = '';
 private flushTimer: ReturnType<typeof setTimeout> | null = null;
 appendToken(token: string) {
@@ -30,5 +30,5 @@ appendToken(token: string) {
 - Every generation: MUST accept `AbortSignal` · ViewModel MUST expose `cancelGeneration()`
 - Token updates: debounced 50ms
 - Download progress: throttled 250ms
-- Memory extraction: fire-and-forget — `.catch(() => {})` — never await in main pipeline
+- Memory extraction: fire-and-forget - `.catch(() => {})` - never await in main pipeline
 - Never `await` inside MobX `reaction` or `autorun`

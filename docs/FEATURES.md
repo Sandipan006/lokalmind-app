@@ -1,8 +1,8 @@
-# LokalMind — What it is
+# LokalMind - What it is
 
 **Tagline:** *Your mind. Your device. No cloud.*
 
-**LokalMind** is a **local-first AI chat app** for **iOS**. You download **open-weight models** (GGUF) and run them **entirely on your phone**—no chat requests are sent to LokalMind’s servers for inference. Your conversations and settings stay on the device. Privacy and offline use (after models are downloaded) are the point.
+**LokalMind** is a **local-first AI chat app** for **iOS**. You download **open-weight models** (GGUF) and run them **entirely on your phone**-no chat requests are sent to LokalMind’s servers for inference. Your conversations and settings stay on the device. Privacy and offline use (after models are downloaded) are the point.
 
 **Elevator pitch:** use the **tagline** and the paragraph above when someone asks what LokalMind is. Everything below explains **what it does**, **why it’s different**, and **what’s still coming**.
 
@@ -23,7 +23,7 @@ Most consumer AI products (**ChatGPT, Claude, Gemini**, and most mobile wrappers
 | Data leaves your phone for generation | **Prompts and replies for local runs stay on device** (stored in local storage on the phone) |
 | Trust is “their policy page” | **Trust is architectural**: local GGUF + local app storage, not a hosted chat backend for the core feature |
 
-LokalMind is **not** trying to replace every cloud AI use case (huge frontier models, team features, web-only tools). It’s for people who want **private**, **offline-capable**, **you-own-the-weights** chat on a phone—without feeding every message to a remote API.
+LokalMind is **not** trying to replace every cloud AI use case (huge frontier models, team features, web-only tools). It’s for people who want **private**, **offline-capable**, **you-own-the-weights** chat on a phone-without feeding every message to a remote API.
 
 ---
 
@@ -39,7 +39,7 @@ LokalMind is **not** trying to replace every cloud AI use case (huge frontier mo
 
 ### Models & downloads
 
-- **Model browser** with several **Qwen**, **DeepSeek R1**, **Gemma**, and other variants—different sizes for speed vs quality, some marked for broader access vs paid tiers in the product’s model policy.
+- **Model browser** with several **Qwen**, **DeepSeek R1**, **Gemma**, and other variants-different sizes for speed vs quality, some marked for broader access vs paid tiers in the product’s model policy.
 - **Download over the network** from the app’s CDN; **pause, resume, and cancel** so large files aren’t stuck on a single bad connection.
 - **Delete** models you no longer want to keep on disk.
 - **Whisper (speech)** asset is part of the model ecosystem for **future** voice input; the speech engine is prepared even where the full mic UI is still rolling out.
@@ -51,7 +51,7 @@ LokalMind is **not** trying to replace every cloud AI use case (huge frontier mo
 - **Rename** chats (swipe actions) and **delete** chats with confirmation.
 - **Search** across chat titles and message text to find old threads quickly.
 - **Auto-titles**: the app can **generate a short session title** from the conversation at natural breakpoints so the sidebar stays readable.
-- **Message queue**: if you send while the model is still answering, messages can **queue** (with a cap), **show in a strip**, and **edit or remove** before they send—so thoughts aren’t lost during long generations.
+- **Message queue**: if you send while the model is still answering, messages can **queue** (with a cap), **show in a strip**, and **edit or remove** before they send-so thoughts aren’t lost during long generations.
 - **Edit a user message** after the fact (long-press): the thread **rewinds** after that point and the assistant can **regenerate** from your corrected text.
 
 ### Modes & system behavior
@@ -76,7 +76,7 @@ LokalMind is **not** trying to replace every cloud AI use case (huge frontier mo
 
 - **Display name**, **avatar** (preset art), **member since** style presentation.
 - Links to **GitHub** and **contact** when configured (environment-driven).
-- **Erase all local data**: one destructive path to wipe **chats, settings, and downloaded models** from the device and return to onboarding—useful for resale or a hard reset.
+- **Erase all local data**: one destructive path to wipe **chats, settings, and downloaded models** from the device and return to onboarding-useful for resale or a hard reset.
 
 ### Support & onboarding
 
@@ -85,13 +85,13 @@ LokalMind is **not** trying to replace every cloud AI use case (huge frontier mo
 
 ### Experience & design
 
-- **Glass-style** surfaces, **dark** theme, **native** tab bar with platform-appropriate icons, **haptics** on key actions, and readable typography—so the app feels like a **premium iOS** product, not a bare web wrapper.
+- **Glass-style** surfaces, **dark** theme, **native** tab bar with platform-appropriate icons, **haptics** on key actions, and readable typography-so the app feels like a **premium iOS** product, not a bare web wrapper.
 
 ---
 
 ## Tech (short)
 
-LokalMind is built with **Expo** and **React Native**, **MobX** for screen state, **expo-router** for navigation, **SQLite** for chat history, and **AsyncStorage** for settings and download state. Inference uses **llama.rn** (GGUF / llama.cpp); speech uses **whisper.rn** where enabled. That stack is what makes **on-device** chat possible in a store-friendly app—not a separate “feature,” but the **enabler** for everything above.
+LokalMind is built with **Expo** and **React Native**, **MobX** for screen state, **expo-router** for navigation, **SQLite** for chat history, and **AsyncStorage** for settings and download state. Inference uses **llama.rn** (GGUF / llama.cpp); speech uses **whisper.rn** where enabled. That stack is what makes **on-device** chat possible in a store-friendly app-not a separate “feature,” but the **enabler** for everything above.
 
 **Monetization:** in-app purchases (e.g. RevenueCat) may appear in the dependency stack for **model unlocks or Pro** as the product matures; wire-up status should match the current codebase when you ship.
 
@@ -99,7 +99,7 @@ LokalMind is built with **Expo** and **React Native**, **MobX** for screen state
 
 ## Not in the app yet (or only partly)
 
-These are **planned or partially wired**—good to mention honestly so expectations match the build:
+These are **planned or partially wired**-good to mention honestly so expectations match the build:
 
 - **Voice input** in the composer (Whisper is set up at the engine level; full **hold-to-talk** UX may still be in progress).
 - **Global** system prompt (single app-wide override) is not the current shipped model; prompt control is per-mode.
@@ -109,4 +109,4 @@ These are **planned or partially wired**—good to mention honestly so expectati
 
 ---
 
-*Last updated: LokalMind v2 — product + codebase snapshot.*
+*Last updated: LokalMind v2 - product + codebase snapshot.*
