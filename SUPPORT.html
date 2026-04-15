@@ -5,36 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LokalMind - Support</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
+
     :root {
-      --bg: #081425;
-      --card: #0f1f38;
-      --text: #eef5ff;
-      --muted: #b8c8e8;
-      --accent: #76b7ff;
-      --line: #294168;
-      --chip: #153158;
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface-2: #2a2a2a;
+      --text: #ffffff;
+      --text-soft: #cfcfcf;
+      --text-muted: #9e9e9e;
+      --line: #333333;
+      --primary: #ff420b;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      font-family: Figtree, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: var(--text);
-      line-height: 1.65;
-      background: radial-gradient(circle at top right, #173769 0%, var(--bg) 52%);
+      line-height: 1.62;
+      background: radial-gradient(circle at top right, #1d1d1d 0%, var(--bg) 58%);
     }
     .wrap { max-width: 980px; margin: 0 auto; padding: 34px 20px 64px; }
     .card {
       border: 1px solid var(--line);
-      border-radius: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
       padding: 30px;
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.3);
     }
-    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 2.8vw, 2.3rem); }
-    .lead { margin: 0 0 18px; color: #d6e5ff; }
-    h2 { margin-top: 26px; margin-bottom: 10px; color: #dce8ff; }
-    h3 { margin: 18px 0 4px; color: #ebf2ff; font-size: 1.05rem; }
-    p { margin: 0 0 8px; color: var(--muted); }
+    h1 {
+      margin: 0 0 8px;
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: clamp(2rem, 3vw, 2.5rem);
+      font-weight: 400;
+    }
+    .lead { margin: 0 0 18px; color: var(--text-muted); }
+    h2 {
+      margin-top: 26px;
+      margin-bottom: 10px;
+      color: var(--text);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    h3 {
+      margin: 0 0 4px;
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    p { margin: 0 0 8px; color: var(--text-soft); }
     hr { border: 0; border-top: 1px solid var(--line); margin: 22px 0; }
     table {
       width: 100%;
@@ -49,17 +68,25 @@
       text-align: left;
       vertical-align: top;
     }
-    th { background: var(--chip); color: #e9f1ff; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    th {
+      background: rgba(255, 66, 11, 0.14);
+      color: var(--text);
+      font-weight: 600;
+    }
+    td { background: rgba(42, 42, 42, 0.38); }
+    a {
+      color: #ff7b55;
+      text-decoration: none;
+    }
+    a:hover { color: #ff9a7b; text-decoration: underline; }
     .faq-item {
-      padding: 12px 14px;
+      padding: 14px;
       border: 1px solid var(--line);
       border-radius: 12px;
-      background: rgba(15, 31, 56, 0.55);
+      background: rgba(42, 42, 42, 0.4);
       margin-bottom: 10px;
     }
-    footer { margin-top: 18px; color: #a8bde3; font-size: 0.95rem; }
+    footer { margin-top: 18px; color: var(--text-muted); font-size: 0.95rem; }
   </style>
 </head>
 <body>
