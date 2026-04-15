@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LokalMind - Support</title>
+  <style>
+    :root {
+      --bg: #081425;
+      --card: #0f1f38;
+      --text: #eef5ff;
+      --muted: #b8c8e8;
+      --accent: #76b7ff;
+      --line: #294168;
+      --chip: #153158;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      line-height: 1.65;
+      background: radial-gradient(circle at top right, #173769 0%, var(--bg) 52%);
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 34px 20px 64px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      padding: 30px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.25);
+    }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 2.8vw, 2.3rem); }
+    .lead { margin: 0 0 18px; color: #d6e5ff; }
+    h2 { margin-top: 26px; margin-bottom: 10px; color: #dce8ff; }
+    h3 { margin: 18px 0 4px; color: #ebf2ff; font-size: 1.05rem; }
+    p { margin: 0 0 8px; color: var(--muted); }
+    hr { border: 0; border-top: 1px solid var(--line); margin: 22px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--chip); color: #e9f1ff; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .faq-item {
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(15, 31, 56, 0.55);
+      margin-bottom: 10px;
+    }
+    footer { margin-top: 18px; color: #a8bde3; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="card">
+      <h1>LokalMind - Support</h1>
+      <p class="lead">Got a problem? We've got you.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Contact Channel</th>
+            <th>Best for</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>GitHub Issues (fastest)</strong></td>
+            <td>Bugs, broken flows, unexpected behavior</td>
+            <td><a href="https://github.com/Sandipan006/lokalmind-app/issues">github.com/Sandipan006/lokalmind-app/issues</a></td>
+          </tr>
+          <tr>
+            <td><strong>Email</strong></td>
+            <td>Private or account-related questions</td>
+            <td><a href="mailto:hey.sandipanbera@gmail.com">hey.sandipanbera@gmail.com</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr />
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="faq-item">
+        <h3>Do I need internet to chat?</h3>
+        <p>No. Once a model is downloaded, LokalMind works completely offline. Internet is only used to download models and app updates.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Why is the app slow on my device?</h3>
+        <p>Larger models (4B) need more RAM. Try a smaller model like Qwen 3.5 0.8B for faster responses on older devices.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How do I delete a model?</h3>
+        <p>Go to the Models tab -> tap the model -> Delete. This frees up storage immediately.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Where is my chat data stored?</h3>
+        <p>Everything - chats, settings, memories - is stored locally on your device. Nothing is sent to any server.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is a system prompt?</h3>
+        <p>A system prompt tells the AI how to behave - its tone, expertise, and rules. LokalMind lets you write your own for each mode in Profile -> AI Behavior.</p>
+      </div>
+      <div class="faq-item">
+        <h3>The model failed to load. What do I do?</h3>
+        <p>Try closing and reopening the app. If it persists, delete and re-download the model from the Models tab.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How do I reset everything?</h3>
+        <p>Profile -> Erase All Data. This wipes all chats, settings, memories, and downloaded models from your device.</p>
+      </div>
+
+      <hr />
+      <h2>Feature Requests</h2>
+      <p>Have an idea? Open a GitHub Discussion:</p>
+      <p><a href="https://github.com/Sandipan006/lokalmind-app/discussions">github.com/Sandipan006/lokalmind-app/discussions</a></p>
+
+      <footer>
+        <p><em>LokalMind is built and maintained by Sandipan Bera.</em></p>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
