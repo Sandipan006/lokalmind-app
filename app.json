@@ -25,7 +25,8 @@
       "entitlements": {
         "com.apple.developer.kernel.extended-virtual-addressing": true,
         "com.apple.developer.kernel.increased-memory-limit": true
-      }
+      },
+      "bundleIdentifier": "com.lokalmind.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -35,11 +36,8 @@
         "monochromeImage": "./assets/images/icon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/icon.png"
+      "predictiveBackGestureEnabled": false,
+      "package": "com.lokalmind.app"
     },
     "plugins": [
       "expo-router",
@@ -62,6 +60,12 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "extra": {}
+    "extra": {},
+    "runtimeVersion": {
+      "policy": "1.0.0"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1c02623d-981e-4e14-b7fa-e954abcbeb4d"
+    }
   }
 }

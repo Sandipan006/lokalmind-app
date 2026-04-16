@@ -384,8 +384,10 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
     }
   }, [viewModel]);
 
+  const isSessionReady = viewModel.session !== null && !viewModel.isLoading;
   const canSend =
     hasDownloadedModel &&
+    isSessionReady &&
     viewModel.inputText.trim().length > 0 &&
     (!viewModel.isStreaming || viewModel.canAcceptMoreQueuedMessages);
 
