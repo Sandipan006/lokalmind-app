@@ -259,6 +259,7 @@ export const ProfileAccountScreen = observer(() => {
               <>
                 <Text style={styles.logoutText}>Sign out</Text>
                 <Text style={styles.logoutHint}>Removes local data on this device.</Text>
+                <Text style={styles.logoutHint}>v1.0</Text>
               </>
             )}
           </TouchableOpacity>
