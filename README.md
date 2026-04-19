@@ -16,11 +16,11 @@ No cloud. No subscriptions for core chat. Your data never leaves your device.
 <br />
 
 <!-- Hero screenshot — replace with your actual App Store screenshot -->
-<img src="assets/screenshots/hero.png" alt="LokalMind app screenshot" width="320" />
+<img src="assets/screenshots/hero.png" alt="LokalMind app screenshot" width="500" />
 
 <br /><br />
 
-[**Download on the App Store**](#) &nbsp;·&nbsp; [Report a Bug](https://github.com/Sandipan006/lokalmind-app/issues) &nbsp;·&nbsp; [Request a Feature](https://github.com/Sandipan006/lokalmind-app/issues) &nbsp;·&nbsp; [Discussions](https://github.com/Sandipan006/lokalmind-app/discussions)
+[**Download on the App Store**](https://apps.apple.com/in/app/lokalmind-offline-ai/id6753812012) &nbsp;·&nbsp; [Report a Bug](https://github.com/Sandipan006/lokalmind-app/issues) &nbsp;·&nbsp; [Request a Feature](https://github.com/Sandipan006/lokalmind-app/issues) &nbsp;·&nbsp; [Discussions](https://github.com/Sandipan006/lokalmind-app/discussions)
 
 </div>
 
@@ -30,11 +30,11 @@ No cloud. No subscriptions for core chat. Your data never leaves your device.
 
 Most AI assistants send everything you type to a server. LokalMind doesn't. The model runs on your phone, responses generate on your CPU/GPU, and nothing is transmitted anywhere.
 
-- 🔒 **Truly private** — no account, no telemetry, no API calls
-- ✈️ **Works offline** — on a plane, in a basement, anywhere
-- 💾 **One-time download** — download a model once, use it forever
-- 🧠 **Remembers you** — on-device semantic memory across conversations
-- ⚡ **Fast** — Metal-accelerated inference on Apple Silicon
+- **Truly private** — no account, no telemetry, no API calls
+- **Works offline** — on a plane, in a basement, anywhere
+- **One-time download** — download a model once, use it forever
+- **Remembers you** — on-device semantic memory across conversations
+- **Fast** — Metal-accelerated inference on Apple Silicon
 
 ---
 
@@ -90,9 +90,9 @@ Most AI assistants send everything you type to a server. LokalMind doesn't. The 
 | Qwen 3.5 · 0.8B | 550 MB | 2 GB+ | Fast everyday chat |
 | Qwen 3.5 · 2B | 1.3 GB | 3 GB+ | Summaries, multilingual |
 | DeepSeek R1 · 1.5B | 1.1 GB | 3 GB+ | Coding, math, reasoning |
-| Qwen 3.5 · 4B | 2.9 GB | 5 GB+ | Complex tasks, creative |
-| Qwen 3 · 4B | 2.5 GB | 5 GB+ | Thinking mode, coding |
-| Gemma 3 · 4B | 2.5 GB | 5 GB+ | Long context, analysis |
+| Qwen 3.5 · 4B | 2.9 GB | 4 GB+ | Complex tasks, creative |
+| Qwen 3 · 4B | 2.5 GB | 4 GB+ | Thinking mode, coding |
+| Gemma 3 · 4B | 2.5 GB | 4 GB+ | Long context, analysis |
 
 > **Tip:** Start with Qwen 0.8B for speed. Upgrade to a 4B model when you need deeper reasoning.
 
