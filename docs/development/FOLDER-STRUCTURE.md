@@ -38,6 +38,11 @@ lokalmind-app/
 │   └── hooks/
 │
 ├── docs/
+│   ├── architecture/             ← system design, data model, LLM pipeline
+│   ├── development/              ← developer guide, conventions, folder structure, roadmap
+│   ├── design/                     ← design system
+│   ├── product/                  ← features, tasks, public overview
+│   └── project/                  ← known limitations, security
 ├── app.json
 ├── package.json
 └── tsconfig.json

@@ -4,7 +4,7 @@ alwaysApply: false
 ---
 # Testing Conventions
 
-Full reference: `docs/CONVENTIONS.md` section 7.
+Full reference: `docs/development/CONVENTIONS.md` section 7.
 
 ## File location - co-located with source
 

@@ -7,11 +7,15 @@ import { AppState, Platform } from 'react-native';
 /** Dedupe window for the same session + event kind. */
 const DEDUPE_TTL_MS = 90_000;
 
-/** Fire inactivity reminder this many seconds after backgrounding (if cooldown allows). */
-const INACTIVITY_DELAY_SEC = 6 * 3600;
+/** Max inactivity reminders scheduled per local calendar day (conservative cap). */
+const INACTIVITY_DAILY_MAX = 4;
 
-/** Minimum time between scheduling inactivity reminders. */
-const INACTIVITY_SCHEDULE_COOLDOWN_MS = 12 * 3600 * 1000;
+const INACTIVITY_TIERS = [
+  { delaySec: 4 * 3600, title: 'Still chatting?', body: 'Pick up where you left off in LokalMind.' },
+  { delaySec: 10 * 3600, title: 'Your thread is waiting', body: 'A quick tap brings your last session back.' },
+  { delaySec: 24 * 3600, title: 'Been a while', body: 'New ideas land better when you jot them down here.' },
+  { delaySec: 30 * 3600, title: 'We saved your context', body: 'Open LokalMind when you are ready to continue.' },
+] as const;
 
 let handlerConfigured = false;
 
@@ -40,6 +44,11 @@ function isBackgroundForBanner(): boolean {
   return AppState.currentState !== 'active';
 }
 
+/** Local calendar day as YYYYMMDD for daily notification budget. */
+function localCalendarYmd(d: Date): number {
+  return d.getFullYear() * 10_000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
 function parseData(data: Record<string, unknown> | undefined | null): LocalNotificationTapPayload | null {
   if (!data || typeof data !== 'object') return null;
   const kind = data.kind;
@@ -65,7 +74,7 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
 
   private readonly dedupeAt = new Map<string, number>();
 
-  private pendingInactivityNotificationId: string | null = null;
+  private pendingInactivityNotificationIds: string[] = [];
 
   constructor(private readonly storage: Pick<IAsyncStorageDriver, 'getNumber' | 'setNumber'>) {}
 
@@ -95,7 +104,14 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
     if (payload) this.responseListener(payload);
   }
 
-  async ensurePermissions(): Promise<boolean> {
+  async hasNotificationPermission(): Promise<boolean> {
+    if (!isIos()) return false;
+    ensureNotificationHandler();
+    const { status } = await Notifications.getPermissionsAsync();
+    return status === 'granted';
+  }
+
+  async requestNotificationPermission(): Promise<boolean> {
     if (!isIos()) return false;
     ensureNotificationHandler();
     const { status: existing } = await Notifications.getPermissionsAsync();
@@ -112,7 +128,7 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
     if (!isIos() || !isBackgroundForBanner()) return;
     const key = `${params.sessionId}:chat:${params.success ? 'ok' : 'err'}`;
     if (this.shouldDedupe(key)) return;
-    const granted = await this.ensurePermissions();
+    const granted = await this.hasNotificationPermission();
     if (!granted) return;
 
     const title = params.success ? 'Reply ready' : 'Generation failed';
@@ -133,7 +149,7 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
     if (!isIos() || !isBackgroundForBanner()) return;
     const key = `${params.sessionId}:memory_saved`;
     if (this.shouldDedupe(key)) return;
-    const granted = await this.ensurePermissions();
+    const granted = await this.hasNotificationPermission();
     if (!granted) return;
 
     await Notifications.scheduleNotificationAsync({
@@ -150,7 +166,7 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
     if (!isIos() || !isBackgroundForBanner()) return;
     const key = 'profile:updated';
     if (this.shouldDedupe(key)) return;
-    const granted = await this.ensurePermissions();
+    const granted = await this.hasNotificationPermission();
     if (!granted) return;
 
     await Notifications.scheduleNotificationAsync({
@@ -166,47 +182,74 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
   async onAppBackground(): Promise<void> {
     if (!isIos()) return;
     ensureNotificationHandler();
-    const granted = await this.ensurePermissions();
+    const granted = await this.hasNotificationPermission();
     if (!granted) return;
 
-    const lastScheduled = await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_LAST_SCHEDULED_AT);
-    if (lastScheduled !== null && Date.now() - lastScheduled < INACTIVITY_SCHEDULE_COOLDOWN_MS) {
+    await this.cancelPendingInactivityNotifications({ refundDailyCap: true });
+
+    const ymdToday = localCalendarYmd(new Date());
+    const storedYmd = await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_YMD);
+    let usedToday = (await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT)) ?? 0;
+    if (storedYmd !== ymdToday) {
+      usedToday = 0;
+    }
+    const remaining = INACTIVITY_DAILY_MAX - usedToday;
+    if (remaining <= 0) {
       return;
     }
 
-    if (this.pendingInactivityNotificationId) {
-      try {
-        await Notifications.cancelScheduledNotificationAsync(this.pendingInactivityNotificationId);
-      } catch {
-        /* ignore */
-      }
-      this.pendingInactivityNotificationId = null;
+    const tiers = INACTIVITY_TIERS.slice(0, Math.min(INACTIVITY_TIERS.length, remaining));
+    const ids: string[] = [];
+    for (const [tierIndex, tier] of tiers.entries()) {
+      const id = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: tier.title,
+          body: tier.body,
+          data: { kind: 'inactivity', tierIndex },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: tier.delaySec,
+          repeats: false,
+        },
+      });
+      ids.push(id);
     }
-
-    const id = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Still there?',
-        body: 'Continue your conversation in LokalMind.',
-        data: { kind: 'inactivity' },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: INACTIVITY_DELAY_SEC,
-        repeats: false,
-      },
-    });
-    this.pendingInactivityNotificationId = id;
-    await this.storage.setNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_LAST_SCHEDULED_AT, Date.now());
+    this.pendingInactivityNotificationIds = ids;
+    await this.storage.setNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_YMD, ymdToday);
+    await this.storage.setNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT, usedToday + tiers.length);
   }
 
   async onAppForeground(): Promise<void> {
-    if (!isIos() || !this.pendingInactivityNotificationId) return;
-    try {
-      await Notifications.cancelScheduledNotificationAsync(this.pendingInactivityNotificationId);
-    } catch {
-      /* ignore */
+    if (!isIos()) return;
+    await this.cancelPendingInactivityNotifications({ refundDailyCap: true });
+  }
+
+  private async cancelPendingInactivityNotifications(options?: {
+    refundDailyCap?: boolean;
+  }): Promise<void> {
+    const ids = this.pendingInactivityNotificationIds;
+    this.pendingInactivityNotificationIds = [];
+    let cancelledOk = 0;
+    for (const id of ids) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(id);
+        cancelledOk += 1;
+      } catch {
+        /* ignore */
+      }
     }
-    this.pendingInactivityNotificationId = null;
+    if (!options?.refundDailyCap || cancelledOk === 0) {
+      return;
+    }
+    const ymdToday = localCalendarYmd(new Date());
+    const storedYmd = await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_YMD);
+    let count = (await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT)) ?? 0;
+    if (storedYmd !== ymdToday) {
+      return;
+    }
+    const next = Math.max(0, count - cancelledOk);
+    await this.storage.setNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT, next);
   }
 
   private shouldDedupe(key: string): boolean {

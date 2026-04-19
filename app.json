@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "5",
+      "buildNumber": "6",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
@@ -61,9 +61,7 @@
       "reactCompiler": true
     },
     "extra": {},
-    "runtimeVersion": {
-      "policy": "1.0.0"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/1c02623d-981e-4e14-b7fa-e954abcbeb4d"
     }

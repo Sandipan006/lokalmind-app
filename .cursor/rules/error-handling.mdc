@@ -4,7 +4,7 @@ alwaysApply: false
 ---
 # Error Handling
 
-Full reference: `docs/CONVENTIONS.md` section 5.
+Full reference: `docs/development/CONVENTIONS.md` section 5.
 
 ## Use cases return Result - never throw
 

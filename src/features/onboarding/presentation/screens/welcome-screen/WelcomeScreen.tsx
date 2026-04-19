@@ -1,11 +1,14 @@
 import { PrimaryButton } from '@/src/design-system/components';
+import { container } from '@/src/core/di/container';
 import { router } from 'expo-router';
 import React from 'react';
 import { ImageBackground, Text, View } from 'react-native';
 import { welcomeScreenStyles as styles } from './WelcomeScreenStyles';
 
 export function WelcomeScreen() {
-  const handleGetStarted = () => {
+  const handleGetStarted = async () => {
+    await container.initializeContainer();
+    await container.localNotifications.requestNotificationPermission();
     router.push('/onboarding/username');
   };
 

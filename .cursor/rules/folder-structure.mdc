@@ -4,7 +4,7 @@ alwaysApply: false
 ---
 # Folder Structure
 
-Full reference: `docs/CONVENTIONS.md` section 2 · `docs/FOLDER-STRUCTURE.md`.
+Full reference: `docs/development/CONVENTIONS.md` section 2 · `docs/development/FOLDER-STRUCTURE.md`.
 
 ## Feature module layout
 

@@ -171,7 +171,7 @@ lokalmind-app/
 │       └── useOtaUpdates.ts      # expo-updates OTA check on foreground
 │
 ├── assets/                       # Static assets: fonts, images, splash
-├── docs/                         # Architecture, feature, data-model docs
+├── docs/                         # Typed docs: architecture/, development/, design/, product/, project/
 ├── scripts/                      # reset-project, clearLocalData utilities
 │
 ├── app.config.ts                 # Expo config (reads from .env)
@@ -1094,7 +1094,7 @@ phase/<number>      phase-level branch
 
 ## 19. Known Limitations
 
-See `KNOWN-LIMITATIONS.md` for community-trackable issues.
+See [KNOWN-LIMITATIONS.md](../project/KNOWN-LIMITATIONS.md) for community-trackable issues.
 
 **Memory retrieval quality variance** - In some chats memory retrieval is relevant and helpful; in others it can be weaker. Depends on model size, prompt structure, and embedding quality.
 
@@ -1108,7 +1108,7 @@ See `KNOWN-LIMITATIONS.md` for community-trackable issues.
 
 ## 20. Roadmap & Future Work
 
-See `docs/NEXT-DEVELOPMENT.md` for detailed upcoming work.
+See [NEXT-DEVELOPMENT.md](./NEXT-DEVELOPMENT.md) for detailed upcoming work.
 
 ### v2.1 (Post-launch)
 - **Voice input (STT):** Full hold-to-talk UI wired to `whisperRnAdapter`. Requires `NSMicrophoneUsageDescription` in `app.json`.
@@ -1130,9 +1130,9 @@ See `docs/NEXT-DEVELOPMENT.md` for detailed upcoming work.
 
 ## Contributing
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for setup instructions and code style. See [SECURITY.md](../SECURITY.md) for vulnerability reporting.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for setup instructions and code style. See [SECURITY.md](../project/SECURITY.md) for vulnerability reporting.
 
-By submitting a pull request you agree your contribution will be licensed under the [MIT License](../LICENSE).
+By submitting a pull request you agree your contribution will be licensed under the [MIT License](../../LICENSE).
 
 ---
 

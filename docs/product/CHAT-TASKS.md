@@ -2,7 +2,7 @@
 
 ## Context window
 
-- [x] **Cap LLM history** - Send at most **20 messages** total (user + assistant) to the model. Trim older turns in `SendMessageUseCase` (or before `execute`) so system prompt + recent window fits reliably.
+- [x] **Cap LLM history** - Send at most **10 messages** total (user + assistant) to the model (`MAX_LLM_CONVERSATION_MESSAGES` in `SendMessageUseCase` / `RegenerateReplyUseCase`). Trim older turns so system prompt + recent window fits reliably.
 - [x] **Dynamic `n_ctx` on device** - `modelConfig.contextSize` is the ceiling per model; `deviceCapability.resolveContextSize` + `LlamaRnAdapter` pick the actual `n_ctx` from total RAM, model weight size, and KV estimate. **Model compatibility** for downloads uses **total** device RAM vs `minRamBytes` (`ModelRepository` → `Model.isCompatibleWithDevice`).
 
 ## UX / product

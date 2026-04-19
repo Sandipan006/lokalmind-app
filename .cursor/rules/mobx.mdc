@@ -6,7 +6,7 @@ alwaysApply: false
 
 # MobX Rules
 
-Full reference: `docs/CONVENTIONS.md` section 4.
+Full reference: `docs/development/CONVENTIONS.md` section 4.
 
 ## ViewModel template
 

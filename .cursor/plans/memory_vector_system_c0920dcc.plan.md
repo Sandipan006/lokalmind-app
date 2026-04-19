@@ -1,6 +1,6 @@
 ---
 name: Memory Vector System
-overview: Implement the full Memory & Vector Embedding System from `docs/MEMORY-VECTOR-SYSTEM.md` across 8 sequential steps, from token limit reductions through to the Memory Screen UI.
+overview: Implement the full Memory & Vector Embedding System from `docs/architecture/MEMORY-VECTOR-SYSTEM.md` across 8 sequential steps, from token limit reductions through to the Memory Screen UI.
 todos:
   - id: step1-token-limits
     content: Reduce MAX_LLM_CONVERSATION_MESSAGES to 10 and MAX_CHARS_PER_LLM_MESSAGE to 2000 in SendMessageUseCase and RegenerateReplyUseCase

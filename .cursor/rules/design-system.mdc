@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Design System Rules
 
-Full reference: `docs/CONVENTIONS.md` section 8 · `docs/DESIGN-SYSTEM.md`.
+Full reference: `docs/development/CONVENTIONS.md` section 8 · `docs/design/DESIGN-SYSTEM.md`.
 
 ## Never hardcode - always use tokens
 
