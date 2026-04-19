@@ -118,6 +118,14 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
   },
+  logoutVersion: {
+    marginTop: spacing.sm,
+    fontSize: fontSizes.xs,
+    color: TEXT_WHITE_40,
+    fontFamily: fonts.figtree.mediumItalic,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
+  },
   loadingText: {
     marginTop: spacing.md,
     color: TEXT_WHITE_60,

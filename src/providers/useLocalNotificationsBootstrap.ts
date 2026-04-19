@@ -26,7 +26,7 @@ function navigateForPayload(
   }
 }
 
-/** Registers iOS local notification permissions, tap handling, and inactivity scheduling. */
+/** Registers iOS local notification tap handling and inactivity scheduling (permission requested from Welcome). */
 export function useLocalNotificationsBootstrap(): void {
   const router = useRouter();
   const coldStartDispatched = useRef(false);

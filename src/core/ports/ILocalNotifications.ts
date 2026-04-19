@@ -10,8 +10,11 @@ export type LocalNotificationTapPayload =
   | { kind: 'inactivity' };
 
 export interface ILocalNotifications {
-  /** iOS permission prompt when needed; resolves false if denied or unsupported platform. */
-  ensurePermissions(): Promise<boolean>;
+  /** iOS: true if notifications are already allowed. Does not prompt. */
+  hasNotificationPermission(): Promise<boolean>;
+
+  /** iOS: system permission prompt when needed; call from onboarding. Resolves false if denied or unsupported. */
+  requestNotificationPermission(): Promise<boolean>;
 
   /** Chat generation finished - surfaces only when app is not in foreground (iOS). */
   notifyChatTurnComplete(params: {

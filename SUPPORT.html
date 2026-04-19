@@ -87,6 +87,24 @@
       margin-bottom: 10px;
     }
     footer { margin-top: 18px; color: var(--text-muted); font-size: 0.95rem; }
+    .table-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+    .table-scroll table { margin-top: 0; min-width: 560px; }
+    td a { word-break: break-word; overflow-wrap: anywhere; }
+    @media (max-width: 640px) {
+      .wrap { padding: 22px 14px 48px; }
+      .card { padding: 20px 16px; border-radius: 14px; }
+      h2 { font-size: 1.08rem; margin-top: 22px; }
+      h3 { font-size: 1rem; }
+      .faq-item { padding: 12px; }
+      th, td { padding: 8px 10px; font-size: 0.92rem; }
+      footer { font-size: 0.9rem; }
+    }
   </style>
 </head>
 <body>
@@ -95,6 +113,7 @@
       <h1>LokalMind - Support</h1>
       <p class="lead">Got a problem? We've got you.</p>
 
+      <div class="table-scroll">
       <table>
         <thead>
           <tr>
@@ -116,6 +135,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
 
       <hr />
       <h2>Frequently Asked Questions</h2>

@@ -3,7 +3,7 @@ name: LokalMind v2 Tech Setup
 overview: Create a full technical architecture document and strict cursor rules for LokalMind v2, then reset the Expo scaffold to a clean base structure ready for development.
 todos:
   - id: tech-doc
-    content: Create docs/ARCHITECTURE.md - full technical architecture document
+    content: Create docs/architecture/ARCHITECTURE.md - full technical architecture document
     status: completed
   - id: cursor-rules
     content: Create .cursor/rules/ - 5 strict cursor rule files (architecture, naming, folder-structure, mobx, design-system)
@@ -20,7 +20,7 @@ isProject: false
 
 ### 1. Technical Architecture Document
 
-File: `docs/ARCHITECTURE.md`
+File: `docs/architecture/ARCHITECTURE.md`
 
 Covers:
 

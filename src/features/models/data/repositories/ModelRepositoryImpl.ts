@@ -301,6 +301,19 @@ export class ModelRepositoryImpl implements IModelRepository {
   async cancelDownload(modelId: string): Promise<Result<void>> {
     try {
       await this.downloadService.cancelDownload(modelId);
+
+      // LLM download kicks off MiniLM in parallel; if the user cancels the LLM, stop the
+      // embedding download too unless the file is already fully on disk.
+      const isCatalogLlm = MODEL_CONFIGS.some((m) => m.id === modelId);
+      const embeddingOnDisk = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename).exists;
+      if (isCatalogLlm && !embeddingOnDisk) {
+        try {
+          await this.downloadService.cancelDownload(EMBEDDING_CONFIG.id);
+        } catch (e) {
+          if (__DEV__) console.warn('[Embedding] Cancel alongside LLM failed:', e);
+        }
+      }
+
       return ok(undefined);
     } catch (e) {
       return err(createError('DOWNLOAD_FAILED', 'Failed to cancel download', e));

@@ -1,6 +1,6 @@
 # LokalMind v2 - Architecture Overview
 
-Version: 2.0.0 | Platform: iOS (Android - Phase 2) | License: MIT
+Version: 1.0.0 | Platform: iOS (Android - Phase 2) | License: MIT
 
 > **Your mind. Your device. No cloud.**
 
@@ -11,11 +11,14 @@ Version: 2.0.0 | Platform: iOS (Android - Phase 2) | License: MIT
 | File | Contents |
 |---|---|
 | **[ARCHITECTURE.md](./ARCHITECTURE.md)** | This file - overview, tech stack, layer rules |
-| **[FOLDER-STRUCTURE.md](./FOLDER-STRUCTURE.md)** | Full folder tree, DI container, dependencies, build phases |
 | **[DATA-MODEL.md](./DATA-MODEL.md)** | SQLite schema, AsyncStorage keys, model registry |
 | **[LLM-PIPELINE.md](./LLM-PIPELINE.md)** | ILLMEngine + IWhisperEngine interfaces, chat turn sequence, memory pipeline, Whisper STT |
-| **[DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md)** | Liquid Glass, color tokens, typography, navigation |
-| **[FEATURES.md](./FEATURES.md)** | Feature showcase - every differentiating capability explained end-to-end |
+| **[FOLDER-STRUCTURE.md](../development/FOLDER-STRUCTURE.md)** | Full folder tree, DI container, dependencies, build phases |
+| **[DESIGN-SYSTEM.md](../design/DESIGN-SYSTEM.md)** | Liquid Glass, color tokens, typography, navigation |
+| **[FEATURES.md](../product/FEATURES.md)** | Feature showcase - every differentiating capability explained end-to-end |
+| **[DEVELOPER-GUIDE.md](../development/DEVELOPER-GUIDE.md)** | Contributor reference, features, infrastructure, conventions |
+| **[KNOWN-LIMITATIONS.md](../project/KNOWN-LIMITATIONS.md)** | Community-trackable limitations |
+| **[SECURITY.md](../project/SECURITY.md)** | Vulnerability reporting |
 
 ---
 
@@ -23,20 +26,20 @@ Version: 2.0.0 | Platform: iOS (Android - Phase 2) | License: MIT
 
 | Layer | Technology |
 |---|---|
-| Runtime | Expo SDK 54 · React Native 0.81 · React 19.1 · New Architecture |
+| Runtime | Expo SDK 54 · React Native 0.81.5 · React 19.1 · New Architecture |
 | Navigation | expo-router v6 (file-based, stack + tabs) |
 | State Management | MobX 6 + mobx-react-lite (ViewModels only) |
-| LLM Engine | llama.rn ^0.7.0 (GGUF inference via llama.cpp) |
-| Voice / STT | whisper.rn (on-device Whisper base model, .bin, 142MB) |
-| Database | expo-sqlite ~16.0.8 (WAL mode, foreign keys) |
+| LLM Engine | llama.rn ^0.11.3 (GGUF inference via llama.cpp) |
+| Voice / STT | whisper.rn ^0.5.5 (on-device Whisper; base model asset ~142MB when bundled) |
+| Database | expo-sqlite ~16.0.10 (WAL mode, foreign keys) |
 | Key-Value Store | @react-native-async-storage/async-storage 2.2.0 |
-| File System | expo-file-system ~19.0.17 (new API, not /legacy) |
+| File System | expo-file-system ~19.0.21 (new API, not /legacy) |
 | Glass UI | expo-glass-effect (native iOS 26+ UIVisualEffectView) |
 | Animations | react-native-reanimated · lottie-react-native |
 | Gestures | react-native-gesture-handler |
 | Lists | @shopify/flash-list 2.0.2 |
 | Monetisation | react-native-purchases (RevenueCat) |
-| Notifications | expo-notifications ~0.32.12 |
+| Notifications | expo-notifications ~0.32.16 |
 | Fonts | expo-font · Figtree family |
 | Icons | react-native-svg + custom SVG icon set |
 | Device Info | react-native-device-info (RAM detection) |

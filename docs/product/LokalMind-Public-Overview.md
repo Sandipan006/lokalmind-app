@@ -8,7 +8,7 @@
 
 ## What it is
 
-**LokalMind** is a mobile app that runs powerful AI chat **on your phone**. You choose and download open models to your device; answers are generated **locally**, not on a remote chat server. After models are on your device, you can use the app **without an internet connection** for conversation-connection is mainly for downloading models and app updates.
+**LokalMind** is a mobile app that runs powerful AI chat **on your phone**. You choose and download open models to your device; answers are generated **locally**, not on a remote chat server. After models are on your device, you can use the app **without an internet connection** for conversation; **connection** is mainly for downloading models and app updates.
 
 It is built for people who want **privacy**, **offline use**, and **control over which model** they run-without sending every prompt to a company’s cloud for the core chat experience.
 

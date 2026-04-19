@@ -1,4 +1,5 @@
 import { getTotalRamBytes } from '@/src/infrastructure/device/deviceCapability';
+import { getModelConfig } from '@/src/infrastructure/downloads/modelConfig';
 import { action, computed, makeObservable, observable, runInAction } from 'mobx';
 import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
 import type { Model } from '../../domain/entities/Model';
@@ -47,6 +48,9 @@ export class ModelSetupViewModel {
     // This avoids dead subscriptions for already-downloaded or never-started models.
     const activeIds = this.subscribeToDownloadProgressUseCase.getActiveIds();
     for (const modelId of activeIds) {
+      // Embedding/whisper run in parallel — they are not Model Browser cards; subscribing would
+      // steal expandedModelId and fight the LLM row’s expanded UI.
+      if (!getModelConfig(modelId)) continue;
       this.attachListener(modelId);
     }
 
@@ -61,7 +65,10 @@ export class ModelSetupViewModel {
     const unsub = this.subscribeToDownloadProgressUseCase.execute(modelId, (progress) => {
       runInAction(() => {
         this.downloadProgress.set(modelId, progress);
-        if (progress.status === 'downloading' || progress.status === 'paused') {
+        if (
+          (progress.status === 'downloading' || progress.status === 'paused') &&
+          getModelConfig(modelId)
+        ) {
           this.expandedModelId = modelId;
         }
       });
@@ -80,8 +87,11 @@ export class ModelSetupViewModel {
   }
 
   @action
-  async loadModels(): Promise<void> {
-    this.isLoading = true;
+  async loadModels(options?: { silent?: boolean }): Promise<void> {
+    const silent = options?.silent === true;
+    if (!silent) {
+      this.isLoading = true;
+    }
     this.errorMessage = null;
 
     const [result, totalRam] = await Promise.all([
@@ -135,7 +145,7 @@ export class ModelSetupViewModel {
       }
     });
 
-    await this.loadModels();
+    await this.loadModels({ silent: true });
   }
 
   @action
@@ -175,7 +185,7 @@ export class ModelSetupViewModel {
       }
     });
 
-    await this.loadModels();
+    await this.loadModels({ silent: true });
   }
 
   @action
@@ -208,7 +218,7 @@ export class ModelSetupViewModel {
     });
 
     if (result.success) {
-      await this.loadModels();
+      await this.loadModels({ silent: true });
     }
   }
 

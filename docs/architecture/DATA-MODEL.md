@@ -100,15 +100,27 @@ CREATE TABLE IF NOT EXISTS models (
 
 ## AsyncStorage Key Registry
 
-Source of truth: `src/infrastructure/storage/asyncStorageDriver.ts`.
+Source of truth: `src/infrastructure/storage/asyncStorageDriver.ts` (`STORAGE_KEYS`). Keys below are the string literals in use; `{mode}` is a chat mode id.
 
 | Key | Type | Description |
 |---|---|---|
+| `user:displayName` | `string` | Display name |
+| `user:profileImage` | `string` | Avatar / profile image reference |
+| `user:joinDate` | `string` | Join date presentation |
+| `models:downloaded` | `string` | Model download bookkeeping |
+| `models:active` | `string` | Active model selection helper |
+| `whisper:downloaded` | `string` | Whether Whisper asset is present |
+| `whisper:modelPath` | `string` | Resolved Whisper model path |
+| `settings:contextWindow` | `string` | Context window preference |
+| `settings:globalSystemPrompt` | `string` | Global system prompt storage key |
 | `settings:mode:{mode}:systemPrompt` | `string` | Per-mode system prompt override |
 | `memory:pinnedFacts` | `string` | Always-injected user facts |
 | `memory:userProfile` | `string` | Derived profile summary for memory-aware prompts |
+| `onboarding:complete` | `string` | Onboarding completion flag |
+| `lm:notif:inactivity:dailyYmd` | `string` | Local calendar day (YYYYMMDD) for inactivity notification daily cap |
+| `lm:notif:inactivity:dailyCount` | `string` | Inactivity reminders scheduled today (max 4) |
 
-Legacy constants still exist in the driver (for backward compatibility / migration safety), but current user/model primary state is persisted in SQLite (`users`, `models`).
+**SQLite vs AsyncStorage:** canonical chat history, `users` row, and `models` install rows live in SQLite. AsyncStorage holds the keys above plus small settings / migration / notification state; keep new durable profile and model state in SQLite unless there is a deliberate exception.
 
 ---
 

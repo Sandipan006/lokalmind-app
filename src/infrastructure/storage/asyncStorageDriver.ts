@@ -13,8 +13,10 @@ export const STORAGE_KEYS = {
   MEMORY_PINNED_FACTS: 'memory:pinnedFacts',
   MEMORY_USER_PROFILE: 'memory:userProfile',
   ONBOARDING_COMPLETE: 'onboarding:complete',
-  /** Last time an inactivity reminder was scheduled (cooldown for reschedule). */
-  NOTIFICATION_INACTIVITY_LAST_SCHEDULED_AT: 'lm:notif:inactivity:lastScheduledAt',
+  /** Local calendar day (YYYYMMDD) for inactivity notification daily cap. */
+  NOTIFICATION_INACTIVITY_DAILY_YMD: 'lm:notif:inactivity:dailyYmd',
+  /** How many inactivity reminders were scheduled today (max 4). */
+  NOTIFICATION_INACTIVITY_DAILY_COUNT: 'lm:notif:inactivity:dailyCount',
   modeSystemPrompt: (mode: string) => `settings:mode:${mode}:systemPrompt`,
 } as const;
 

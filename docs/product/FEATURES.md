@@ -91,20 +91,20 @@ LokalMind is **not** trying to replace every cloud AI use case (huge frontier mo
 
 ## Tech (short)
 
-LokalMind is built with **Expo** and **React Native**, **MobX** for screen state, **expo-router** for navigation, **SQLite** for chat history, and **AsyncStorage** for settings and download state. Inference uses **llama.rn** (GGUF / llama.cpp); speech uses **whisper.rn** where enabled. That stack is what makes **on-device** chat possible in a store-friendly app-not a separate “feature,” but the **enabler** for everything above.
+LokalMind is built with **Expo** and **React Native**, **MobX** for screen state, **expo-router** for navigation, **SQLite** for chats, local profile fields, downloaded-model records, and related structured data, and **AsyncStorage** for settings keys, Whisper/download flags, onboarding, and notification scheduling caps (see `docs/architecture/DATA-MODEL.md`). Inference uses **llama.rn** (GGUF / llama.cpp); speech uses **whisper.rn** where enabled. That stack is what makes **on-device** chat possible in a store-friendly app-not a separate “feature,” but the **enabler** for everything above.
 
 **Monetization:** in-app purchases (e.g. RevenueCat) may appear in the dependency stack for **model unlocks or Pro** as the product matures; wire-up status should match the current codebase when you ship.
 
 ---
 
-## Not in the app yet (or only partly)
+## Not in the app yet
 
 These are **planned or partially wired**-good to mention honestly so expectations match the build:
 
 - **Voice input** in the composer (Whisper is set up at the engine level; full **hold-to-talk** UX may still be in progress).
 - **Global** system prompt (single app-wide override) is not the current shipped model; prompt control is per-mode.
 - **Reply threading** and **image / vision** attachments as first-class message features.
-- **Profile → Storage** screen as a full breakdown (may be a placeholder until Phase 3).
+- **Profile → Storage** screen as a full breakdown.
 - **Android** as a first-class target (roadmap; iOS is the current focus in docs).
 
 ---
