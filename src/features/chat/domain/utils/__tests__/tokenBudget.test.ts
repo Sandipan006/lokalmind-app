@@ -39,8 +39,8 @@ describe('buildContextMessages', () => {
     expect(total).toBeLessThanOrEqual(BUDGET_TOTAL);
   });
 
-  // C02 / F03: with a tight summary budget the NEW summary is dropped and the OLD one kept.
-  test.failing('C02 keeps the newest in-session summary when budget is tight', () => {
+  // C02 / F03: with a tight summary budget the NEW summary used to be dropped and the OLD one kept.
+  test('C02 keeps the newest in-session summary when budget is tight', () => {
     const out = buildContextMessages({
       systemPrompt: 'sys',
       pinnedFacts: '',
@@ -91,5 +91,19 @@ describe('buildContextMessages', () => {
       reservedOutputTokens: 100,
     });
     expect(out[0]?.content).toBe('SYSTEM');
+  });
+
+  test('summaries that fit are injected in chronological order', () => {
+    const out = buildContextMessages({
+      systemPrompt: 'sys',
+      pinnedFacts: '',
+      userProfile: '',
+      inSessionSummaries: [summary(2, 'THIRD'), summary(0, 'FIRST'), summary(1, 'SECOND')],
+      history: [],
+      currentMessage: { role: 'user', content: 'hi' },
+    });
+    const system = out[0]?.content ?? '';
+    expect(system.indexOf('FIRST')).toBeLessThan(system.indexOf('SECOND'));
+    expect(system.indexOf('SECOND')).toBeLessThan(system.indexOf('THIRD'));
   });
 });

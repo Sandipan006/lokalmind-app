@@ -102,17 +102,18 @@ export function buildContextMessages(params: ContextBudget): LLMMessage[] {
     resolvedSystem = resolvedSystem.slice(0, lo) + ' [truncated]';
   }
 
-  // --- In-session summaries: budget BUDGET_IN_SESSION, cut oldest first ---
+  // --- In-session summaries: budget BUDGET_IN_SESSION, keep the newest, then restore chronological order ---
   let inSessionBudgetLeft = BUDGET_IN_SESSION;
-  const sortedSummaries = [...inSessionSummaries].sort((a, b) => a.bucketIndex - b.bucketIndex);
+  const newestFirst = [...inSessionSummaries].sort((a, b) => b.bucketIndex - a.bucketIndex);
   const includedSummaries: SessionSummary[] = [];
-  for (const s of sortedSummaries) {
+  for (const s of newestFirst) {
     const t = estimateTokens(s.summary);
     if (inSessionBudgetLeft >= t) {
       includedSummaries.push(s);
       inSessionBudgetLeft -= t;
     }
   }
+  includedSummaries.reverse();
 
   // --- Build system message ---
   // Memory sections always carry an explicit "this is about the USER" label so any
