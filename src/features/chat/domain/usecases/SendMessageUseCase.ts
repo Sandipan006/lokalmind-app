@@ -17,15 +17,6 @@ import { buildContextMessages } from '../utils/tokenBudget';
 /** Max user + assistant messages passed to the LLM (system prompt is separate). */
 const MAX_LLM_CONVERSATION_MESSAGES = 10;
 
-const DISMISSIVE_MESSAGES = new Set([
-  'no', 'nope', 'nah', 'nothing', 'none', 'never mind', 'nevermind',
-  'nm', 'ok', 'okay', 'k', 'fine', 'sure', 'alright', 'cool',
-]);
-
-function isDismissive(text: string): boolean {
-  return DISMISSIVE_MESSAGES.has(text.trim().toLowerCase());
-}
-
 function isSelfMemoryQuestion(text: string): boolean {
   const t = text.trim().toLowerCase();
   // Generic self-reference intent detection (not tied to specific user phrases).
@@ -167,13 +158,6 @@ export class SendMessageUseCase {
           llmMessages: llmMessages.length,
           userChars: userMessage.content.length,
         });
-      }
-
-      if (isDismissive(userMessage.content)) {
-        const canned = 'Got it.';
-        await this.chatRepository.updateMessageContent(assistantId, canned, 'done');
-        void this.localNotifications?.notifyChatTurnComplete({ sessionId, success: true });
-        return { success: true, data: { ...assistantMessage, content: canned, status: 'done' } };
       }
 
       onBeforeGenerate?.();

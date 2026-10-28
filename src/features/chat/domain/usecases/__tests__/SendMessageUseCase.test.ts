@@ -52,4 +52,20 @@ describe('SendMessageUseCase', () => {
     const config = (generateResponse.mock.calls[0] as unknown[])[1] as { maxTokens?: number };
     expect(config.maxTokens).toBe(512);
   });
+
+  // 2.4: "yes"/"no"/"ok" answer the assistant's last question; they must reach the model with history.
+  test.each(['ok', 'no', 'sure', 'fine'])('short reply "%s" is sent to the model, not answered with a canned reply', async (text) => {
+    const { useCase, generateResponse } = setup();
+    const result = await useCase.execute({
+      sessionId: 's1',
+      modelId: 'm1',
+      userMessage: { ...userMessage, content: text },
+      history: [],
+      mode: 'default' as never,
+      onToken: () => {},
+      signal: new AbortController().signal,
+    });
+    expect(generateResponse).toHaveBeenCalledTimes(1);
+    expect(result.success && result.data.content).not.toBe('Got it.');
+  });
 });
