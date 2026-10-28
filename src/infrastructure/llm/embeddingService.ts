@@ -1,3 +1,4 @@
+import { logger } from '@/src/core/logger';
 import type { IEmbeddingService } from '@/src/core/ports/IEmbeddingService';
 // llama.rn is imported here in embedding mode - isolation same as llamaRnAdapter.ts.
 // No other file may call initLlama for embedding purposes.
@@ -15,7 +16,7 @@ export class EmbeddingService implements IEmbeddingService {
   private initPromise: Promise<void> | null = null;
   private isLlmBusy = false;
   // Queue of resolve functions waiting for LLM to go idle before embedding.
-  private embedQueue: Array<() => void> = [];
+  private embedQueue: (() => void)[] = [];
 
   async initialize(): Promise<void> {
     if (this.context) return;
@@ -41,7 +42,7 @@ export class EmbeddingService implements IEmbeddingService {
       return;
     }
 
-    if (__DEV__) console.log(`[Embedding] Loading MiniLM (${usableMB} MB RAM free)…`);
+    logger.debug(`[Embedding] Loading MiniLM (${usableMB} MB RAM free)…`);
     const modelPath = modelFile.uri.replace(/^file:\/\//, '');
     this.context = await initLlama({
       model: modelPath,
@@ -51,23 +52,23 @@ export class EmbeddingService implements IEmbeddingService {
       n_gpu_layers: 0,   // embedding models do not benefit from GPU on mobile
       use_mlock: false,
     });
-    if (__DEV__) console.log('[Embedding] MiniLM ready - semantic retrieval active');
+    logger.debug('[Embedding] MiniLM ready - semantic retrieval active');
   }
 
   /** Called by ChatViewModel at generation start/end to prevent concurrent LLM+embed. */
   setLlmBusy(busy: boolean): void {
     this.isLlmBusy = busy;
     if (busy) {
-      if (__DEV__) console.log('[Embedding] LLM busy - embed calls will queue');
+      logger.debug('[Embedding] LLM busy - embed calls will queue');
     } else {
       const drained = this.embedQueue.length;
       const queue = this.embedQueue.splice(0);
       queue.forEach((resolve) => resolve());
       if (__DEV__) {
         if (drained > 0) {
-          console.log(`[Embedding] LLM idle - drained ${drained} queued embed call(s)`);
+          logger.debug(`[Embedding] LLM idle - drained ${drained} queued embed call(s)`);
         } else {
-          console.log('[Embedding] LLM idle');
+          logger.debug('[Embedding] LLM idle');
         }
       }
     }
@@ -79,14 +80,14 @@ export class EmbeddingService implements IEmbeddingService {
     // Wait for LLM to finish generating before running embedding.
     // Prevents two concurrent LlamaContext inference calls on low-RAM devices.
     if (this.isLlmBusy) {
-      if (__DEV__) console.log('[Embedding] Waiting for LLM to finish before embedding…');
+      logger.debug('[Embedding] Waiting for LLM to finish before embedding…');
       await new Promise<void>((resolve) => { this.embedQueue.push(resolve); });
     }
 
     try {
       const result = await this.context.embedding(text.slice(0, 1800)); // ~450 token guard
       const vec = result.embedding ?? [];
-      if (__DEV__) console.log(`[Embedding] Embedded ${text.length} chars → ${vec.length}-dim vector`);
+      logger.debug(`[Embedding] Embedded ${text.length} chars → ${vec.length}-dim vector`);
       return vec;
     } catch (e) {
       if (__DEV__) console.warn('[Embedding] embed() failed, returning empty vector:', e);

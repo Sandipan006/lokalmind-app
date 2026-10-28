@@ -1,3 +1,4 @@
+import { logger } from '@/src/core/logger';
 import type { Result } from '@/src/core/types';
 import { ok } from '@/src/core/types';
 import type { SessionMemory } from '../entities/SessionMemory';
@@ -53,17 +54,17 @@ export class MemoryService {
     const pinned = all.filter((m) => m.isPinned);
     const nonPinned = all.filter((m) => !m.isPinned);
 
-    if (__DEV__) console.log(`[Memory] DB: ${all.length} memories (${pinned.length} pinned, ${nonPinned.length} non-pinned)`);
+    logger.debug(`[Memory] DB: ${all.length} memories (${pinned.length} pinned, ${nonPinned.length} non-pinned)`);
 
     if (!requiresMemory(userMessage, sessionTurnCount)) {
-      if (__DEV__) console.log('[Memory] Stateless/generic message - skipping cross-session memory injection');
+      logger.debug('[Memory] Stateless/generic message - skipping cross-session memory injection');
       return ok([]);
     }
 
     // Score-based fallback when embedding model is not ready.
     if (!this.embeddingService?.isReady()) {
       const top5 = [...nonPinned].sort((a, b) => b.score - a.score).slice(0, 5);
-      if (__DEV__) console.log(`[Memory] Score-based retrieval (embedding not ready) → ${top5.length} non-pinned selected`);
+      logger.debug(`[Memory] Score-based retrieval (embedding not ready) → ${top5.length} non-pinned selected`);
       return ok([...pinned, ...top5]);
     }
 
@@ -71,7 +72,7 @@ export class MemoryService {
     const queryVec = await this.embeddingService.embed(userMessage);
     if (queryVec.length === 0) {
       const top5 = [...nonPinned].sort((a, b) => b.score - a.score).slice(0, 5);
-      if (__DEV__) console.log('[Memory] Embed returned empty vector - falling back to score-based');
+      logger.debug('[Memory] Embed returned empty vector - falling back to score-based');
       return ok([...pinned, ...top5]);
     }
 
@@ -88,7 +89,7 @@ export class MemoryService {
       .map(({ mem }) => mem);
 
     if (__DEV__) {
-      console.log(`[Memory] Semantic retrieval → top ${rankedWithConfidence.length} non-pinned above confidence threshold`);
+      logger.debug(`[Memory] Semantic retrieval → top ${rankedWithConfidence.length} non-pinned above confidence threshold`);
     }
     return ok([...pinned, ...rankedWithConfidence]);
   }
@@ -96,16 +97,16 @@ export class MemoryService {
   /** Embeds summary text and stores the vector. No-op until EmbeddingService is injected and ready. */
   async embedAndSave(memoryId: string, summaryText: string): Promise<void> {
     if (!this.embeddingService?.isReady()) {
-      if (__DEV__) console.log('[Memory] embedAndSave: embedding not ready, skipping vector write');
+      logger.debug('[Memory] embedAndSave: embedding not ready, skipping vector write');
       return;
     }
-    if (__DEV__) console.log('[Memory] embedAndSave: embedding summary for', memoryId);
+    logger.debug('[Memory] embedAndSave: embedding summary for', memoryId);
     const vec = await this.embeddingService.embed(summaryText);
     if (vec.length === 0) return;
     await this.memoryRepository.updateSessionMemory(memoryId, {
       embedding: JSON.stringify(vec),
     });
-    if (__DEV__) console.log('[Memory] embedAndSave: vector written to DB');
+    logger.debug('[Memory] embedAndSave: vector written to DB');
   }
 
   async evictIfNeeded(max = 10): Promise<void> {

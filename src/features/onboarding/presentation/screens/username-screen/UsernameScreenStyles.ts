@@ -65,7 +65,7 @@ export const usernameScreenStyles = StyleSheet.create({
     ...Platform.select({
       ios: {
         borderRadius: borderRadius.lg,
-        borderCurve: 'continuous' as any,
+        borderCurve: 'continuous',
       },
       android: {
         borderRadius: borderRadius.lg,

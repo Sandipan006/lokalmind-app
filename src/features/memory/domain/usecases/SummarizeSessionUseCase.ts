@@ -1,3 +1,4 @@
+import { logger } from '@/src/core/logger';
 import type { ILLMEngine } from '@/src/core/ports/ILLMEngine';
 import type { ILocalNotifications } from '@/src/core/ports/ILocalNotifications';
 import type { Result } from '@/src/core/types';
@@ -20,7 +21,7 @@ export type SummarizeSessionParams =
       sessionTitle: string;
       type: 'cross-session';
       /** Raw messages passed when no bucket summaries exist (short sessions). */
-      messages?: Array<{ role: 'user' | 'assistant'; content: string }>;
+      messages?: { role: 'user' | 'assistant'; content: string }[];
     };
 
 interface ParsedSummary {
@@ -100,7 +101,7 @@ function isMeaningfulUserStatement(text: string): boolean {
 function buildDeterministicCrossSessionSummary(
   sessionTitle: string,
   createdAt: number,
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  messages: { role: 'user' | 'assistant'; content: string }[],
 ): { summary: string; userStatementCount: number } | null {
   const seen = new Set<string>();
   const userStatements: string[] = [];
@@ -139,11 +140,11 @@ export class SummarizeSessionUseCase {
 
   async execute(params: SummarizeSessionParams): Promise<Result<void>> {
     if (!this.llmEngine.isModelLoaded()) {
-      if (__DEV__) console.log('[Memory] Skipping summarisation - no model loaded');
+      logger.debug('[Memory] Skipping summarisation - no model loaded');
       return ok(undefined);
     }
     if (this.llmEngine.isGenerating()) {
-      if (__DEV__) console.log('[Memory] Skipping summarisation - LLM is generating');
+      logger.debug('[Memory] Skipping summarisation - LLM is generating');
       return ok(undefined);
     }
 
@@ -170,7 +171,7 @@ export class SummarizeSessionUseCase {
           const saveResult = await this.memoryRepository.saveSessionMemory(memory);
           if (!saveResult.success) return saveResult;
           void this.localNotifications?.notifySessionMemorySaved({ sessionId, sessionTitle });
-          if (__DEV__) console.log('[Memory] Saved deterministic cross-session memory', {
+          logger.debug('[Memory] Saved deterministic cross-session memory', {
             sessionId,
             userStatementCount: deterministic.userStatementCount,
           });
@@ -182,7 +183,7 @@ export class SummarizeSessionUseCase {
         }
         // Do not fall back to LLM summarisation for cross-session memory when user facts are absent.
         // This avoids storing assistant-generated noise as long-term memory.
-        if (__DEV__) console.log('[Memory] Skipping cross-session save - no deterministic user statements found');
+        logger.debug('[Memory] Skipping cross-session save - no deterministic user statements found');
         return ok(undefined);
       }
 
@@ -196,7 +197,7 @@ export class SummarizeSessionUseCase {
         conversationContext = params.messages
           .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content.slice(0, 500)}`)
           .join('\n');
-        if (__DEV__) console.log('[Memory] Using raw messages as summarisation context', { count: params.messages.length });
+        logger.debug('[Memory] Using raw messages as summarisation context', { count: params.messages.length });
       }
 
       const modelId = this.llmEngine.getCurrentModelId();

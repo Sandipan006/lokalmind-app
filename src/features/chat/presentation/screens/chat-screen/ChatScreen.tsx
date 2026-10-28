@@ -82,11 +82,6 @@ function ThinkingIndicator({ onDismiss }: { onDismiss: () => void }) {
     return () => shimmer.stop();
   }, [shimmerProgress]);
 
-  const shimmerTranslateX = shimmerProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-110, 110],
-  });
-
   return (
     <Pressable style={styles.thinkingRow} onPress={onDismiss}>
       <Text style={styles.thinkingText}>Thinking...</Text>

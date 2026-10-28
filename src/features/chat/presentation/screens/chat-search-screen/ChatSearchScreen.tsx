@@ -4,7 +4,7 @@ import { PRIMARY_ORANGE, TEXT_WHITE_60 } from '@/src/design-system/tokens/colors
 import { spacing } from '@/src/design-system/tokens/spacing';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +26,7 @@ export function ChatSearchScreen() {
   const [editingSession, setEditingSession] = useState<ChatSession | null>(null);
   const [titleDraft, setTitleDraft] = useState('');
 
-  const searchUseCase = new SearchChatsUseCase(container.chatRepository);
+  const searchUseCase = useMemo(() => new SearchChatsUseCase(container.chatRepository), []);
 
   const handleSearch = useCallback(async (searchQuery: string) => {
     setIsSearching(true);
@@ -57,7 +57,7 @@ export function ChatSearchScreen() {
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [searchUseCase]);
 
   const handleChangeText = useCallback((text: string) => {
     setQuery(text);

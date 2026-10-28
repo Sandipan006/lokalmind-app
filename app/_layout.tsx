@@ -56,10 +56,8 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="chat/[id]" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="model/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/ai-behavior" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/mode-system-prompts" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="profile/storage" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="profile/support" options={{ animation: 'slide_from_right' }} />
           </Stack>
         </KeyboardProvider>

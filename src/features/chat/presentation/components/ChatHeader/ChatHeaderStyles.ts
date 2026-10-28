@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { BLACK_PRIMARY, PRIMARY_ORANGE, TEXT_WHITE_40, TEXT_WHITE_60, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
+import { BLACK_PRIMARY, PRIMARY_ORANGE, TEXT_WHITE_40, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { borderRadius, spacing, typography } from '@/src/design-system/tokens';
 
 export const styles = StyleSheet.create({

@@ -1,3 +1,4 @@
+import { logger } from '@/src/core/logger';
 import {
     createDownloadResumable,
     deleteAsync,
@@ -209,7 +210,7 @@ export class DownloadService implements IDownloadService {
         const totalMB = (progress.totalBytes / (1024 * 1024)).toFixed(1);
         const pct = (progress.progressFraction * 100).toFixed(1);
         const etaMin = progress.etaSeconds > 0 ? (progress.etaSeconds / 60).toFixed(1) : '?';
-        if (__DEV__) console.log(
+        logger.debug(
           `[Download] ${modelId} | ${pct}% (${writtenMB}/${totalMB} MB) | ${speedMBps} MB/s | ETA ${etaMin} min`
         );
       }

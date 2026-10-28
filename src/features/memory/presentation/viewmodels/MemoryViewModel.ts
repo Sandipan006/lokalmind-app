@@ -1,3 +1,4 @@
+import { logger } from '@/src/core/logger';
 import type { IAppSettingsRepository } from '@/src/core/ports/IAppSettingsRepository';
 import { makeAutoObservable, runInAction } from 'mobx';
 import type { SessionMemory } from '../../domain/entities/SessionMemory';
@@ -33,7 +34,7 @@ export class MemoryViewModel {
         this.appSettingsRepository.getUserProfile(),
       ]);
       const loadedMemories = memoriesResult.success ? memoriesResult.data : [];
-      if (__DEV__) console.log('[MemoryScreen] Past conversations loaded:', loadedMemories.length);
+      logger.debug('[MemoryScreen] Past conversations loaded:', loadedMemories.length);
       runInAction(() => {
         this.pinnedFacts = factsResult.success ? factsResult.data : '';
         this.memories = loadedMemories;
