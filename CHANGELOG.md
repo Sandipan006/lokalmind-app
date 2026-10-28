@@ -16,6 +16,7 @@ All notable changes to LokalMind. Format follows [Keep a Changelog](https://keep
 - README, CONTRIBUTING and docs no longer mention RevenueCat or the removed `reset-project` script.
 
 ### Removed
+- **All memory:** cross-session memories, learned profile, pinned facts, in-chat summaries, MiniLM semantic search, the Memory screen, and the memory/profile notifications. Saved memory data stays in the on-device database but is no longer read. The MiniLM file (~21 MB) is deleted from the device on upgrade.
 - Unused dependencies: `react-native-purchases`, `expo-av`, `expo-background-task`, `expo-web-browser`. A new native build is needed.
 - Placeholder screens `model/[id]` and `profile/storage` (nothing linked to them).
 

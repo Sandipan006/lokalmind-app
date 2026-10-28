@@ -5,8 +5,6 @@
 
 export type LocalNotificationTapPayload =
   | { kind: 'chat'; sessionId: string }
-  | { kind: 'memory'; sessionId: string }
-  | { kind: 'profile' }
   | { kind: 'inactivity' };
 
 export interface ILocalNotifications {
@@ -22,12 +20,6 @@ export interface ILocalNotifications {
     success: boolean;
     errorMessage?: string;
   }): Promise<void>;
-
-  /** Session memory / summary persisted after summarization. */
-  notifySessionMemorySaved(params: { sessionId: string; sessionTitle: string }): Promise<void>;
-
-  /** User profile text was updated. */
-  notifyProfileUpdated(): Promise<void>;
 
   /** App became inactive/background - may schedule inactivity reminder (cooldown + cancel-replace). */
   onAppBackground(): Promise<void>;

@@ -55,12 +55,6 @@ function parseData(data: Record<string, unknown> | undefined | null): LocalNotif
   if (kind === 'chat' && typeof data.sessionId === 'string') {
     return { kind: 'chat', sessionId: data.sessionId };
   }
-  if (kind === 'memory' && typeof data.sessionId === 'string') {
-    return { kind: 'memory', sessionId: data.sessionId };
-  }
-  if (kind === 'profile') {
-    return { kind: 'profile' };
-  }
   if (kind === 'inactivity') {
     return { kind: 'inactivity' };
   }
@@ -140,40 +134,6 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
         title,
         body,
         data: { kind: 'chat', sessionId: params.sessionId },
-      },
-      trigger: null,
-    });
-  }
-
-  async notifySessionMemorySaved(params: { sessionId: string; sessionTitle: string }): Promise<void> {
-    if (!isIos() || !isBackgroundForBanner()) return;
-    const key = `${params.sessionId}:memory_saved`;
-    if (this.shouldDedupe(key)) return;
-    const granted = await this.hasNotificationPermission();
-    if (!granted) return;
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Memory saved',
-        body: params.sessionTitle.slice(0, 80) || 'Session notes were saved.',
-        data: { kind: 'memory', sessionId: params.sessionId },
-      },
-      trigger: null,
-    });
-  }
-
-  async notifyProfileUpdated(): Promise<void> {
-    if (!isIos() || !isBackgroundForBanner()) return;
-    const key = 'profile:updated';
-    if (this.shouldDedupe(key)) return;
-    const granted = await this.hasNotificationPermission();
-    if (!granted) return;
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Profile updated',
-        body: 'Your remembered profile was refreshed.',
-        data: { kind: 'profile' },
       },
       trigger: null,
     });

@@ -1,5 +1,13 @@
-import { MODEL_CONFIGS, WHISPER_CONFIG, EMBEDDING_CONFIG } from '@/src/infrastructure/downloads/modelConfig';
+import { LEGACY_EMBEDDING_FILENAME, MODEL_CONFIGS, WHISPER_CONFIG } from '@/src/infrastructure/downloads/modelConfig';
 import { File, Paths } from 'expo-file-system';
+
+/** Deletes the MiniLM file left behind by older versions (semantic memory was removed). */
+export async function removeLegacyEmbeddingModel(): Promise<void> {
+  const file = new File(Paths.document, 'models', LEGACY_EMBEDDING_FILENAME);
+  if (file.exists) {
+    await file.delete();
+  }
+}
 
 /** Removes GGUF and Whisper binaries from the app documents `models/` folder. */
 export async function deleteDownloadedModelFiles(): Promise<void> {
@@ -15,8 +23,5 @@ export async function deleteDownloadedModelFiles(): Promise<void> {
     await whisperFile.delete();
   }
 
-  const embeddingFile = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
-  if (embeddingFile.exists) {
-    await embeddingFile.delete();
-  }
+  await removeLegacyEmbeddingModel();
 }

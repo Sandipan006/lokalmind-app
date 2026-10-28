@@ -141,14 +141,8 @@ export const WHISPER_CONFIG = {
   description: '99 languages, auto language detection. Required for voice input.',
 } as const;
 
-export const EMBEDDING_CONFIG = {
-  id: 'all-minilm-l6-v2',
-  displayName: 'MiniLM Embedding Model',
-  filename: 'all-MiniLM-L6-v2-Q4_K_M.gguf',
-  cdnFolder: 'all-MiniLM-L6',
-  sizeBytes: 20_999_104,
-  description: 'Powers semantic memory retrieval. Downloaded automatically.',
-} as const;
+/** Semantic-memory model removed from the app; the file is deleted from devices on upgrade. */
+export const LEGACY_EMBEDDING_FILENAME = 'all-MiniLM-L6-v2-Q4_K_M.gguf';
 
 export const getModelConfig = (id: string): ModelConfig | undefined =>
   MODEL_CONFIGS.find((m) => m.id === id);

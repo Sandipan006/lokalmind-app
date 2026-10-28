@@ -1,17 +1,15 @@
-import type { SessionSummary } from '@/src/features/memory/domain/entities/SessionSummary';
-import { buildContextMessages, estimateTokens } from '../tokenBudget';
+import { buildContextMessages, estimateTokens, fitInputToTokens, maxInputTokens } from '../tokenBudget';
 
 const BUDGET_TOTAL = 3800;
 
-const summary = (bucketIndex: number, text: string): SessionSummary => ({
-  id: `s${bucketIndex}`,
-  sessionId: 'sess',
-  bucketIndex,
-  summary: text,
-  turnStart: 0,
-  turnEnd: 0,
-  createdAt: 0,
-});
+const turns = (count: number, content: string) =>
+  Array.from({ length: count }, (_, i) => ({
+    role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
+    content,
+  }));
+
+const totalTokens = (messages: { content: string }[]) =>
+  messages.reduce((n, m) => n + estimateTokens(m.content), 0);
 
 describe('estimateTokens', () => {
   test('Latin text is ~4 chars per token', () => {
@@ -23,87 +21,62 @@ describe('buildContextMessages', () => {
   // C01 / F02: the 4-turn history floor used to let the context exceed the total budget.
   test('C01 never exceeds the total token budget', () => {
     const big = 'x'.repeat(4000); // 1000 tokens each
-    const history = Array.from({ length: 10 }, (_, i) => ({
-      role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
-      content: big,
-    }));
     const out = buildContextMessages({
       systemPrompt: 'sys',
-      pinnedFacts: '',
-      userProfile: '',
-      inSessionSummaries: [],
-      history,
+      history: turns(10, big),
       currentMessage: { role: 'user', content: big },
     });
-    const total = out.reduce((n, m) => n + estimateTokens(m.content), 0);
-    expect(total).toBeLessThanOrEqual(BUDGET_TOTAL);
-  });
-
-  // C02 / F03: with a tight summary budget the NEW summary used to be dropped and the OLD one kept.
-  test('C02 keeps the newest in-session summary when budget is tight', () => {
-    const out = buildContextMessages({
-      systemPrompt: 'sys',
-      pinnedFacts: '',
-      userProfile: '',
-      inSessionSummaries: [
-        summary(0, 'OLD ' + 'a'.repeat(400)), // 101 tokens
-        summary(1, 'NEW ' + 'b'.repeat(400)), // 101 tokens, does not fit with OLD in 150
-      ],
-      history: [],
-      currentMessage: { role: 'user', content: 'hi' },
-    });
-    const system = out[0]?.content ?? '';
-    expect(system).toContain('NEW');
-    expect(system).not.toContain('OLD');
+    expect(totalTokens(out)).toBeLessThanOrEqual(BUDGET_TOTAL);
   });
 
   // 2.1: a 2048-token window must hold prompt + reserved reply, even if that drops the 4-turn floor.
   test('never exceeds contextSize minus reserved output tokens', () => {
-    const big = 'x'.repeat(2000); // 500 tokens each
-    const history = Array.from({ length: 8 }, (_, i) => ({
-      role: i % 2 === 0 ? ('user' as const) : ('assistant' as const),
-      content: big,
-    }));
     const out = buildContextMessages({
       systemPrompt: 'sys',
-      pinnedFacts: '',
-      userProfile: 'p'.repeat(800),
-      inSessionSummaries: [summary(0, 's'.repeat(400))],
-      history,
+      history: turns(8, 'x'.repeat(2000)), // 500 tokens each
       currentMessage: { role: 'user', content: 'hello there' },
       contextSize: 2048,
       reservedOutputTokens: 512,
     });
-    const total = out.reduce((n, m) => n + estimateTokens(m.content), 0);
-    expect(total).toBeLessThanOrEqual(2048 - 512 - 64);
+    expect(totalTokens(out)).toBeLessThanOrEqual(2048 - 512 - 64);
     expect(out[out.length - 1]?.content).toBe('hello there');
   });
 
-  test('drops memory blocks before the system prompt when history is already empty', () => {
+  test('keeps the most recent history when it has to cut', () => {
+    const history = [
+      { role: 'user' as const, content: 'OLD ' + 'x'.repeat(3000) },
+      { role: 'assistant' as const, content: 'OLD ' + 'x'.repeat(3000) },
+      { role: 'user' as const, content: 'NEW question' },
+      { role: 'assistant' as const, content: 'NEW answer' },
+    ];
     const out = buildContextMessages({
-      systemPrompt: 'SYSTEM',
-      pinnedFacts: '',
-      userProfile: 'p'.repeat(800), // 200 tokens
-      inSessionSummaries: [],
-      history: [],
-      currentMessage: { role: 'user', content: 'x'.repeat(4000) }, // 1000 tokens
+      systemPrompt: 'sys',
+      history,
+      currentMessage: { role: 'user', content: 'next' },
       contextSize: 1200,
       reservedOutputTokens: 100,
     });
-    expect(out[0]?.content).toBe('SYSTEM');
+    const text = out.map((m) => m.content).join('|');
+    expect(text).toContain('NEW answer');
+    expect(text).not.toContain('OLD');
+  });
+});
+
+describe('fitInputToTokens', () => {
+  test('returns short text unchanged', () => {
+    expect(fitInputToTokens('hello', 100)).toEqual({ text: 'hello', truncated: false });
   });
 
-  test('summaries that fit are injected in chronological order', () => {
-    const out = buildContextMessages({
-      systemPrompt: 'sys',
-      pinnedFacts: '',
-      userProfile: '',
-      inSessionSummaries: [summary(2, 'THIRD'), summary(0, 'FIRST'), summary(1, 'SECOND')],
-      history: [],
-      currentMessage: { role: 'user', content: 'hi' },
-    });
-    const system = out[0]?.content ?? '';
-    expect(system.indexOf('FIRST')).toBeLessThan(system.indexOf('SECOND'));
-    expect(system.indexOf('SECOND')).toBeLessThan(system.indexOf('THIRD'));
+  test('keeps head and tail of long text and says it cut', () => {
+    const text = 'START ' + 'word '.repeat(5000) + 'END';
+    const fit = fitInputToTokens(text, 500);
+    expect(fit.truncated).toBe(true);
+    expect(fit.text.startsWith('START')).toBe(true);
+    expect(fit.text.endsWith('END')).toBe(true);
+    expect(estimateTokens(fit.text)).toBeLessThanOrEqual(500);
+  });
+
+  test('maxInputTokens shrinks with the context window', () => {
+    expect(maxInputTokens(2048, 512)).toBeLessThan(maxInputTokens(undefined, 512));
   });
 });

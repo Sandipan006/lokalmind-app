@@ -1,5 +1,8 @@
 # LokalMind v2 - Folder Structure, DI, Dependencies & Build Phases
 
+> **Note:** the memory system described in parts of this document (pinned facts, learned profile, cross-session memories, in-chat summaries, MiniLM embeddings, the Memory screen) was **removed**. Chats now send only the system prompt, recent history and the current message. Sections about memory are kept for history and will be rewritten.
+
+
 ---
 
 ## Folder Tree

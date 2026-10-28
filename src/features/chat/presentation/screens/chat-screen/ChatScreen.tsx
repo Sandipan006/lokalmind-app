@@ -287,13 +287,8 @@ export const ChatScreen = observer(({ sessionId, viewModel }: ChatScreenProps) =
       return () => {
         composerInputRef.current?.blur();
         Keyboard.dismiss();
-
-        // Update the living user profile document when the user leaves the chat.
-        void viewModel.maybeUpdateUserProfile(viewModel.messages.length);
-        // Save a cross-session memory summary if this session is long enough.
-        void viewModel.maybeSaveSessionMemory();
       };
-    }, [loadPickerModels, refreshDownloadedModel, viewModel]),
+    }, [loadPickerModels, refreshDownloadedModel]),
   );
 
   useEffect(() => {

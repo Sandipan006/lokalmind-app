@@ -10,8 +10,6 @@ export const STORAGE_KEYS = {
   WHISPER_MODEL_PATH: 'whisper:modelPath',
   SETTINGS_CONTEXT_WINDOW: 'settings:contextWindow',
   SETTINGS_GLOBAL_SYSTEM_PROMPT: 'settings:globalSystemPrompt',
-  MEMORY_PINNED_FACTS: 'memory:pinnedFacts',
-  MEMORY_USER_PROFILE: 'memory:userProfile',
   ONBOARDING_COMPLETE: 'onboarding:complete',
   /** Local calendar day (YYYYMMDD) for inactivity notification daily cap. */
   NOTIFICATION_INACTIVITY_DAILY_YMD: 'lm:notif:inactivity:dailyYmd',

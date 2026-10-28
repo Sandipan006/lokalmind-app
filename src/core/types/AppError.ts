@@ -8,7 +8,6 @@ export type AppErrorCode =
   | 'DOWNLOAD_FAILED'
   | 'DOWNLOAD_PAUSED'
   | 'TRANSCRIPTION_ERROR'
-  | 'MEMORY_EXTRACTION_ERROR'
   | 'NOT_FOUND'
   | 'UNKNOWN_ERROR';
 

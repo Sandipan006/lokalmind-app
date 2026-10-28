@@ -12,12 +12,6 @@ function navigateForPayload(
     case 'chat':
       router.push(`/chat/${payload.sessionId}`);
       break;
-    case 'memory':
-      router.push('/profile/memory');
-      break;
-    case 'profile':
-      router.push('/profile/ai-behavior');
-      break;
     case 'inactivity':
       router.push('/(tabs)/chat');
       break;

@@ -44,31 +44,18 @@ export default function ChatSessionScreen() {
     const repo = container.chatRepository;
     const llm = container.llmEngine;
     const settings = container.appSettingsRepository;
-    const memRepo = container.memoryRepository;
-    const memService = container.memoryService;
     return new ChatViewModel(
       new CreateSessionUseCase(repo),
       new GetSessionUseCase(repo),
       new GetMessagesUseCase(repo),
-      new SendMessageUseCase(repo, llm, settings, memRepo, memService, container.localNotifications),
+      new SendMessageUseCase(repo, llm, settings, container.localNotifications),
       new EditMessageUseCase(repo),
       new GenerateChatTitleUseCase(repo, llm),
       new UpdateSessionModelUseCase(repo),
-      new RegenerateReplyUseCase(repo, llm, settings, memRepo, memService, container.localNotifications),
-      container.summarizeSessionUseCase,
-      container.updateUserProfileUseCase,
-      memRepo,
+      new RegenerateReplyUseCase(repo, llm, settings, container.localNotifications),
       llm,
-      container.embeddingService,
     );
   }, [isContainerReady]);
-
-  useEffect(() => {
-    if (!isContainerReady || !viewModel) return;
-    container.userRepository.getDisplayName().then((name) => {
-      if (name) viewModel.userDisplayName = name;
-    }).catch(() => undefined);
-  }, [isContainerReady, viewModel]);
 
   useEffect(() => {
     let isMounted = true;

@@ -8,10 +8,6 @@ export type InitialAppRoute =
   | '/onboarding/model-setup'
   | '/onboarding/welcome';
 
-interface IEmbeddingInit {
-  initialize(): Promise<void>;
-}
-
 /**
  * Decides first navigation after splash - onboarding state, downloaded models, and chat history.
  */
@@ -20,7 +16,6 @@ export class ResolveInitialRouteUseCase {
     private readonly userRepository: IUserRepository,
     private readonly modelRepository: IModelRepository,
     private readonly chatRepository: IChatRepository,
-    private readonly embeddingService: IEmbeddingInit,
   ) {}
 
   async execute(): Promise<InitialAppRoute> {
@@ -41,11 +36,6 @@ export class ResolveInitialRouteUseCase {
         const downloaded = allModelsResult.data.filter((m) => m.isDownloaded);
         console.warn('[AppInit] Downloaded models:', downloaded.map((m) => m.id));
       }
-      void this.embeddingService.initialize().catch((e) => {
-        if (__DEV__) {
-          console.warn('[Embedding] Background init failed, score-based fallback active:', e);
-        }
-      });
       return '/chat/new';
     }
 

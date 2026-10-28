@@ -1,11 +1,9 @@
-import { logger } from '@/src/core/logger';
 import { env } from '@/src/config/env';
-import type { IEmbeddingService } from '@/src/core/ports/IEmbeddingService';
 import type { Result } from '@/src/core/types';
 import { createError, err, ok } from '@/src/core/types';
 import { getTotalRamBytes } from '@/src/infrastructure/device/deviceCapability';
 import type { IDownloadService } from '@/src/infrastructure/downloads/downloadService';
-import { EMBEDDING_CONFIG, MODEL_CONFIGS } from '@/src/infrastructure/downloads/modelConfig';
+import { MODEL_CONFIGS } from '@/src/infrastructure/downloads/modelConfig';
 import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
 import { File, Paths } from 'expo-file-system';
 import type { DownloadProgressInfo } from '../../domain/entities/DownloadStatus';
@@ -18,50 +16,11 @@ export class ModelRepositoryImpl implements IModelRepository {
   constructor(
     private readonly downloadService: IDownloadService,
     private readonly sqliteDriver: ISQLiteDriver,
-    private readonly embeddingService?: IEmbeddingService,
   ) {}
 
   private getCdnBaseUrl(): string | null {
     const baseUrl = (env.hetzner.baseUrl || env.hetzner.webdavUrl || '').trim().replace(/\/+$/, '');
     return baseUrl.length > 0 ? baseUrl : null;
-  }
-
-  private async maybeDownloadEmbeddingModel(): Promise<void> {
-    try {
-      const embeddingFile = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
-      if (embeddingFile.exists) {
-        logger.debug('[Embedding] Model already on disk - skipping download, initialising service');
-        if (this.embeddingService) {
-          await this.embeddingService.initialize();
-        }
-        return;
-      }
-
-      const cdnBaseUrl = this.getCdnBaseUrl();
-      if (!cdnBaseUrl) return;
-
-      const url = `${cdnBaseUrl}/models/${EMBEDDING_CONFIG.cdnFolder}/${EMBEDDING_CONFIG.filename}`;
-      const destinationPath = embeddingFile.uri;
-
-      logger.debug('[Embedding] Starting silent download alongside LLM');
-      await this.downloadService.startDownload(
-        { modelId: EMBEDDING_CONFIG.id, url, destinationPath, expectedBytes: EMBEDDING_CONFIG.sizeBytes },
-        () => { /* silent - no progress reporting */ },
-      );
-
-      const downloaded = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename);
-      if (downloaded.exists) {
-        logger.debug('[Embedding] Download complete - initialising service');
-        if (this.embeddingService) {
-          await this.embeddingService.initialize();
-        }
-      } else {
-        if (__DEV__) console.warn('[Embedding] Download finished but file not found on disk');
-      }
-    } catch (e) {
-      // Silent failure - score-based retrieval fallback remains active.
-      if (__DEV__) console.warn('[Embedding] Silent download failed:', e);
-    }
   }
 
   private async ensureInitialized(): Promise<void> {
@@ -196,11 +155,6 @@ export class ModelRepositoryImpl implements IModelRepository {
       const url = `${cdnBaseUrl}/models/${config.id}/${config.filename}`;
       const destinationPath = new File(Paths.document, 'models', config.filename).uri;
 
-      // Kick off MiniLM download immediately - runs in parallel with the LLM download.
-      // At 21 MB it will finish long before the LLM (500+ MB), so the embedding service
-      // is ready by the time the user starts their first chat.
-      void this.maybeDownloadEmbeddingModel();
-
       await this.downloadService.startDownload(
         {
           modelId,
@@ -302,18 +256,6 @@ export class ModelRepositoryImpl implements IModelRepository {
   async cancelDownload(modelId: string): Promise<Result<void>> {
     try {
       await this.downloadService.cancelDownload(modelId);
-
-      // LLM download kicks off MiniLM in parallel; if the user cancels the LLM, stop the
-      // embedding download too unless the file is already fully on disk.
-      const isCatalogLlm = MODEL_CONFIGS.some((m) => m.id === modelId);
-      const embeddingOnDisk = new File(Paths.document, 'models', EMBEDDING_CONFIG.filename).exists;
-      if (isCatalogLlm && !embeddingOnDisk) {
-        try {
-          await this.downloadService.cancelDownload(EMBEDDING_CONFIG.id);
-        } catch (e) {
-          if (__DEV__) console.warn('[Embedding] Cancel alongside LLM failed:', e);
-        }
-      }
 
       return ok(undefined);
     } catch (e) {

@@ -1,5 +1,8 @@
 # LokalMind v2 - Data Model
 
+> **Note:** the memory system described in parts of this document (pinned facts, learned profile, cross-session memories, in-chat summaries, MiniLM embeddings, the Memory screen) was **removed**. Chats now send only the system prompt, recent history and the current message. Sections about memory are kept for history and will be rewritten.
+
+
 ---
 
 ## SQLite Schema

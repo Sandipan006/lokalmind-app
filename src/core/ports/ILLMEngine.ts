@@ -30,8 +30,8 @@ export interface ILLMEngine {
   getCurrentModelId(): string | null;
   /** Active n_ctx of the loaded model, or null when none is loaded. */
   getContextSize(): number | null;
-  /** True while generateResponse() is active - used by SummarizeSessionUseCase and EmbeddingService. */
+  /** True while generateResponse() is active - used to avoid starting work on a busy context. */
   isGenerating(): boolean;
-  /** Releases all native llama contexts (chat + embedding). Call when app backgrounds to reduce zombie state after process death. */
+  /** Releases all native llama contexts (chat). Call when app backgrounds to reduce zombie state after process death. */
   releaseAllContexts(): Promise<void>;
 }

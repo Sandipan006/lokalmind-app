@@ -2,11 +2,10 @@
 
 This document tracks current behavior gaps that are not always reproducible, so community contributors can help investigate and improve them.
 
-## 1) Memory Retrieval Quality Variance
+## 1) No memory between chats
 
-- In some chats, memory retrieval is relevant and helpful.
-- In other chats, retrieved memory can be weak or less aligned with user intent.
-- This appears to be intermittent rather than consistently failing.
+- The model only sees the current conversation. Facts from earlier chats are not remembered.
+- A cross-session memory feature existed in earlier versions and was removed because its quality was not good enough.
 
 ## 2) Small Model Answer Quality Variance
 

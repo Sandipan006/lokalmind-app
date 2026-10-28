@@ -33,7 +33,6 @@ Most AI assistants send everything you type to a server. LokalMind doesn't. The 
 - **Truly private** — no account, no telemetry, no API calls
 - **Works offline** — on a plane, in a basement, anywhere
 - **One-time download** — download a model once, use it forever
-- **Remembers you** — on-device semantic memory across conversations
 - **Fast** — Metal-accelerated inference on Apple Silicon
 
 ---
@@ -55,10 +54,6 @@ Most AI assistants send everything you type to a server. LokalMind doesn't. The 
       <br /><sub><b>Models</b></sub>
     </td>
     <td align="center">
-      <img src="assets/screenshots/memory.png" width="180" alt="Memory / learned profile" />
-      <br /><sub><b>Memory</b></sub>
-    </td>
-    <td align="center">
       <img src="assets/screenshots/settings.png" width="180" alt="Settings" />
       <br /><sub><b>Settings</b></sub>
     </td>
@@ -74,7 +69,6 @@ Most AI assistants send everything you type to a server. LokalMind doesn't. The 
 |---|---------|-------------|
 | 💬 | **Streaming chat** | Tokens stream live with haptic feedback |
 | 🎙️ | **Voice input** | Planned: on-device speech-to-text with Whisper (not yet available in the app) |
-| 🧠 | **Cross-session memory** | Remembers facts using local semantic search (all-MiniLM-L6-v2) |
 | 🔁 | **Reply to message** | Thread-style replies inside any conversation |
 | 🎭 | **Chat modes** | General · Code · Reasoning · Creative · and more |
 | 📥 | **Resumable downloads** | Large GGUF models download in the background, resume on reconnect |
@@ -161,10 +155,9 @@ src/
   core/                 DI container, ports (interfaces), shared Result<T> type
   features/
     chat/               └── domain / data / presentation
-    memory/             └── cross-session memory & embeddings
     models/             └── download, manage GGUF models
     onboarding/         └── first-run flow
-    profile/            └── settings, pinned facts, storage
+    profile/            └── settings, AI behaviour prompts
   infrastructure/       Adapters — llama.rn, whisper.rn, SQLite, downloads
   design-system/        Tokens (colors, typography, spacing, glass)
   config/               env.ts — runtime config

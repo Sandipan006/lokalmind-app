@@ -29,8 +29,6 @@ function setup() {
   } as unknown as IChatRepository;
   const settings = {
     getModeSystemPromptOverride: async () => null,
-    getPinnedFacts: async () => '',
-    getUserProfile: async () => '',
   } as unknown as IAppSettingsRepository;
   const useCase = new SendMessageUseCase(chatRepo, llm, settings);
   return { useCase, generateResponse };

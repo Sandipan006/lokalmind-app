@@ -5,8 +5,6 @@ import type { ILLMEngine, LLMMessage } from '@/src/core/ports/ILLMEngine';
 import type { ILocalNotifications } from '@/src/core/ports/ILocalNotifications';
 import type { Result } from '@/src/core/types';
 import { createError } from '@/src/core/types';
-import type { SessionMemory } from '@/src/features/memory/domain/entities/SessionMemory';
-import type { IMemoryRepository } from '@/src/features/memory/domain/repositories/IMemoryRepository';
 import { resolveSystemPromptForChat } from '../config/systemPromptResolution';
 import type { ChatMessage } from '../entities/ChatMessage';
 import type { ChatMode } from '../entities/ChatMode';
@@ -16,24 +14,6 @@ import { buildContextMessages, fitInputToTokens, INPUT_TRUNCATION_NOTICE, maxInp
 
 /** Max user + assistant messages passed to the LLM (system prompt is separate). */
 const MAX_LLM_CONVERSATION_MESSAGES = 10;
-
-function isSelfMemoryQuestion(text: string): boolean {
-  const t = text.trim().toLowerCase();
-  // Generic self-reference intent detection (not tied to specific user phrases).
-  const hasSelfRef = /\b(i|me|my|mine)\b/i.test(t);
-  const hasMemoryIntent =
-    t.includes('?') ||
-    /\b(who|what|where|which|remember|recall|tell|mentioned|said|told|building|from|using)\b/i.test(t);
-  return hasSelfRef && hasMemoryIntent;
-}
-
-function enforceSecondPersonForSelfQuestion(userText: string, assistantText: string): string {
-  if (!isSelfMemoryQuestion(userText)) return assistantText;
-  return assistantText
-    .replace(/(^|[.!?]\s+)i am\b/gi, (_m, p1: string) => `${p1}You are`)
-    .replace(/(^|[.!?]\s+)i'm\b/gi, (_m, p1: string) => `${p1}You are`)
-    .replace(/(^|[.!?]\s+)my\b/gi, (_m, p1: string) => `${p1}Your`);
-}
 
 /**
  * Cap each message so one huge assistant reply does not break llama.rn completion (OOM / native errors).
@@ -74,10 +54,6 @@ export interface SendMessageParams {
   mode: ChatMode;
   onToken: (token: string) => void;
   signal: AbortSignal;
-  /** Fired right before generateResponse() - used to set embeddingService busy AFTER memory retrieval. */
-  onBeforeGenerate?: () => void;
-  /** Onboarding display name - used as profile seed when memory profile is still empty. */
-  userDisplayName?: string;
 }
 
 export class SendMessageUseCase {
@@ -85,15 +61,11 @@ export class SendMessageUseCase {
     private readonly chatRepository: IChatRepository,
     private readonly llmEngine: ILLMEngine,
     private readonly appSettingsRepository: IAppSettingsRepository,
-    private readonly memoryRepository?: IMemoryRepository,
-    private readonly memoryService?: {
-      getRelevantMemories(message: string, turnCount?: number): Promise<Result<SessionMemory[]>>;
-    },
     private readonly localNotifications?: ILocalNotifications,
   ) {}
 
   async execute(params: SendMessageParams): Promise<Result<ChatMessage>> {
-      const { sessionId, modelId, userMessage, history, mode, onToken, signal, onBeforeGenerate, userDisplayName } = params;
+      const { sessionId, modelId, userMessage, history, mode, onToken, signal } = params;
 
     const saveResult = await this.chatRepository.saveMessage(userMessage);
     if (!saveResult.success) return saveResult;
@@ -128,33 +100,11 @@ export class SendMessageUseCase {
       const historyOnly = rawTurns.slice(0, -1);
       const currentMsg = rawTurns[rawTurns.length - 1]!;
 
-      const sessionTurnCount = history.length;
-      const [modeOverride, pinnedFacts, userProfile, memoriesResult, summariesResult] = await Promise.all([
-        this.appSettingsRepository.getModeSystemPromptOverride(mode),
-        this.appSettingsRepository.getPinnedFacts(),
-        this.appSettingsRepository.getUserProfile(),
-        this.memoryService
-          ? this.memoryService.getRelevantMemories(userMessage.content, sessionTurnCount)
-          : Promise.resolve({ success: true as const, data: [] as SessionMemory[] }),
-        this.memoryRepository?.getSessionSummaries(sessionId)
-          ?? Promise.resolve({ success: true as const, data: [] }),
-      ]);
-
+      const modeOverride = await this.appSettingsRepository.getModeSystemPromptOverride(mode);
       const systemPrompt = resolveSystemPromptForChat(mode, modeOverride);
-
-      // Fall back to onboarding display name when memory hasn't built a profile yet.
-      const effectiveProfile = userProfile.trim()
-        ? userProfile
-        : userDisplayName?.trim()
-          ? `The person you are talking to is named ${userDisplayName.trim()}.`
-          : '';
 
       const llmMessages = buildContextMessages({
         systemPrompt,
-        pinnedFacts,
-        userProfile: effectiveProfile,
-        crossSessionMemories: memoriesResult.success ? memoriesResult.data : [],
-        inSessionSummaries: summariesResult.success ? summariesResult.data : [],
         history: historyOnly,
         currentMessage: currentMsg,
         contextSize: this.llmEngine.getContextSize() ?? undefined,
@@ -163,7 +113,6 @@ export class SendMessageUseCase {
 
       if (__DEV__) {
         logger.debug('[Chat][LLM] Mode:', mode);
-        logger.debug('[Chat][LLM] Profile injected:', effectiveProfile || '(empty)');
         logger.debug('[Chat][LLM] Context stats:', {
           historyMessages: history.length,
           llmMessages: llmMessages.length,
@@ -176,7 +125,6 @@ export class SendMessageUseCase {
         onToken(INPUT_TRUNCATION_NOTICE);
       }
 
-      onBeforeGenerate?.();
       const response = await this.llmEngine.generateResponse(
         llmMessages,
         { modelId, temperature: 0.7, maxTokens: env.models.chatMaxTokens },
@@ -190,7 +138,7 @@ export class SendMessageUseCase {
       const rawFinalContent = response.text
         ? (inputTruncated ? INPUT_TRUNCATION_NOTICE : '') + response.text
         : accumulatedContent;
-      const finalContent = enforceSecondPersonForSelfQuestion(userMessage.content, rawFinalContent);
+      const finalContent = rawFinalContent;
       const finalStatus = 'done';
       logger.debug('[Chat][LLM] Response:', finalContent);
 

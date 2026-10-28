@@ -61,11 +61,7 @@ LokalMind is **not** trying to replace every cloud AI use case (huge frontier mo
 
 ### Memory
 
-- **Pinned facts**: user-editable memory notes that are always injected into chat context.
-- **Learned profile**: app-maintained user profile summary used for personalization in prompts.
-- **Past conversation memories**: cross-session memory cards are saved from completed chats and retrieved by relevance.
-- **In-session summaries**: long chats are compressed into summary buckets to preserve context under token limits.
-- **Memory screen controls**: view memories, pin/unpin, delete, and edit pinned facts from Profile → Memory.
+LokalMind does not keep memory between chats. The model sees the current conversation only. A memory feature was removed because it was not reliable enough; it may come back later in a better form.
 
 ### Reading assistant answers
 
