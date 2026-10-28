@@ -11,7 +11,7 @@ import type { ChatMessage } from '../entities/ChatMessage';
 import type { ChatMode } from '../entities/ChatMode';
 import type { IChatRepository } from '../repositories/IChatRepository';
 import { composeTurnContentForLlm } from '../utils/messageReply';
-import { buildContextMessages } from '../utils/tokenBudget';
+import { buildContextMessages, fitInputToTokens, INPUT_TRUNCATION_NOTICE, maxInputTokens } from '../utils/tokenBudget';
 
 const MAX_LLM_CONVERSATION_MESSAGES = 10;
 const MAX_CHARS_PER_LLM_MESSAGE = 2_000;
@@ -71,19 +71,28 @@ export class RegenerateReplyUseCase {
 
     const cappedHistory: LLMMessage[] = historyUpToUserTurn
       .slice(-MAX_LLM_CONVERSATION_MESSAGES)
-      .map((m) => ({
+      .map((m, i, all) => ({
         role: m.role as LLMMessage['role'],
-        content: composeTurnContentForLlm(m, truncateMessageContentForLlm),
+        // The last turn is the one being answered; it is fitted by tokens after the engine is ready.
+        content: composeTurnContentForLlm(m, i === all.length - 1 ? (c) => c : truncateMessageContentForLlm),
       }));
 
     const historyOnly = cappedHistory.slice(0, -1);
-    const currentMsg = cappedHistory[cappedHistory.length - 1]!;
+    let currentMsg = cappedHistory[cappedHistory.length - 1]!;
+    let inputTruncated = false;
 
     let accumulatedContent = '';
     try {
       if (!this.llmEngine.isModelLoaded() || this.llmEngine.getCurrentModelId() !== modelId) {
         await this.llmEngine.initialize(modelId, { modelId });
       }
+
+      const fit = fitInputToTokens(
+        currentMsg.content,
+        maxInputTokens(this.llmEngine.getContextSize() ?? undefined, env.models.chatMaxTokens),
+      );
+      inputTruncated = fit.truncated;
+      currentMsg = { ...currentMsg, content: fit.text };
 
       const sessionId = historyUpToUserTurn[0]?.sessionId ?? '';
       const sessionTurnCount = historyUpToUserTurn.length;
@@ -121,6 +130,11 @@ export class RegenerateReplyUseCase {
         reservedOutputTokens: env.models.chatMaxTokens,
       });
 
+      if (inputTruncated) {
+        accumulatedContent += INPUT_TRUNCATION_NOTICE;
+        onToken(INPUT_TRUNCATION_NOTICE);
+      }
+
       const response = await this.llmEngine.generateResponse(
         llmMessages,
         { modelId, temperature: 0.7, maxTokens: env.models.chatMaxTokens },
@@ -131,7 +145,9 @@ export class RegenerateReplyUseCase {
         signal,
       );
 
-      const rawFinalContent = response.text || accumulatedContent;
+      const rawFinalContent = response.text
+        ? (inputTruncated ? INPUT_TRUNCATION_NOTICE : '') + response.text
+        : accumulatedContent;
       const finalContent = enforceSecondPersonForSelfQuestion(currentMsg.content, rawFinalContent);
 
       const addResult = await this.chatRepository.addMessageAlternate(

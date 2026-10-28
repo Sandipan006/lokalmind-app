@@ -12,7 +12,7 @@ import type { ChatMessage } from '../entities/ChatMessage';
 import type { ChatMode } from '../entities/ChatMode';
 import type { IChatRepository } from '../repositories/IChatRepository';
 import { composeTurnContentForLlm } from '../utils/messageReply';
-import { buildContextMessages } from '../utils/tokenBudget';
+import { buildContextMessages, fitInputToTokens, INPUT_TRUNCATION_NOTICE, maxInputTokens } from '../utils/tokenBudget';
 
 /** Max user + assistant messages passed to the LLM (system prompt is separate). */
 const MAX_LLM_CONVERSATION_MESSAGES = 10;
@@ -48,7 +48,11 @@ function truncateMessageContentForLlm(content: string): string {
   return `${content.slice(0, head)}\n\n[…truncated…]\n\n${content.slice(-tail)}`;
 }
 
-function buildCappedLlmTurns(history: ChatMessage[], userMessage: ChatMessage): LLMMessage[] {
+function buildCappedLlmTurns(
+  history: ChatMessage[],
+  userMessage: ChatMessage,
+  fitUserTurn: (content: string) => string,
+): LLMMessage[] {
   const turns: LLMMessage[] = [
     ...history.map((m) => ({
       role: m.role as LLMMessage['role'],
@@ -56,7 +60,7 @@ function buildCappedLlmTurns(history: ChatMessage[], userMessage: ChatMessage): 
     })),
     {
       role: 'user' as const,
-      content: composeTurnContentForLlm(userMessage, truncateMessageContentForLlm),
+      content: composeTurnContentForLlm(userMessage, fitUserTurn),
     },
   ];
   return turns.slice(-MAX_LLM_CONVERSATION_MESSAGES);
@@ -113,7 +117,14 @@ export class SendMessageUseCase {
         await this.llmEngine.initialize(modelId, { modelId });
       }
 
-      const rawTurns = buildCappedLlmTurns(history, userMessage);
+      // The current message is cut by tokens, never silently: the user is told when it happens.
+      const inputLimit = maxInputTokens(this.llmEngine.getContextSize() ?? undefined, env.models.chatMaxTokens);
+      let inputTruncated = false;
+      const rawTurns = buildCappedLlmTurns(history, userMessage, (content) => {
+        const fit = fitInputToTokens(content, inputLimit);
+        inputTruncated = fit.truncated;
+        return fit.text;
+      });
       const historyOnly = rawTurns.slice(0, -1);
       const currentMsg = rawTurns[rawTurns.length - 1]!;
 
@@ -160,6 +171,11 @@ export class SendMessageUseCase {
         });
       }
 
+      if (inputTruncated) {
+        accumulatedContent += INPUT_TRUNCATION_NOTICE;
+        onToken(INPUT_TRUNCATION_NOTICE);
+      }
+
       onBeforeGenerate?.();
       const response = await this.llmEngine.generateResponse(
         llmMessages,
@@ -171,7 +187,9 @@ export class SendMessageUseCase {
         signal,
       );
 
-      const rawFinalContent = response.text || accumulatedContent;
+      const rawFinalContent = response.text
+        ? (inputTruncated ? INPUT_TRUNCATION_NOTICE : '') + response.text
+        : accumulatedContent;
       const finalContent = enforceSecondPersonForSelfQuestion(userMessage.content, rawFinalContent);
       const finalStatus = 'done';
       logger.debug('[Chat][LLM] Response:', finalContent);

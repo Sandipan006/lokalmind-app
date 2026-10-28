@@ -49,6 +49,24 @@ export function estimateTokens(text: string): number {
   return Math.ceil(total / 4);                                 // Latin standard
 }
 
+/** Shown at the start of the reply when the user's message had to be shortened to fit. */
+export const INPUT_TRUNCATION_NOTICE =
+  "_Your message was too long for the model's memory, so the middle part was skipped._\n\n";
+
+/**
+ * Keeps the start and end of a long message so it fits `maxTokens`. Reports whether it cut anything,
+ * so the caller can tell the user instead of shortening silently.
+ */
+export function fitInputToTokens(text: string, maxTokens: number): { text: string; truncated: boolean } {
+  const tokens = estimateTokens(text);
+  if (tokens <= maxTokens) return { text, truncated: false };
+  const charsPerToken = text.length / tokens;
+  const maxChars = Math.floor(maxTokens * charsPerToken * 0.95);
+  const head = Math.floor(maxChars * 0.6);
+  const tail = maxChars - head;
+  return { text: `${text.slice(0, head)}\n\n[…]\n\n${text.slice(text.length - tail)}`, truncated: true };
+}
+
 export interface ContextBudget {
   systemPrompt: string;
   pinnedFacts: string;
@@ -79,6 +97,11 @@ const TEMPLATE_OVERHEAD = 64;
 function promptLimit(contextSize: number | undefined, reservedOutputTokens: number): number {
   if (!contextSize) return BUDGET_TOTAL;
   return Math.min(BUDGET_TOTAL, Math.max(0, contextSize - reservedOutputTokens - TEMPLATE_OVERHEAD));
+}
+
+/** Most tokens the current user message may take: the prompt limit minus room for system prompt and pinned notes. */
+export function maxInputTokens(contextSize: number | undefined, reservedOutputTokens: number): number {
+  return Math.max(256, promptLimit(contextSize, reservedOutputTokens) - BUDGET_SYSTEM - BUDGET_PINNED);
 }
 
 /**

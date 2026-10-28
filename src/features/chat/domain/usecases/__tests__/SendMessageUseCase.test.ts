@@ -68,4 +68,30 @@ describe('SendMessageUseCase', () => {
     expect(generateResponse).toHaveBeenCalledTimes(1);
     expect(result.success && result.data.content).not.toBe('Got it.');
   });
+
+  // 2.5: a long message is shortened by tokens and the user is told; it is no longer cut silently at 1800 chars.
+  test('a long message is kept whole when it fits the budget', async () => {
+    const { useCase, generateResponse } = setup();
+    const long = 'word '.repeat(1000); // 5000 chars, ~1250 tokens
+    await useCase.execute({
+      sessionId: 's1', modelId: 'm1', userMessage: { ...userMessage, content: long }, history: [],
+      mode: 'default' as never, onToken: () => {}, signal: new AbortController().signal,
+    });
+    const msgs = (generateResponse.mock.calls[0] as unknown[])[0] as { content: string }[];
+    expect(msgs[msgs.length - 1]?.content).toBe(long);
+  });
+
+  test('an over-long message is shortened and the user is told', async () => {
+    const { useCase, generateResponse } = setup();
+    const tokens: string[] = [];
+    const huge = 'word '.repeat(10000); // ~12,500 tokens
+    const result = await useCase.execute({
+      sessionId: 's1', modelId: 'm1', userMessage: { ...userMessage, content: huge }, history: [],
+      mode: 'default' as never, onToken: (t) => tokens.push(t), signal: new AbortController().signal,
+    });
+    const msgs = (generateResponse.mock.calls[0] as unknown[])[0] as { content: string }[];
+    expect(msgs[msgs.length - 1]?.content.length).toBeLessThan(huge.length);
+    expect(tokens.join('')).toContain('too long');
+    expect(result.success && result.data.content).toContain('too long');
+  });
 });
