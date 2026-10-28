@@ -41,10 +41,8 @@ Native modules (`llama.rn`, `whisper.rn`) require a dev build. Expo Go will not 
 - Clean Architecture: domain layer has zero third-party imports.
 - MobX ViewModels: `makeAutoObservable(this)` first; all mutations inside `runInAction`.
 - Use `Result<T>` flows for use cases; never throw across layer boundaries.
-- All `console.log`/`console.warn` calls must be wrapped in `if (__DEV__)`.
+- Use `logger.debug` from `@/src/core/logger` instead of `console.log`; it is silent in production builds.
 
 ## License note
 
 This project is MIT licensed. By submitting a pull request you agree your contribution will be licensed under the same terms.
-
-> **Note:** `react-native-purchases` (RevenueCat) ships under a proprietary SDK license. It is used only for in-app purchase handling and is not required for the core local-inference functionality.

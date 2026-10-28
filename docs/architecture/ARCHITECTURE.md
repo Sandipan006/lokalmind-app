@@ -38,7 +38,6 @@ Version: 1.0.0 | Platform: iOS (Android - Phase 2) | License: MIT
 | Animations | react-native-reanimated · lottie-react-native |
 | Gestures | react-native-gesture-handler |
 | Lists | @shopify/flash-list 2.0.2 |
-| Monetisation | react-native-purchases (RevenueCat) |
 | Notifications | expo-notifications ~0.32.16 |
 | Fonts | expo-font · Figtree family |
 | Icons | react-native-svg + custom SVG icon set |
