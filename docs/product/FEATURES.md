@@ -93,8 +93,6 @@ LokalMind is **not** trying to replace every cloud AI use case (huge frontier mo
 
 LokalMind is built with **Expo** and **React Native**, **MobX** for screen state, **expo-router** for navigation, **SQLite** for chats, local profile fields, downloaded-model records, and related structured data, and **AsyncStorage** for settings keys, Whisper/download flags, onboarding, and notification scheduling caps (see `docs/architecture/DATA-MODEL.md`). Inference uses **llama.rn** (GGUF / llama.cpp); speech uses **whisper.rn** where enabled. That stack is what makes **on-device** chat possible in a store-friendly app-not a separate “feature,” but the **enabler** for everything above.
 
-**Monetization:** in-app purchases (e.g. RevenueCat) may appear in the dependency stack for **model unlocks or Pro** as the product matures; wire-up status should match the current codebase when you ship.
-
 ---
 
 ## Not in the app yet

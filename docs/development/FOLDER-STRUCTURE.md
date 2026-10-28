@@ -81,7 +81,7 @@ Current app runtime dependencies include:
 ```bash
 expo-router, expo-sqlite, expo-file-system, expo-glass-effect, expo-blur, expo-haptics,
 expo-notifications, @shopify/flash-list, @react-native-async-storage/async-storage,
-mobx, mobx-react-lite, llama.rn, whisper.rn, react-native-purchases, react-native-svg.
+mobx, mobx-react-lite, llama.rn, whisper.rn, react-native-svg.
 ```
 
 ---
@@ -93,7 +93,7 @@ mobx, mobx-react-lite, llama.rn, whisper.rn, react-native-purchases, react-nativ
 | **Phase 0** | Current | Scaffold reset, design system tokens, `ILLMEngine` + `IWhisperEngine` interfaces, DI container skeleton, cursor rules |
 | **Phase 1** | Week 3–5 | `llamaRnAdapter`, model download + management, GGUF loading, streaming chat, message queue |
 | **Phase 2** | Week 6–8 | Full chat UI (FlashList, reply-to-message, swipe gestures), chat history, onboarding, `GlassSurface` components |
-| **Phase 3** | Week 9–10 | Whisper STT pipeline, profile screen, AI modes, memory pipeline, RevenueCat IAP |
+| **Phase 3** | Week 9–10 | Whisper STT pipeline, profile screen, AI modes, memory pipeline |
 | **Phase 4** | Week 11–12 | Polish, performance profiling, App Store submission, GitHub public release |
 | **v2.1** | Post-launch | Android support, BYOM (Bring Your Own Model), RAG pipeline |
 | **v2.2** | Future | On-device TTS - English + Hindi via `expo-speech`, Indic languages via AI4Bharat `indic-parler-tts` |

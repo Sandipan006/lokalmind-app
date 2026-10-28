@@ -1,4 +1,4 @@
-import { AppError } from './AppError';
+import { type AppError } from './AppError';
 
 export type Result<T, E = AppError> =
   | { readonly success: true; readonly data: T }

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -26,7 +26,7 @@ export function ChatSearchModal({ onClose }: ChatSearchModalProps) {
   const [messagePreviewBySession, setMessagePreviewBySession] = useState<Record<string, string>>({});
   const [hasSearched, setHasSearched] = useState(false);
 
-  const searchUseCase = new SearchChatsUseCase(container.chatRepository);
+  const searchUseCase = useMemo(() => new SearchChatsUseCase(container.chatRepository), []);
 
   const handleSearch = useCallback(async (searchQuery: string) => {
     setIsSearching(true);
@@ -57,7 +57,7 @@ export function ChatSearchModal({ onClose }: ChatSearchModalProps) {
     } finally {
       setIsSearching(false);
     }
-  }, []);
+  }, [searchUseCase]);
 
   const handleChangeText = useCallback((text: string) => {
     setQuery(text);

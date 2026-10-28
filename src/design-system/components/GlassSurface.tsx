@@ -1,15 +1,16 @@
 import React from 'react';
-import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, View, type ViewStyle, type StyleProp } from 'react-native';
 import type { GlassTier, GlassTint } from '../tokens/glass';
 import { GLASS_TIERS, GLASS_TINTS } from '../tokens/glass';
 
 // expo-glass-effect and expo-blur are imported conditionally to handle
 // environments where native modules may not be linked yet.
-let GlassView: React.ComponentType<any> | null = null;
+let GlassView: React.ComponentType<Record<string, unknown>> | null = null;
 let isGlassEffectAPIAvailable: (() => boolean) | null = null;
-let BlurView: React.ComponentType<any> | null = null;
+let BlurView: React.ComponentType<Record<string, unknown>> | null = null;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, must not throw at import time
   const glassEffect = require('expo-glass-effect');
   GlassView = glassEffect.GlassView;
   isGlassEffectAPIAvailable = glassEffect.isGlassEffectAPIAvailable;
@@ -18,6 +19,7 @@ try {
 }
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, must not throw at import time
   const blur = require('expo-blur');
   BlurView = blur.BlurView;
 } catch {

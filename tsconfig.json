@@ -10,6 +10,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "expo-file-system/legacy": [
+        "./node_modules/expo-file-system/build/legacy/index"
       ]
     }
   },

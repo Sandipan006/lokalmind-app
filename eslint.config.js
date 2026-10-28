@@ -8,6 +8,8 @@ module.exports = defineConfig([
     ignores: ['dist/*', 'node_modules/*', '.expo/*'],
   },
   {
+    files: ['**/*.ts', '**/*.tsx'],
+    plugins: { '@typescript-eslint': require('@typescript-eslint/eslint-plugin') },
     rules: {
       // No explicit any - forces proper typing throughout the codebase
       '@typescript-eslint/no-explicit-any': 'error',

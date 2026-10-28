@@ -1,3 +1,5 @@
+import { env } from '@/src/config/env';
+import { logger } from '@/src/core/logger';
 import type { IAppSettingsRepository } from '@/src/core/ports/IAppSettingsRepository';
 import type { ILLMEngine, LLMMessage } from '@/src/core/ports/ILLMEngine';
 import type { ILocalNotifications } from '@/src/core/ports/ILocalNotifications';
@@ -156,9 +158,9 @@ export class SendMessageUseCase {
       });
 
       if (__DEV__) {
-        console.log('[Chat][LLM] Mode:', mode);
-        console.log('[Chat][LLM] Profile injected:', effectiveProfile || '(empty)');
-        console.log('[Chat][LLM] Context stats:', {
+        logger.debug('[Chat][LLM] Mode:', mode);
+        logger.debug('[Chat][LLM] Profile injected:', effectiveProfile || '(empty)');
+        logger.debug('[Chat][LLM] Context stats:', {
           historyMessages: history.length,
           llmMessages: llmMessages.length,
           userChars: userMessage.content.length,
@@ -175,7 +177,7 @@ export class SendMessageUseCase {
       onBeforeGenerate?.();
       const response = await this.llmEngine.generateResponse(
         llmMessages,
-        { modelId, temperature: 0.7 },
+        { modelId, temperature: 0.7, maxTokens: env.models.chatMaxTokens },
         (token) => {
           accumulatedContent += token;
           onToken(token);
@@ -186,7 +188,7 @@ export class SendMessageUseCase {
       const rawFinalContent = response.text || accumulatedContent;
       const finalContent = enforceSecondPersonForSelfQuestion(userMessage.content, rawFinalContent);
       const finalStatus = 'done';
-      if (__DEV__) console.log('[Chat][LLM] Response:', finalContent);
+      logger.debug('[Chat][LLM] Response:', finalContent);
 
       await this.chatRepository.updateMessageContent(assistantId, finalContent, finalStatus);
 

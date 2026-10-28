@@ -2,7 +2,6 @@ import { GlassSurface } from '@/src/design-system/components';
 import { TEXT_WHITE_40, WHITE_PRIMARY } from '@/src/design-system/tokens/colors';
 import { env } from '@/src/config/env';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import React from 'react';
 import { Alert, Linking, Text, TouchableOpacity, View } from 'react-native';
@@ -12,12 +11,6 @@ import { paypalLogoSvg } from '../../../assets/svgs';
 import { styles } from './SupportScreenStyles';
 
 export function SupportScreen() {
-  const router = useRouter();
-
-  const handleBackPress = () => {
-    router.back();
-  };
-
   const handlePayPal = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const url = env.support.paypalUrl;
@@ -32,7 +25,7 @@ export function SupportScreen() {
       } else {
         Alert.alert('Error', 'Cannot open PayPal link');
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to open PayPal link');
     }
   };
@@ -51,7 +44,7 @@ export function SupportScreen() {
       } else {
         Alert.alert('Error', 'Cannot open payment link');
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to open payment link');
     }
   };

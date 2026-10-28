@@ -73,7 +73,7 @@ Most AI assistants send everything you type to a server. LokalMind doesn't. The 
 | | Feature | Description |
 |---|---------|-------------|
 | 💬 | **Streaming chat** | Tokens stream live with haptic feedback |
-| 🎙️ | **Voice input** | Whisper-powered on-device STT |
+| 🎙️ | **Voice input** | Planned: on-device speech-to-text with Whisper (not yet available in the app) |
 | 🧠 | **Cross-session memory** | Remembers facts using local semantic search (all-MiniLM-L6-v2) |
 | 🔁 | **Reply to message** | Thread-style replies inside any conversation |
 | 🎭 | **Chat modes** | General · Code · Reasoning · Creative · and more |
@@ -98,6 +98,13 @@ Most AI assistants send everything you type to a server. LokalMind doesn't. The 
 
 ---
 
+## Project status
+
+- **Platform:** iOS only today. Android is planned.
+- **Maintenance:** actively maintained by one maintainer. Bug reports are read; expect replies within a few days, not hours.
+- **Stable branch:** `main`. App Store builds come from `prod-app`.
+- **Known gaps:** see [docs/project/KNOWN-LIMITATIONS.md](docs/project/KNOWN-LIMITATIONS.md).
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -108,7 +115,6 @@ Most AI assistants send everything you type to a server. LokalMind doesn't. The 
 | Inference | llama.rn (GGUF) |
 | Voice | whisper.rn (base, 142 MB) |
 | Storage | expo-sqlite · AsyncStorage |
-| Payments | RevenueCat |
 | Architecture | Clean Architecture · `Result<T>` flows · DI container |
 
 ---
@@ -193,7 +199,8 @@ Presentation  →  Use Cases  →  Domain entities
 | `npm run start` | Expo dev server |
 | `npm run ios` | Run on device / simulator |
 | `npm run lint` | ESLint |
-| `npm run reset-project` | Reset local state |
+| `npm run typecheck` | TypeScript check |
+| `npm test` | Jest tests |
 
 ---
 
@@ -213,7 +220,7 @@ Have an idea? [Open a discussion →](https://github.com/Sandipan006/lokalmind-a
 
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, branch conventions, and code style.
 
-Found a security issue? See [SECURITY.md](SECURITY.md) — please don't open a public issue.
+Found a security issue? See [SECURITY.md](docs/project/SECURITY.md) — please don't open a public issue.
 
 ---
 

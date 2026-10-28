@@ -1,3 +1,4 @@
+import { logger } from '@/src/core/logger';
 import type { Result } from '@/src/core/types';
 import { ok, err, createError } from '@/src/core/types';
 import type { ILLMEngine, LLMMessage } from '@/src/core/ports/ILLMEngine';
@@ -86,7 +87,7 @@ ${transcript}`,
 
       const nextTitle = sanitizeTitle(response.text);
       if (!nextTitle) return ok(undefined);
-      if (__DEV__) console.log('[Chat][Title] Generated:', nextTitle);
+      logger.debug('[Chat][Title] Generated:', nextTitle);
 
       return await this.chatRepository.updateAutoSessionTitle(sessionId, nextTitle, bucket);
     } catch (e) {

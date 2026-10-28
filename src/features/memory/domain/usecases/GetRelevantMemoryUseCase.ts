@@ -1,5 +1,5 @@
 import type { Result } from '@/src/core/types';
-import { ok, createError, err } from '@/src/core/types';
+import { createError, err } from '@/src/core/types';
 import type { SessionMemory } from '../entities/SessionMemory';
 import type { MemoryService } from '../services/MemoryService';
 

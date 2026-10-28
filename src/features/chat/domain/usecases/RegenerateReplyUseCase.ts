@@ -1,3 +1,4 @@
+import { env } from '@/src/config/env';
 import type { IAppSettingsRepository } from '@/src/core/ports/IAppSettingsRepository';
 import type { ILLMEngine, LLMMessage } from '@/src/core/ports/ILLMEngine';
 import type { ILocalNotifications } from '@/src/core/ports/ILocalNotifications';
@@ -120,7 +121,7 @@ export class RegenerateReplyUseCase {
 
       const response = await this.llmEngine.generateResponse(
         llmMessages,
-        { modelId, temperature: 0.7 },
+        { modelId, temperature: 0.7, maxTokens: env.models.chatMaxTokens },
         (token) => {
           accumulatedContent += token;
           onToken(token);

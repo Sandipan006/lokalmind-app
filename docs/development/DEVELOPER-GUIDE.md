@@ -69,7 +69,6 @@ LokalMind is an **iOS-first, offline-capable AI chat app** built with React Nati
 | Glass UI | expo-glass-effect ~0.1.9 + expo-blur ~15 fallback |
 | Animations | react-native-reanimated ~4 |
 | Lists | @shopify/flash-list 2.0.2 |
-| Monetisation | react-native-purchases (RevenueCat) ^9 |
 | Fonts | Figtree, Instrument Serif, Bricolage Grotesque |
 
 ---
@@ -172,7 +171,7 @@ lokalmind-app/
 │
 ├── assets/                       # Static assets: fonts, images, splash
 ├── docs/                         # Typed docs: architecture/, development/, design/, product/, project/
-├── scripts/                      # reset-project, clearLocalData utilities
+├── scripts/                      # clearLocalData utility
 │
 ├── app.config.ts                 # Expo config (reads from .env)
 ├── app.json                      # Static Expo config (plugins, iOS info.plist)

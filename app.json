@@ -52,7 +52,6 @@
       ],
       "expo-sqlite",
       "llama.rn",
-      "expo-background-task",
       "expo-updates",
       "expo-notifications"
     ],

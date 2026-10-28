@@ -244,7 +244,7 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
     }
     const ymdToday = localCalendarYmd(new Date());
     const storedYmd = await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_YMD);
-    let count = (await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT)) ?? 0;
+    const count = (await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT)) ?? 0;
     if (storedYmd !== ymdToday) {
       return;
     }
