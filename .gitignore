@@ -48,3 +48,11 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Private working notes (not for the public repo)
+/TODO.md
+/MANUAL.md
+/decision.md
+/flow.md
+/LokalMind*Review*.md
+/message-fromDeveloper.md
