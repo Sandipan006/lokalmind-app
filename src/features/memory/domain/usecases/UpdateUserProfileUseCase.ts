@@ -32,8 +32,11 @@ Rules:
 - Max 400 characters. No headers, no lists, no quotes.`;
 
 const NAME_FROM_MY_NAME_IS = /\bmy name is\s+([a-z][a-z'-]{1,30}(?:\s+[a-z][a-z'-]{1,30}){0,1})\b/i;
-const NAME_FROM_I_AM_STRICT = /^\s*i am\s+([a-z][a-z'-]{1,30}(?:\s+[a-z][a-z'-]{1,30}){0,1})\s*[.!]?\s*$/i;
-const NAME_FROM_IM_STRICT = /^\s*i'm\s+([a-z][a-z'-]{1,30}(?:\s+[a-z][a-z'-]{1,30}){0,1})\s*[.!]?\s*$/i;
+const NAME_FROM_CALL_ME = /\bcall me\s+([a-z][a-z'-]{1,30}(?:\s+[a-z][a-z'-]{1,30}){0,1})\s*[.!]?\s*$/i;
+
+/** Drafting requests, commands and make-believe are not facts about the user. */
+const REQUEST_OR_FICTION = /^(please\b|(?:can|could|would|will) you\b|(?:write|draft|compose|create|make|generate|translate|summari[sz]e|explain|tell|give|show|list|fix|rewrite|help|imagine|pretend|suppose)\b|i (?:want|need) you to\b)/i;
+const QUOTED_TEXT = /"[^"]*"|\u201c[^\u201d]*\u201d/g;
 
 function normaliseText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
@@ -60,11 +63,9 @@ function isSmallTalk(text: string): boolean {
   return t === 'hi' || t === 'hey' || t === 'hello' || t === 'yo' || t === 'sup';
 }
 
-function extractNameFromText(text: string): string | null {
-  const fromMyNameIs = text.match(NAME_FROM_MY_NAME_IS)?.[1];
-  const fromStrictIam = text.match(NAME_FROM_I_AM_STRICT)?.[1];
-  const fromStrictIm = text.match(NAME_FROM_IM_STRICT)?.[1];
-  const source = fromMyNameIs ?? fromStrictIam ?? fromStrictIm;
+export function extractNameFromText(text: string): string | null {
+  // Only explicit identity statements count. "I am tired" is a state, not a name.
+  const source = text.match(NAME_FROM_MY_NAME_IS)?.[1] ?? text.match(NAME_FROM_CALL_ME)?.[1];
   if (!source || !isLikelyNameCandidate(source)) return null;
   const raw = source.trim().split(/\s+/).slice(0, 2).join(' ');
   return raw.replace(/\b\w/g, (c) => c.toUpperCase());
@@ -80,7 +81,7 @@ function extractCurrentProfileName(profile: string): string | null {
 function extractProfileFacts(profile: string): string[] {
   return profile
     .split(/[.]\s+/)
-    .map((s) => normaliseText(s))
+    .map((s) => normaliseText(s).replace(/^user-stated facts:\s*/i, ''))
     .filter((s) => s.length > 0)
     .filter((s) => !/^the person you are talking to is named\b/i.test(s));
 }
@@ -98,7 +99,7 @@ function buildDeterministicProfile(
   }
 
   for (const raw of userMessages) {
-    const text = normaliseText(raw);
+    const text = normaliseText(raw.replace(QUOTED_TEXT, ' '));
     if (!text || isSmallTalk(text) || isQuestionOnly(text) || startsLikeQuestion(text)) continue;
     const maybeName = extractNameFromText(text);
     if (maybeName) name = maybeName;
@@ -110,6 +111,8 @@ function buildDeterministicProfile(
       .filter((s) => s.length >= 10)
       .filter((s) => !s.endsWith('?'))
       .filter((s) => !startsLikeQuestion(s))
+      .filter((s) => !REQUEST_OR_FICTION.test(s))
+      .filter((s) => !NAME_FROM_MY_NAME_IS.test(s) && !NAME_FROM_CALL_ME.test(s))
       .slice(0, 2);
 
     for (const fact of facts) {
