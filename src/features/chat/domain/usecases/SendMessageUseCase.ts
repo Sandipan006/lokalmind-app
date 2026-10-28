@@ -155,6 +155,8 @@ export class SendMessageUseCase {
         inSessionSummaries: summariesResult.success ? summariesResult.data : [],
         history: historyOnly,
         currentMessage: currentMsg,
+        contextSize: this.llmEngine.getContextSize() ?? undefined,
+        reservedOutputTokens: env.models.chatMaxTokens,
       });
 
       if (__DEV__) {

@@ -59,6 +59,10 @@ export interface ContextBudget {
   inSessionSummaries: SessionSummary[];
   history: LLMMessage[];
   currentMessage: LLMMessage;
+  /** Active llama.rn n_ctx. When given, the prompt never exceeds contextSize - reservedOutputTokens. */
+  contextSize?: number | undefined;
+  /** Tokens kept free for the reply (the maxTokens passed to the engine). */
+  reservedOutputTokens?: number;
 }
 
 const BUDGET_SYSTEM = 300;
@@ -68,6 +72,14 @@ const BUDGET_CROSS_SESSION = 200;     // past-conversation memories, highest sco
 const BUDGET_IN_SESSION = 150;        // cut oldest bucket first
 const BUDGET_HISTORY = 800;           // cut oldest pairs, floor = 4 turns
 const BUDGET_TOTAL = 3800;
+/** Slack for chat-template tokens (role markers) that estimateTokens does not count. */
+const TEMPLATE_OVERHEAD = 64;
+
+/** Hard prompt limit: the soft total, lowered to what the active context window can really hold. */
+function promptLimit(contextSize: number | undefined, reservedOutputTokens: number): number {
+  if (!contextSize) return BUDGET_TOTAL;
+  return Math.min(BUDGET_TOTAL, Math.max(0, contextSize - reservedOutputTokens - TEMPLATE_OVERHEAD));
+}
 
 /**
  * Assembles the final LLMMessage[] array within the token budget.
@@ -75,7 +87,7 @@ const BUDGET_TOTAL = 3800;
  * All memory blocks injected into a single system message; empty blocks are omitted.
  */
 export function buildContextMessages(params: ContextBudget): LLMMessage[] {
-  const { systemPrompt, pinnedFacts, userProfile, crossSessionMemories = [], inSessionSummaries, history, currentMessage } = params;
+  const { systemPrompt, pinnedFacts, userProfile, crossSessionMemories = [], inSessionSummaries, history, currentMessage, contextSize, reservedOutputTokens = 0 } = params;
 
   // --- System prompt: cap at BUDGET_SYSTEM tokens ---
   let resolvedSystem = systemPrompt;
@@ -105,13 +117,16 @@ export function buildContextMessages(params: ContextBudget): LLMMessage[] {
   // --- Build system message ---
   // Memory sections always carry an explicit "this is about the USER" label so any
   // system prompt (including user-customised ones) can't cause the model to misread them.
-  const systemParts: string[] = [resolvedSystem];
+  let pinnedBlock = '';
+  let profileBlock = '';
+  let crossBlock = '';
+  let summaryBlock = '';
 
   if (pinnedFacts.trim()) {
     const facts = estimateTokens(pinnedFacts) <= BUDGET_PINNED
       ? pinnedFacts
       : pinnedFacts.slice(0, Math.floor(BUDGET_PINNED * 4));
-    systemParts.push(`\nUser notes: ${facts}`);
+    pinnedBlock = `\nUser notes: ${facts}`;
   }
 
   if (userProfile.trim()) {
@@ -120,7 +135,7 @@ export function buildContextMessages(params: ContextBudget): LLMMessage[] {
       : userProfile.slice(0, Math.floor(BUDGET_USER_PROFILE * 4));
     // Explicit anti-role-confusion rule for small models (0.8B): these facts are about the human user.
     // The assistant must never claim them as its own identity.
-    systemParts.push(
+    profileBlock =
       `\n[Human profile - about the USER, not the assistant]
 Use these facts only to answer about the user.
 Never say "I am <user>" or "I am building <user project>".
@@ -129,8 +144,7 @@ When referring to these facts, address the user as "you/your".
 If the user asks about themselves (e.g. "who am I", "what am I building"), reply in second person ("You are...", "You are building...").
 Do not invent project details, stack choices, or plans not explicitly present in user notes/profile/history.
 If the user asks a similar follow-up question, do not repeat the exact previous answer; provide a concise delta or short restatement in 1-2 lines.
-${profile}`,
-    );
+${profile}`;
   }
 
   // --- Cross-session memories: budget BUDGET_CROSS_SESSION, highest score first ---
@@ -146,18 +160,20 @@ ${profile}`,
       }
     }
     if (includedMemories.length > 0) {
-      systemParts.push(`\n[Past conversations]\n${includedMemories.join('\n\n')}`);
+      crossBlock = `\n[Past conversations]\n${includedMemories.join('\n\n')}`;
     }
   }
 
   if (includedSummaries.length > 0) {
     const block = includedSummaries.map((s) => s.summary).join('\n\n');
-    systemParts.push(`\n[Earlier in this conversation]\n${block}`);
+    summaryBlock = `\n[Earlier in this conversation]\n${block}`;
   }
 
-  const systemContent = systemParts.join('');
+  // Least important blocks are dropped first when the hard limit is hit. System prompt and pinned notes are never cut.
+  const optional = { profile: profileBlock, cross: crossBlock, summary: summaryBlock };
+  const renderSystem = () => resolvedSystem + pinnedBlock + optional.profile + optional.cross + optional.summary;
 
-  // --- History: budget BUDGET_HISTORY, cut oldest pairs, floor = 4 turns ---
+  // --- History: soft budget BUDGET_HISTORY, cut oldest pairs, floor = 4 turns ---
   const MIN_HISTORY_TURNS = 4;
   let historyToInclude = [...history];
   while (
@@ -168,26 +184,24 @@ ${profile}`,
     historyToInclude = historyToInclude.slice(2);
   }
 
-  // --- Final total budget check: always include current message ---
-  const totalEstimate =
-    estimateTokens(systemContent) +
+  // --- Hard limit: always keep the current message; the 4-turn floor does not apply here ---
+  const limit = promptLimit(contextSize, reservedOutputTokens);
+  const currentTokens = estimateTokens(currentMessage.content);
+  const total = () =>
+    estimateTokens(renderSystem()) +
     historyToInclude.reduce((sum, m) => sum + estimateTokens(m.content), 0) +
-    estimateTokens(currentMessage.content);
+    currentTokens;
 
-  if (totalEstimate > BUDGET_TOTAL && historyToInclude.length > MIN_HISTORY_TURNS) {
-    // Last-resort: cut more history until within budget.
-    while (historyToInclude.length > MIN_HISTORY_TURNS) {
-      historyToInclude = historyToInclude.slice(2);
-      const est =
-        estimateTokens(systemContent) +
-        historyToInclude.reduce((sum, m) => sum + estimateTokens(m.content), 0) +
-        estimateTokens(currentMessage.content);
-      if (est <= BUDGET_TOTAL) break;
-    }
+  while (total() > limit && historyToInclude.length > 0) {
+    historyToInclude = historyToInclude.slice(2);
+  }
+  for (const key of ['summary', 'cross', 'profile'] as const) {
+    if (total() <= limit) break;
+    optional[key] = '';
   }
 
   return [
-    { role: 'system', content: systemContent },
+    { role: 'system', content: renderSystem() },
     ...historyToInclude,
     currentMessage,
   ];

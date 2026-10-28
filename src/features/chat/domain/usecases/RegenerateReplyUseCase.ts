@@ -117,6 +117,8 @@ export class RegenerateReplyUseCase {
         inSessionSummaries: summariesResult.success ? summariesResult.data : [],
         history: historyOnly,
         currentMessage: currentMsg,
+        contextSize: this.llmEngine.getContextSize() ?? undefined,
+        reservedOutputTokens: env.models.chatMaxTokens,
       });
 
       const response = await this.llmEngine.generateResponse(

@@ -20,6 +20,7 @@ function setup() {
   const llm = {
     isModelLoaded: () => true,
     getCurrentModelId: () => 'm1',
+    getContextSize: () => null,
     generateResponse,
   } as unknown as ILLMEngine;
   const chatRepo = {

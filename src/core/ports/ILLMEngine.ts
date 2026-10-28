@@ -28,6 +28,8 @@ export interface ILLMEngine {
   unloadModel(): Promise<void>;
   isModelLoaded(): boolean;
   getCurrentModelId(): string | null;
+  /** Active n_ctx of the loaded model, or null when none is loaded. */
+  getContextSize(): number | null;
   /** True while generateResponse() is active - used by SummarizeSessionUseCase and EmbeddingService. */
   isGenerating(): boolean;
   /** Releases all native llama contexts (chat + embedding). Call when app backgrounds to reduce zombie state after process death. */

@@ -27,6 +27,7 @@ function stripThinkingTags(text: string): string {
 export class LlamaRnAdapter implements ILLMEngine {
   private context: LlamaContext | null = null;
   private currentModelId: string | null = null;
+  private contextSize: number | null = null;
   // Deduplicate concurrent initialize() calls - prevents double-loading during app boot races.
   private initializingPromise: Promise<void> | null = null;
   /** One completion at a time - native throws "Context is busy" if a new completion starts before the last fully unwinds. */
@@ -56,6 +57,7 @@ export class LlamaRnAdapter implements ILLMEngine {
       await this.context.release();
       this.context = null;
       this.currentModelId = null;
+      this.contextSize = null;
     }
 
     const modelConfig = getModelConfig(modelId);
@@ -103,6 +105,7 @@ export class LlamaRnAdapter implements ILLMEngine {
     }
 
     this.currentModelId = modelId;
+    this.contextSize = n_ctx;
   }
 
   async generateResponse(
@@ -176,6 +179,7 @@ export class LlamaRnAdapter implements ILLMEngine {
       this.context = null;
     }
     this.currentModelId = null;
+    this.contextSize = null;
     this.initializingPromise = null;
     this.completionEnd = Promise.resolve();
   }
@@ -186,6 +190,10 @@ export class LlamaRnAdapter implements ILLMEngine {
 
   getCurrentModelId(): string | null {
     return this.currentModelId;
+  }
+
+  getContextSize(): number | null {
+    return this.contextSize;
   }
 
   isGenerating(): boolean {
@@ -199,6 +207,7 @@ export class LlamaRnAdapter implements ILLMEngine {
     await releaseAllLlama();
     this.context = null;
     this.currentModelId = null;
+    this.contextSize = null;
     this.initializingPromise = null;
     this.completionEnd = Promise.resolve();
   }
