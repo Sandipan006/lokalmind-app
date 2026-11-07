@@ -31,6 +31,8 @@ module.exports = ({ config }: { config: any }) => {
     ios: {
       ...(config.ios || {}),
       bundleIdentifier: iosBundle,
+      // Local device builds only: set APPLE_TEAM_ID in .env. Unset in EAS/production builds.
+      ...(process.env.APPLE_TEAM_ID ? { appleTeamId: process.env.APPLE_TEAM_ID } : {}),
     },
     android: {
       ...(config.android || {}),
