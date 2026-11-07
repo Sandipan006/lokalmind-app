@@ -1,3 +1,4 @@
+import { setBusy } from '@/src/core/appBusy';
 import { logger } from '@/src/core/logger';
 import {
     createDownloadResumable,
@@ -6,6 +7,8 @@ import {
     makeDirectoryAsync,
     type DownloadProgressData,
 } from 'expo-file-system/legacy';
+import { calculateSpeed } from './downloadProgress';
+import { checkDownloadResult } from './downloadVerification';
 import type { IAsyncStorageDriver } from '../storage/asyncStorageDriver';
 import type { DownloadConfig, DownloadProgress, DownloadState } from './types';
 
@@ -78,6 +81,26 @@ export class DownloadService implements IDownloadService {
     };
   }
 
+  /** Throws (after deleting the bad file) when the response was an error or the file is shorter than announced. */
+  private async assertComplete(
+    result: { status: number; headers?: Record<string, string>; uri: string },
+    config: DownloadConfig,
+  ): Promise<void> {
+    const info = await getInfoAsync(config.destinationPath);
+    const size = info.exists ? info.size : 0;
+    const problem = checkDownloadResult(result, size);
+    if (!problem) return;
+    await deleteAsync(config.destinationPath, { idempotent: true });
+    await this.clearPersistedState(config.modelId);
+    throw new Error(problem);
+  }
+
+  /** Tells the app a reload would kill an active download (OTA waits for idle). */
+  private syncBusy(): void {
+    const downloading = [...this.activeDownloads.values()].some((c) => c.state.status === 'downloading');
+    setBusy('download', downloading);
+  }
+
   private notifyListeners(modelId: string, progress: DownloadProgress): void {
     this.listeners.get(modelId)?.forEach((l) => l(progress));
   }
@@ -108,6 +131,7 @@ export class DownloadService implements IDownloadService {
             lastComputedEta: 0,
             hasPublishedMetrics: false,
           });
+          this.syncBusy();
         } catch (e) {
           if (__DEV__) console.warn(`Failed to parse persisted download state for ${modelId}`, e);
         }
@@ -123,19 +147,6 @@ export class DownloadService implements IDownloadService {
   private async clearPersistedState(modelId: string): Promise<void> {
     const key = `${RESUME_STATE_KEY_PREFIX}${modelId}`;
     await this.asyncStorageDriver.removeItem(key);
-  }
-
-  private calculateSpeed(samples: { timestamp: number; bytesWritten: number }[]): number {
-    if (samples.length < 2) return 0;
-
-    const oldest = samples[0];
-    const newest = samples[samples.length - 1];
-    if (!oldest || !newest) return 0;
-
-    const timeDiffSeconds = (newest.timestamp - oldest.timestamp) / 1000;
-    const bytesDiff = newest.bytesWritten - oldest.bytesWritten;
-
-    return timeDiffSeconds > 0 ? bytesDiff / timeDiffSeconds : 0;
   }
 
   private createProgressCallback(
@@ -171,7 +182,7 @@ export class DownloadService implements IDownloadService {
         bytesWritten >= totalBytes;
 
       if (shouldRefreshMetrics) {
-        const speed = this.calculateSpeed(context.speedSamples);
+        const speed = calculateSpeed(context.speedSamples);
         context.lastMetricsUpdate = now;
         context.lastComputedSpeed = speed;
         context.lastComputedEta = speed > 0 ? bytesRemaining / speed : 0;
@@ -227,26 +238,36 @@ export class DownloadService implements IDownloadService {
     if (!dirInfo.exists) {
       await makeDirectoryAsync(dirPath, { intermediates: true });
     }
+    await this.runDownload(config, onProgress, null);
+  }
 
+  async resumeDownload(
+    config: DownloadConfig,
+    resumeUri: string,
+    onProgress: (progress: DownloadProgress) => void
+  ): Promise<void> {
+    await this.runDownload(config, onProgress, resumeUri);
+  }
+
+  /** Shared by start and resume: track the download, check the result, record success or failure. */
+  private async runDownload(
+    config: DownloadConfig,
+    onProgress: (progress: DownloadProgress) => void,
+    resumeUri: string | null,
+  ): Promise<void> {
     const callback = this.createProgressCallback(config.modelId, config, onProgress);
-
     const resumable = createDownloadResumable(
       config.url,
       config.destinationPath,
       {},
-      callback as Parameters<typeof createDownloadResumable>[3]
+      callback as Parameters<typeof createDownloadResumable>[3],
+      ...(resumeUri ? [resumeUri] : []),
     );
 
     const context: DownloadContext = {
       resumable,
       config,
-      state: {
-        modelId: config.modelId,
-        status: 'downloading',
-        progress: null,
-        resumeUri: null,
-        error: null,
-      },
+      state: { modelId: config.modelId, status: 'downloading', progress: null, resumeUri, error: null },
       speedSamples: [],
       lastSpeedLog: 0,
       lastMetricsUpdate: 0,
@@ -256,11 +277,13 @@ export class DownloadService implements IDownloadService {
     };
 
     this.activeDownloads.set(config.modelId, context);
+    this.syncBusy();
     await this.persistState(config.modelId, context.state);
 
     try {
-      const result = await resumable.downloadAsync();
+      const result = await (resumeUri ? resumable.resumeAsync() : resumable.downloadAsync());
       if (result) {
+        await this.assertComplete(result, config);
         context.state = {
           modelId: config.modelId,
           status: 'completed',
@@ -277,10 +300,11 @@ export class DownloadService implements IDownloadService {
         };
         await this.clearPersistedState(config.modelId);
         this.activeDownloads.delete(config.modelId);
+        this.syncBusy();
         this.listeners.delete(config.modelId);
       }
     } catch (e) {
-      if (__DEV__) console.error('[DownloadService] downloadAsync failed:', e);
+      if (__DEV__) console.error('[DownloadService] download failed:', e);
       context.state = {
         modelId: config.modelId,
         status: 'failed',
@@ -288,6 +312,7 @@ export class DownloadService implements IDownloadService {
         resumeUri: null,
         error: e instanceof Error ? e.message : 'Download failed',
       };
+      this.syncBusy();
       await this.persistState(config.modelId, context.state);
       this.listeners.delete(config.modelId);
       throw e;
@@ -312,81 +337,11 @@ export class DownloadService implements IDownloadService {
         error: null,
       };
 
+      this.syncBusy();
       await this.persistState(modelId, context.state);
       return resumeUri;
     } catch (e) {
       throw new Error(`Failed to pause download: ${e instanceof Error ? e.message : 'Unknown error'}`);
-    }
-  }
-
-  async resumeDownload(
-    config: DownloadConfig,
-    resumeUri: string,
-    onProgress: (progress: DownloadProgress) => void
-  ): Promise<void> {
-    const callback = this.createProgressCallback(config.modelId, config, onProgress);
-
-    const resumable = createDownloadResumable(
-      config.url,
-      config.destinationPath,
-      {},
-      callback as Parameters<typeof createDownloadResumable>[3],
-      resumeUri
-    );
-
-    const context: DownloadContext = {
-      resumable,
-      config,
-      state: {
-        modelId: config.modelId,
-        status: 'downloading',
-        progress: null,
-        resumeUri,
-        error: null,
-      },
-      speedSamples: [],
-      lastSpeedLog: 0,
-      lastMetricsUpdate: 0,
-      lastComputedSpeed: 0,
-      lastComputedEta: 0,
-      hasPublishedMetrics: false,
-    };
-
-    this.activeDownloads.set(config.modelId, context);
-    await this.persistState(config.modelId, context.state);
-
-    try {
-      const result = await resumable.resumeAsync();
-      if (result) {
-        context.state = {
-          modelId: config.modelId,
-          status: 'completed',
-          progress: {
-            modelId: config.modelId,
-            bytesWritten: config.expectedBytes,
-            totalBytes: config.expectedBytes,
-            progressFraction: 1,
-            speedBytesPerSecond: 0,
-            etaSeconds: 0,
-          },
-          resumeUri: null,
-          error: null,
-        };
-        await this.clearPersistedState(config.modelId);
-        this.activeDownloads.delete(config.modelId);
-        this.listeners.delete(config.modelId);
-      }
-    } catch (e) {
-      context.state = {
-        modelId: config.modelId,
-        status: 'failed',
-        progress: context.state.progress,
-        resumeUri: null,
-        error: e instanceof Error ? e.message : 'Resume failed',
-      };
-      await this.persistState(config.modelId, context.state);
-      this.listeners.delete(config.modelId);
-      throw e;
     }
   }
 
@@ -400,6 +355,7 @@ export class DownloadService implements IDownloadService {
       await context.resumable.cancelAsync();
       await this.clearPersistedState(modelId);
       this.activeDownloads.delete(modelId);
+      this.syncBusy();
       this.listeners.delete(modelId);
 
       const fileInfo = await getInfoAsync(context.config.destinationPath);
@@ -419,6 +375,7 @@ export class DownloadService implements IDownloadService {
       } catch {
         await this.clearPersistedState(modelId);
         this.activeDownloads.delete(modelId);
+        this.syncBusy();
       }
     }
   }

@@ -131,7 +131,12 @@ export class RegenerateReplyUseCase {
       if (signal.aborted) {
         const partial = accumulatedContent;
         if (partial) {
-          await this.chatRepository.addMessageAlternate(assistantMessage.id, assistantMessage.content, partial);
+          const partialResult = await this.chatRepository.addMessageAlternate(
+            assistantMessage.id,
+            assistantMessage.content,
+            partial,
+          );
+          if (!partialResult.success) return partialResult;
         }
         const updatedAlternates =
           (assistantMessage.alternateContents?.length ?? 0) === 0

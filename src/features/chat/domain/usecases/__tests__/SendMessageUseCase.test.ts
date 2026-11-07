@@ -15,7 +15,7 @@ const userMessage: ChatMessage = {
   createdAt: 0,
 };
 
-function setup() {
+function setup(updateResult: unknown = { success: true, data: undefined }) {
   const generateResponse = jest.fn(async () => ({ text: 'ok', tokensUsed: 1, finishReason: 'stop' as const }));
   const llm = {
     isModelLoaded: () => true,
@@ -25,13 +25,14 @@ function setup() {
   } as unknown as ILLMEngine;
   const chatRepo = {
     saveMessage: async () => ({ success: true, data: undefined }),
-    updateMessageContent: async () => ({ success: true, data: undefined }),
+    updateMessageContent: async () => updateResult,
   } as unknown as IChatRepository;
   const settings = {
     getModeSystemPromptOverride: async () => null,
   } as unknown as IAppSettingsRepository;
-  const useCase = new SendMessageUseCase(chatRepo, llm, settings);
-  return { useCase, generateResponse };
+  const notify = jest.fn(async () => {});
+  const useCase = new SendMessageUseCase(chatRepo, llm, settings, { notifyChatTurnComplete: notify } as never);
+  return { useCase, generateResponse, notify };
 }
 
 describe('SendMessageUseCase', () => {
@@ -91,5 +92,17 @@ describe('SendMessageUseCase', () => {
     expect(msgs[msgs.length - 1]?.content.length).toBeLessThan(huge.length);
     expect(tokens.join('')).toContain('too long');
     expect(result.success && result.data.content).toContain('too long');
+  });
+
+  // 3.1: a failed save must not look like success.
+  test('returns the error and sends no success notification when the final save fails', async () => {
+    const saveError = { code: 'DB_ERROR', message: 'disk full' };
+    const { useCase, notify } = setup({ success: false, error: saveError });
+    const result = await useCase.execute({
+      sessionId: 's1', modelId: 'm1', userMessage, history: [],
+      mode: 'default' as never, onToken: () => {}, signal: new AbortController().signal,
+    });
+    expect(result.success).toBe(false);
+    expect(notify).not.toHaveBeenCalled();
   });
 });

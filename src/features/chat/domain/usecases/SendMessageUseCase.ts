@@ -142,7 +142,8 @@ export class SendMessageUseCase {
       const finalStatus = 'done';
       logger.debug('[Chat][LLM] Response:', finalContent);
 
-      await this.chatRepository.updateMessageContent(assistantId, finalContent, finalStatus);
+      const updateResult = await this.chatRepository.updateMessageContent(assistantId, finalContent, finalStatus);
+      if (!updateResult.success) return updateResult;
 
       void this.localNotifications?.notifyChatTurnComplete({ sessionId, success: true });
       return {
@@ -152,7 +153,8 @@ export class SendMessageUseCase {
     } catch (e) {
       if (signal.aborted) {
         const partial = accumulatedContent;
-        await this.chatRepository.updateMessageContent(assistantId, partial, 'done');
+        const partialResult = await this.chatRepository.updateMessageContent(assistantId, partial, 'done');
+        if (!partialResult.success) return partialResult;
         return { success: true, data: { ...assistantMessage, content: partial, status: 'done' } };
       }
       if (__DEV__) console.error('[Chat][LLM] generation error', e);

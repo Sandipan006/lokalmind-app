@@ -4,6 +4,29 @@ import type { ISQLiteDriver } from '@/src/infrastructure/storage/sqliteDriver';
 import type { ChatMessage } from '../../domain/entities/ChatMessage';
 import type { ChatSession } from '../../domain/entities/ChatSession';
 import type { IChatRepository } from '../../domain/repositories/IChatRepository';
+import { ensureChatSchema } from './chatSchema';
+
+interface SessionRow {
+  id: string;
+  model_id: string;
+  title: string;
+  is_title_locked: number;
+  last_title_bucket: number | null;
+  created_at: number;
+  updated_at: number;
+}
+
+function toSession(r: SessionRow): ChatSession {
+  return {
+    id: r.id,
+    modelId: r.model_id,
+    title: r.title,
+    isTitleLocked: r.is_title_locked === 1,
+    lastTitleBucket: r.last_title_bucket ?? 0,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
 export class ChatRepositoryImpl implements IChatRepository {
   private initialized = false;
@@ -12,104 +35,7 @@ export class ChatRepositoryImpl implements IChatRepository {
 
   private async ensureInitialized(): Promise<void> {
     if (this.initialized) return;
-
-    await this.sqliteDriver.execute(`
-      CREATE TABLE IF NOT EXISTS chat_sessions (
-        id TEXT PRIMARY KEY,
-        model_id TEXT NOT NULL,
-        title TEXT NOT NULL DEFAULT 'New Chat',
-        is_title_locked INTEGER NOT NULL DEFAULT 0,
-        last_title_bucket INTEGER NOT NULL DEFAULT 0,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      );
-    `);
-
-    await this.sqliteDriver.execute(`
-      CREATE TABLE IF NOT EXISTS chat_messages (
-        id TEXT PRIMARY KEY,
-        session_id TEXT NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT NOT NULL DEFAULT '',
-        status TEXT NOT NULL DEFAULT 'done',
-        created_at INTEGER NOT NULL,
-        FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
-      );
-    `);
-
-    await this.sqliteDriver.execute(
-      `CREATE INDEX IF NOT EXISTS idx_messages_session ON chat_messages(session_id, created_at);`
-    );
-
-    const columns = await this.sqliteDriver.query<{ name: string }>('PRAGMA table_info(chat_sessions)');
-    const names = new Set(columns.map((c) => c.name));
-    if (!names.has('is_title_locked')) {
-      await this.sqliteDriver.execute('ALTER TABLE chat_sessions ADD COLUMN is_title_locked INTEGER NOT NULL DEFAULT 0');
-    }
-    if (!names.has('last_title_bucket')) {
-      await this.sqliteDriver.execute('ALTER TABLE chat_sessions ADD COLUMN last_title_bucket INTEGER NOT NULL DEFAULT 0');
-    }
-
-    const msgColumns = await this.sqliteDriver.query<{ name: string }>('PRAGMA table_info(chat_messages)');
-    const msgNames = new Set(msgColumns.map((c) => c.name));
-    if (!msgNames.has('reply_to_message_id')) {
-      await this.sqliteDriver.execute('ALTER TABLE chat_messages ADD COLUMN reply_to_message_id TEXT');
-    }
-    if (!msgNames.has('reply_preview')) {
-      await this.sqliteDriver.execute('ALTER TABLE chat_messages ADD COLUMN reply_preview TEXT');
-    }
-    if (!msgNames.has('reply_to_role')) {
-      await this.sqliteDriver.execute('ALTER TABLE chat_messages ADD COLUMN reply_to_role TEXT');
-    }
-
-    // Alternate (regenerated) assistant message versions - ordered by seq ASC (oldest first).
-    await this.sqliteDriver.execute(`
-      CREATE TABLE IF NOT EXISTS message_alternates (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        message_id TEXT NOT NULL,
-        content TEXT NOT NULL,
-        seq INTEGER NOT NULL,
-        FOREIGN KEY (message_id) REFERENCES chat_messages(id) ON DELETE CASCADE
-      );
-    `);
-    await this.sqliteDriver.execute(
-      `CREATE INDEX IF NOT EXISTS idx_alternates_message ON message_alternates(message_id, seq);`
-    );
-
-    // Rolling in-session summaries - one row per 20-turn bucket per session.
-    await this.sqliteDriver.execute(`
-      CREATE TABLE IF NOT EXISTS session_summaries (
-        id            TEXT PRIMARY KEY,
-        session_id    TEXT NOT NULL,
-        bucket_index  INTEGER NOT NULL,
-        summary       TEXT NOT NULL,
-        turn_start    INTEGER NOT NULL,
-        turn_end      INTEGER NOT NULL,
-        created_at    INTEGER NOT NULL,
-        FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
-      );
-    `);
-    await this.sqliteDriver.execute(
-      `CREATE INDEX IF NOT EXISTS idx_summaries_session ON session_summaries(session_id, bucket_index);`
-    );
-
-    // Cross-session long-term memory - one row per completed session (≥ 6 turns).
-    await this.sqliteDriver.execute(`
-      CREATE TABLE IF NOT EXISTS session_memories (
-        id             TEXT PRIMARY KEY,
-        session_id     TEXT NOT NULL,
-        session_title  TEXT NOT NULL,
-        summary        TEXT NOT NULL,
-        embedding      TEXT,
-        score          REAL NOT NULL DEFAULT 0.0,
-        is_pinned      INTEGER NOT NULL DEFAULT 0,
-        is_user_edited INTEGER NOT NULL DEFAULT 0,
-        created_at     INTEGER NOT NULL,
-        updated_at     INTEGER NOT NULL,
-        FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
-      );
-    `);
-
+    await ensureChatSchema(this.sqliteDriver);
     this.initialized = true;
   }
 
@@ -132,9 +58,7 @@ export class ChatRepositoryImpl implements IChatRepository {
   async getSessions(): Promise<Result<ChatSession[]>> {
     try {
       await this.ensureInitialized();
-      const rows = await this.sqliteDriver.query<{
-        id: string; model_id: string; title: string; is_title_locked: number; last_title_bucket: number; created_at: number; updated_at: number;
-      }>(`
+      const rows = await this.sqliteDriver.query<SessionRow>(`
         SELECT s.*
         FROM chat_sessions s
         WHERE EXISTS (
@@ -145,15 +69,7 @@ export class ChatRepositoryImpl implements IChatRepository {
         ORDER BY s.updated_at DESC
       `);
 
-      const sessions: ChatSession[] = rows.map((r) => ({
-        id: r.id,
-        modelId: r.model_id,
-        title: r.title,
-        isTitleLocked: r.is_title_locked === 1,
-        lastTitleBucket: r.last_title_bucket ?? 0,
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-      }));
+      const sessions = rows.map(toSession);
 
       return ok(sessions);
     } catch (e) {
@@ -164,21 +80,10 @@ export class ChatRepositoryImpl implements IChatRepository {
   async getSession(sessionId: string): Promise<Result<ChatSession | null>> {
     try {
       await this.ensureInitialized();
-      const rows = await this.sqliteDriver.query<{
-        id: string; model_id: string; title: string; is_title_locked: number; last_title_bucket: number; created_at: number; updated_at: number;
-      }>(`SELECT * FROM chat_sessions WHERE id = ?`, [sessionId]);
+      const rows = await this.sqliteDriver.query<SessionRow>(`SELECT * FROM chat_sessions WHERE id = ?`, [sessionId]);
 
       if (rows.length === 0) return ok(null);
-      const r = rows[0]!;
-      return ok({
-        id: r.id,
-        modelId: r.model_id,
-        title: r.title,
-        isTitleLocked: r.is_title_locked === 1,
-        lastTitleBucket: r.last_title_bucket ?? 0,
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-      });
+      return ok(toSession(rows[0]!));
     } catch (e) {
       return err(createError('STORAGE_ERROR', 'Failed to get session', e));
     }
@@ -419,30 +324,21 @@ export class ChatRepositoryImpl implements IChatRepository {
   async searchSessions(query: string): Promise<Result<ChatSession[]>> {
     try {
       await this.ensureInitialized();
-      const searchPattern = `%${query}%`;
-      const rows = await this.sqliteDriver.query<{
-        id: string; model_id: string; title: string; is_title_locked: number; last_title_bucket: number; created_at: number; updated_at: number;
-      }>(
+      // Escape LIKE wildcards so "100%" or "a_b" match literally.
+      const searchPattern = `%${query.replace(/[\\%_]/g, '\\$&')}%`;
+      const rows = await this.sqliteDriver.query<SessionRow>(
         `SELECT DISTINCT s.*
          FROM chat_sessions s
-         WHERE s.title LIKE ?
+         WHERE s.title LIKE ? ESCAPE '\\'
             OR EXISTS (
               SELECT 1 FROM chat_messages m
-              WHERE m.session_id = s.id AND m.content LIKE ?
+              WHERE m.session_id = s.id AND m.content LIKE ? ESCAPE '\\'
             )
          ORDER BY s.updated_at DESC`,
         [searchPattern, searchPattern],
       );
 
-      const sessions: ChatSession[] = rows.map((r) => ({
-        id: r.id,
-        modelId: r.model_id,
-        title: r.title,
-        isTitleLocked: r.is_title_locked === 1,
-        lastTitleBucket: r.last_title_bucket ?? 0,
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-      }));
+      const sessions = rows.map(toSession);
 
       return ok(sessions);
     } catch (e) {

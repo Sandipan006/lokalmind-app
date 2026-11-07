@@ -28,30 +28,45 @@ export class LlamaRnAdapter implements ILLMEngine {
   private context: LlamaContext | null = null;
   private currentModelId: string | null = null;
   private contextSize: number | null = null;
-  // Deduplicate concurrent initialize() calls - prevents double-loading during app boot races.
-  private initializingPromise: Promise<void> | null = null;
-  /** One completion at a time - native throws "Context is busy" if a new completion starts before the last fully unwinds. */
-  private completionEnd: Promise<void> = Promise.resolve();
+  /**
+   * Tail of the native-call queue. Load, generate, unload and release all run one at a time:
+   * native throws "Context is busy" if a call starts before the last one fully unwinds.
+   */
+  private queueTail: Promise<void> = Promise.resolve();
   private generating = false;
   private activeStopCompletion: (() => void) | null = null;
 
-  async initialize(modelId: string, config: LLMConfig): Promise<void> {
-    if (this.context && this.currentModelId === modelId) return;
-
-    if (this.initializingPromise) {
-      await this.initializingPromise;
-      return;
-    }
-
-    this.initializingPromise = this.performInitialize(modelId, config);
+  /** Runs `task` after every earlier native call finished. A queued task whose signal aborts is skipped, never waited on. */
+  private async runExclusive<T>(task: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+    const previous = this.queueTail;
+    let finish!: () => void;
+    const mine = new Promise<void>((resolve) => { finish = resolve; });
+    // Later tasks wait for `mine` even if this one aborts early, because `previous` is still running.
+    this.queueTail = previous.then(() => mine);
     try {
-      await this.initializingPromise;
+      await new Promise<void>((resolve, reject) => {
+        if (signal?.aborted) return reject(new Error('Aborted'));
+        const onAbort = () => reject(new Error('Aborted'));
+        signal?.addEventListener('abort', onAbort, { once: true });
+        void previous.then(() => {
+          signal?.removeEventListener('abort', onAbort);
+          resolve();
+        });
+      });
+      return await task();
     } finally {
-      this.initializingPromise = null;
+      finish();
     }
   }
 
+  async initialize(modelId: string, config: LLMConfig): Promise<void> {
+    // The model check happens inside the queue, so a waiter sees what the earlier load left behind.
+    await this.runExclusive(() => this.performInitialize(modelId, config));
+  }
+
   private async performInitialize(modelId: string, config: LLMConfig): Promise<void> {
+    if (this.context && this.currentModelId === modelId) return;
+
     // Release any previously loaded model before loading a new one.
     if (this.context) {
       await this.context.release();
@@ -87,19 +102,26 @@ export class LlamaRnAdapter implements ILLMEngine {
       );
     });
 
+    const loading = initLlama({
+      model: modelPath,
+      n_ctx,
+      n_threads: N_THREADS,
+      n_gpu_layers: 99,   // llama.rn auto-caps at what the device supports
+      n_batch: 256,
+      use_mlock: false,   // never lock memory on mobile - risks OOM kills
+      ctx_shift: false,   // avoid silent context corruption on some models
+    });
+    let timedOut = false;
+    // A load that finishes after the timeout would leak a native context; release it.
+    loading.then(
+      (late) => { if (timedOut) void late.release().catch(() => undefined); },
+      () => undefined,
+    );
     try {
-      this.context = await Promise.race([
-        initLlama({
-          model: modelPath,
-          n_ctx,
-          n_threads: N_THREADS,
-          n_gpu_layers: 99,   // llama.rn auto-caps at what the device supports
-          n_batch: 256,
-          use_mlock: false,   // never lock memory on mobile - risks OOM kills
-          ctx_shift: false,   // avoid silent context corruption on some models
-        }),
-        timeoutPromise,
-      ]);
+      this.context = await Promise.race([loading, timeoutPromise]);
+    } catch (e) {
+      timedOut = true;
+      throw e;
     } finally {
       if (timeoutHandle !== null) clearTimeout(timeoutHandle);
     }
@@ -117,13 +139,20 @@ export class LlamaRnAdapter implements ILLMEngine {
     if (!this.context) {
       throw new Error('[LlamaRnAdapter] Model not loaded. Call initialize() first.');
     }
+    return this.runExclusive(() => this.performGenerate(messages, config, onToken, signal), signal);
+  }
 
-    await this.completionEnd;
-
-    let releaseCompletion!: () => void;
-    this.completionEnd = new Promise<void>((resolve) => {
-      releaseCompletion = resolve;
-    });
+  private async performGenerate(
+    messages: LLMMessage[],
+    config: LLMConfig,
+    onToken?: (token: string) => void,
+    signal?: AbortSignal,
+  ): Promise<LLMResponse> {
+    // Another model may have been loaded while this call waited in the queue.
+    if (!this.context || this.currentModelId !== config.modelId) {
+      throw new Error('[LlamaRnAdapter] Requested model is no longer loaded.');
+    }
+    const context = this.context;
 
     const modelConfig = this.currentModelId ? getModelConfig(this.currentModelId) : null;
 
@@ -133,7 +162,7 @@ export class LlamaRnAdapter implements ILLMEngine {
     const stopCompletion = () => {
       if (!stopped) {
         stopped = true;
-        this.context?.stopCompletion();
+        context.stopCompletion();
       }
     };
     this.activeStopCompletion = stopCompletion;
@@ -142,7 +171,7 @@ export class LlamaRnAdapter implements ILLMEngine {
 
     this.generating = true;
     try {
-      const result = await this.context.completion(
+      const result = await context.completion(
         {
           messages: oaiMessages,
           n_predict: config.maxTokens ?? -1,
@@ -169,19 +198,19 @@ export class LlamaRnAdapter implements ILLMEngine {
       this.activeStopCompletion = null;
       signal?.removeEventListener('abort', stopCompletion);
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      releaseCompletion();
     }
   }
 
   async unloadModel(): Promise<void> {
-    if (this.context) {
-      await this.context.release();
-      this.context = null;
-    }
-    this.currentModelId = null;
-    this.contextSize = null;
-    this.initializingPromise = null;
-    this.completionEnd = Promise.resolve();
+    this.activeStopCompletion?.();
+    await this.runExclusive(async () => {
+      if (this.context) {
+        await this.context.release();
+        this.context = null;
+      }
+      this.currentModelId = null;
+      this.contextSize = null;
+    });
   }
 
   isModelLoaded(): boolean {
@@ -203,12 +232,11 @@ export class LlamaRnAdapter implements ILLMEngine {
   // Releases all llama contexts - call on app teardown / background.
   async releaseAllContexts(): Promise<void> {
     this.activeStopCompletion?.();
-    await this.completionEnd;
-    await releaseAllLlama();
-    this.context = null;
-    this.currentModelId = null;
-    this.contextSize = null;
-    this.initializingPromise = null;
-    this.completionEnd = Promise.resolve();
+    await this.runExclusive(async () => {
+      await releaseAllLlama();
+      this.context = null;
+      this.currentModelId = null;
+      this.contextSize = null;
+    });
   }
 }

@@ -91,7 +91,13 @@ export function ChatInputBar({
         <View style={styles.editBanner}>
           <SymbolView name="pencil" size={13} tintColor={WHITE_PRIMARY} style={styles.editBannerIcon} />
           <Text style={styles.editBannerText}>Editing message</Text>
-          <TouchableOpacity onPress={onCancelEdit} hitSlop={12} style={styles.editBannerCancel}>
+          <TouchableOpacity
+            onPress={onCancelEdit}
+            hitSlop={12}
+            style={styles.editBannerCancel}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel editing"
+          >
             <SymbolView name="xmark" size={13} tintColor={WHITE_PRIMARY} />
           </TouchableOpacity>
         </View>
@@ -131,6 +137,10 @@ export function ChatInputBar({
               onPress={handleModeButtonPress}
               disabled={composerLocked}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`Chat mode: ${CHAT_MODE_LABELS[selectedMode]}`}
+              accessibilityHint="Opens the list of chat modes"
+              accessibilityState={{ disabled: composerLocked }}
             >
               <Text style={[styles.modeButtonText, composerLocked && styles.modeButtonTextDisabled]}>
                 {CHAT_MODE_LABELS[selectedMode]}
@@ -146,11 +156,22 @@ export function ChatInputBar({
                     onPress={onSend}
                     disabled={!canSend}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Queue message"
+                    accessibilityHint="Sends after the current reply finishes"
+                    accessibilityState={{ disabled: !canSend }}
                   >
                     <SvgXml xml={sendMessageSvg} width={18} height={18} />
                   </TouchableOpacity>
                 ) : null}
-                <TouchableOpacity style={styles.stopButton} onPress={onStop} activeOpacity={0.7}>
+                <TouchableOpacity
+                  style={styles.stopButton}
+                  onPress={onStop}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Stop generating"
+                  hitSlop={8}
+                >
                   <View style={styles.stopSquare} />
                 </TouchableOpacity>
               </View>
@@ -160,6 +181,9 @@ export function ChatInputBar({
                 onPress={onSend}
                 disabled={!canSend}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Send message"
+                accessibilityState={{ disabled: !canSend }}
               >
                 <SvgXml xml={sendMessageSvg} width={18} height={18} />
               </TouchableOpacity>
@@ -196,6 +220,9 @@ export function ChatInputBar({
                   style={[styles.modalOption, isSelected && styles.modalOptionSelected]}
                   onPress={() => handleModeSelect(mode)}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={CHAT_MODE_LABELS[mode]}
+                  accessibilityState={{ selected: isSelected }}
                 >
                   <Text style={styles.modalOptionText}>{CHAT_MODE_LABELS[mode]}</Text>
                   {isSelected ? <View style={styles.modalOptionDot} /> : null}

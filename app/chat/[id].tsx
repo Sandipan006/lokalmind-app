@@ -10,6 +10,8 @@ import { GenerateChatTitleUseCase } from '@/src/features/chat/domain/usecases/Ge
 import { RegenerateReplyUseCase } from '@/src/features/chat/domain/usecases/RegenerateReplyUseCase';
 import { SendMessageUseCase } from '@/src/features/chat/domain/usecases/SendMessageUseCase';
 import { UpdateSessionModelUseCase } from '@/src/features/chat/domain/usecases/UpdateSessionModelUseCase';
+import { setBusy } from '@/src/core/appBusy';
+import { reaction } from 'mobx';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { BLACK_PRIMARY, PRIMARY_ORANGE } from '@/src/design-system/tokens/colors';
@@ -56,6 +58,20 @@ export default function ChatSessionScreen() {
       llm,
     );
   }, [isContainerReady]);
+
+  // Block OTA reloads while the user types or the model works.
+  useEffect(() => {
+    if (!viewModel) return;
+    const stop = reaction(
+      () => viewModel.isStreaming || viewModel.isModelLoading || viewModel.inputText.length > 0,
+      (busy) => setBusy('chat', busy),
+      { fireImmediately: true },
+    );
+    return () => {
+      stop();
+      setBusy('chat', false);
+    };
+  }, [viewModel]);
 
   useEffect(() => {
     let isMounted = true;

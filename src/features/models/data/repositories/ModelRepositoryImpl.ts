@@ -118,6 +118,19 @@ export class ModelRepositoryImpl implements IModelRepository {
     }
   }
 
+  /** Moves a verified `.part` file into place and only then marks the model downloaded. */
+  private async finalizeDownload(modelId: string, filename: string): Promise<Result<void>> {
+    const partFile = new File(Paths.document, 'models', `${filename}.part`);
+    // Cancel/pause paths do not leave a completed file on disk.
+    if (!partFile.exists) return ok(undefined);
+
+    const finalFile = new File(Paths.document, 'models', filename);
+    // An older copy is replaced only now, after the new file passed the download checks.
+    if (finalFile.exists) finalFile.delete();
+    partFile.move(finalFile);
+    return this.markDownloaded(modelId, filename, finalFile.uri);
+  }
+
   private async markDownloaded(modelId: string, filename: string, destinationPath: string): Promise<Result<void>> {
     const file = new File(Paths.document, 'models', filename);
     if (!file.exists) {
@@ -153,7 +166,7 @@ export class ModelRepositoryImpl implements IModelRepository {
         return err(createError('DOWNLOAD_FAILED', 'Missing CDN base URL for model downloads'));
       }
       const url = `${cdnBaseUrl}/models/${config.id}/${config.filename}`;
-      const destinationPath = new File(Paths.document, 'models', config.filename).uri;
+      const destinationPath = new File(Paths.document, 'models', `${config.filename}.part`).uri;
 
       await this.downloadService.startDownload(
         {
@@ -175,13 +188,7 @@ export class ModelRepositoryImpl implements IModelRepository {
         }
       );
 
-      // Cancel/pause paths do not leave a completed file on disk.
-      const downloadedFile = new File(Paths.document, 'models', config.filename);
-      if (!downloadedFile.exists) {
-        return ok(undefined);
-      }
-
-      return await this.markDownloaded(modelId, config.filename, destinationPath);
+      return await this.finalizeDownload(modelId, config.filename);
     } catch (e) {
       if (__DEV__) console.error('[ModelRepository] startDownload failed:', e);
       return err(createError('DOWNLOAD_FAILED', 'Failed to start download', e));
@@ -219,7 +226,7 @@ export class ModelRepositoryImpl implements IModelRepository {
         return err(createError('DOWNLOAD_FAILED', 'Missing CDN base URL for model downloads'));
       }
       const url = `${cdnBaseUrl}/models/${config.id}/${config.filename}`;
-      const destinationPath = new File(Paths.document, 'models', config.filename).uri;
+      const destinationPath = new File(Paths.document, 'models', `${config.filename}.part`).uri;
 
       await this.downloadService.resumeDownload(
         {
@@ -242,12 +249,7 @@ export class ModelRepositoryImpl implements IModelRepository {
         }
       );
 
-      const resumedFile = new File(Paths.document, 'models', config.filename);
-      if (!resumedFile.exists) {
-        return ok(undefined);
-      }
-
-      return await this.markDownloaded(modelId, config.filename, destinationPath);
+      return await this.finalizeDownload(modelId, config.filename);
     } catch (e) {
       return err(createError('DOWNLOAD_FAILED', 'Failed to resume download', e));
     }

@@ -16,6 +16,10 @@ export async function deleteDownloadedModelFiles(): Promise<void> {
     if (file.exists) {
       await file.delete();
     }
+    const partial = new File(Paths.document, 'models', `${config.filename}.part`);
+    if (partial.exists) {
+      await partial.delete();
+    }
   }
 
   const whisperFile = new File(Paths.document, 'models', WHISPER_CONFIG.filename);
