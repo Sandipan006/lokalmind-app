@@ -1,7 +1,6 @@
 # LokalMind - Complete Developer Guide
 
-> **Note:** the memory system described in parts of this document (pinned facts, learned profile, cross-session memories, in-chat summaries, MiniLM embeddings, the Memory screen) was **removed**. Chats now send only the system prompt, recent history and the current message. Sections about memory are kept for history and will be rewritten.
-
+> LokalMind has no memory feature. Cross-session memories, the learned profile, pinned facts, in-chat summaries and embeddings were removed. A turn sends only the system prompt, recent history and the current message.
 
 > **Your mind. Your device. No cloud.**
 >
@@ -18,31 +17,28 @@
 5. [Feature Modules](#5-feature-modules)
    - 5.1 [Chat](#51-chat)
    - 5.2 [Models](#52-models)
-   - 5.3 [Memory](#53-memory)
-   - 5.4 [Onboarding](#54-onboarding)
-   - 5.5 [Profile](#55-profile)
-   - 5.6 [Tabs](#56-tabs)
+   - 5.3 [Onboarding](#53-onboarding)
+   - 5.4 [Profile](#54-profile)
+   - 5.5 [Tabs](#55-tabs)
 6. [Infrastructure Layer](#6-infrastructure-layer)
    - 6.1 [LLM (llama.rn)](#61-llm-llamarn)
-   - 6.2 [Embedding Service](#62-embedding-service)
-   - 6.3 [Whisper (STT)](#63-whisper-stt)
-   - 6.4 [Downloads](#64-downloads)
-   - 6.5 [Storage (SQLite + AsyncStorage)](#65-storage-sqlite--asyncstorage)
-   - 6.6 [Device Capability](#66-device-capability)
+   - 6.2 [Whisper (STT)](#62-whisper-stt)
+   - 6.3 [Downloads](#63-downloads)
+   - 6.4 [Storage (SQLite + AsyncStorage)](#64-storage-sqlite--asyncstorage)
+   - 6.5 [Device Capability](#65-device-capability)
 7. [Core Layer - Ports, Types, DI](#7-core-layer--ports-types-di)
 8. [Design System](#8-design-system)
 9. [Navigation (expo-router)](#9-navigation-expo-router)
 10. [State Management (MobX)](#10-state-management-mobx)
 11. [LLM Pipeline - End to End](#11-llm-pipeline--end-to-end)
-12. [Memory System - End to End](#12-memory-system--end-to-end)
-13. [Download Pipeline](#13-download-pipeline)
-14. [Environment & Configuration](#14-environment--configuration)
-15. [Build System (EAS)](#15-build-system-eas)
-16. [Coding Conventions](#16-coding-conventions)
-17. [Testing Strategy](#17-testing-strategy)
-18. [Git Conventions](#18-git-conventions)
-19. [Known Limitations](#19-known-limitations)
-20. [Roadmap & Future Work](#20-roadmap--future-work)
+12. [Download Pipeline](#12-download-pipeline)
+13. [Environment & Configuration](#13-environment--configuration)
+14. [Build System (EAS)](#14-build-system-eas)
+15. [Coding Conventions](#15-coding-conventions)
+16. [Testing Strategy](#16-testing-strategy)
+17. [Git Conventions](#17-git-conventions)
+18. [Known Limitations](#18-known-limitations)
+19. [Roadmap & Future Work](#19-roadmap--future-work)
 
 ---
 
@@ -51,7 +47,6 @@
 LokalMind is an **iOS-first, offline-capable AI chat app** built with React Native and Expo. It runs open-weight LLMs (GGUF format) entirely on-device using [llama.rn](https://github.com/mybigday/llama.rn). No prompt ever leaves the phone for inference. The app includes:
 
 - **Streaming chat** with multiple downloadable models
-- **On-device semantic memory** using MiniLM embeddings
 - **Whisper STT** (infrastructure wired, UI rolling out)
 - **Clean Architecture** with strict layer separation
 - **Apple Liquid Glass UI** (iOS 26+ native, expo-blur fallback)
@@ -64,7 +59,6 @@ LokalMind is an **iOS-first, offline-capable AI chat app** built with React Nati
 | Navigation | expo-router v6 (file-based) |
 | State | MobX 6 + mobx-react-lite |
 | LLM inference | llama.rn ^0.11.3 (GGUF via llama.cpp) |
-| Embeddings | llama.rn in embed mode (MiniLM L6 Q4_K_M) |
 | STT | whisper.rn ^0.5.5 (Phase 3, stub only) |
 | Database | expo-sqlite ~16 (WAL, FK ON) |
 | Key-value | @react-native-async-storage/async-storage 2.2.0 |
@@ -128,13 +122,9 @@ lokalmind-app/
 │   │   └── search.tsx            # Support tab
 │   ├── chat/
 │   │   └── [id].tsx              # Active chat session route
-│   ├── model/
-│   │   └── [id].tsx              # Model detail (placeholder)
 │   └── profile/
 │       ├── ai-behavior.tsx       # Profile / account screen
-│       ├── memory.tsx            # Memory management
 │       ├── mode-system-prompts.tsx  # Per-mode system prompt editor
-│       ├── storage.tsx           # Storage usage (placeholder)
 │       └── support.tsx           # Support / donate
 │
 ├── src/
@@ -154,7 +144,6 @@ lokalmind-app/
 │   │
 │   ├── features/
 │   │   ├── chat/                 # Chat sessions, messages, streaming, queue
-│   │   ├── memory/               # Summaries, cross-session memory, embeddings
 │   │   ├── models/               # Model registry, downloads, browser UI
 │   │   ├── onboarding/           # Splash, welcome, username screens
 │   │   ├── profile/              # Settings, system prompts, data reset
@@ -163,7 +152,7 @@ lokalmind-app/
 │   ├── infrastructure/
 │   │   ├── device/               # deviceCapability - RAM detection, n_ctx sizing
 │   │   ├── downloads/            # DownloadService, modelConfig, types
-│   │   ├── llm/                  # llamaRnAdapter, embeddingService
+│   │   ├── llm/                  # llamaRnAdapter (serial native-call queue)
 │   │   ├── storage/              # sqliteDriver, asyncStorageDriver, localDataResetAdapter
 │   │   └── whisper/              # whisperRnAdapter (stub, Phase 3)
 │   │
@@ -220,12 +209,10 @@ const asyncStorageDriver = new AsyncStorageDriver();
 const llmEngine = new LlamaRnAdapter();
 const whisperEngine = new WhisperRnAdapter();
 const downloadService = new DownloadService(asyncStorageDriver);
-const embeddingService = new EmbeddingService();
 
 // … then lazy-init repositories via initializeContainer():
 chatRepository = new ChatRepositoryImpl(sqliteDriver);
-memoryRepository = new MemoryRepositoryImpl(sqliteDriver);
-modelRepository = new ModelRepositoryImpl(downloadService, sqliteDriver, embeddingService);
+modelRepository = new ModelRepositoryImpl(downloadService, sqliteDriver);
 // etc.
 ```
 
@@ -365,7 +352,7 @@ Six models currently registered:
 | `qwen3-4b` | Qwen 3 - 4B | ~2.5 GB | 5 GB |
 | `gemma3-4b` | Gemma 3 - 4B | ~2.5 GB | 5 GB |
 
-Additional configs: `WHISPER_CONFIG` (Whisper base, STT) and `EMBEDDING_CONFIG` (MiniLM L6, semantic memory).
+Additional config: `WHISPER_CONFIG` (Whisper base, STT). `LEGACY_EMBEDDING_FILENAME` names the MiniLM file that older versions downloaded; it is deleted from devices at startup.
 
 #### Use Cases
 
@@ -375,62 +362,13 @@ Additional configs: `WHISPER_CONFIG` (Whisper base, STT) and `EMBEDDING_CONFIG` 
 
 1. `ModelSetupViewModel.startDownload(modelId)` calls `StartDownloadUseCase`
 2. `ModelRepositoryImpl.startDownload()` resolves CDN URL from env, calls `DownloadService.startDownload()`
-3. `DownloadService` creates a resumable `expo-file-system` download, throttles progress to 250ms, persists resume state in AsyncStorage
-4. On completion, `markDownloaded()` writes to SQLite `models` table
-5. After any LLM model is downloaded, `maybeDownloadEmbeddingModel()` fires silently in parallel
+3. `DownloadService` creates a resumable `expo-file-system` download to `<filename>.part`, throttles progress updates, persists resume state in AsyncStorage
+4. When the download ends, the HTTP status and the file length are checked (`downloadVerification.ts`); a bad file is deleted and the download fails
+5. `finalizeDownload()` moves the `.part` file to its final name, then `markDownloaded()` writes the SQLite `models` row
 
 ---
 
-### 5.3 Memory
-
-**Location:** `src/features/memory/`
-
-Three-tier memory system, all on-device.
-
-| Tier | Storage | Description |
-|---|---|---|
-| **Pinned facts** | AsyncStorage `memory:pinnedFacts` | User-written, always injected, max 800 chars |
-| **Learned profile** | AsyncStorage `memory:userProfile` | LLM-maintained living document, max 600 chars |
-| **Past conversations** | SQLite `session_memories` | Per-session summaries with optional embeddings |
-| **In-session summaries** | SQLite `session_summaries` | Rolling 20-turn bucket summaries within a chat |
-
-#### Entities
-
-```typescript
-SessionSummary { id, sessionId, bucketIndex, summary, turnStart, turnEnd, createdAt }
-SessionMemory  { id, sessionId, sessionTitle, summary, embedding (JSON float[]), score, isPinned, isUserEdited, … }
-```
-
-#### SummarizeSessionUseCase
-
-Two modes:
-- `type: 'bucket'` - called every 20 turns within a session. Uses LLM to generate structured `TOPICS / FACTS / DONE / OPEN` summary stored in `session_summaries`.
-- `type: 'cross-session'` - called when leaving a chat (or periodically during long chats). Uses a **deterministic** user-statement extractor first (no LLM call needed for short chats). Falls back to LLM summarisation for sessions with bucket summaries.
-
-Both are fire-and-forget - never awaited in the UI path.
-
-#### UpdateUserProfileUseCase
-
-Runs on every chat exit (if LLM is loaded and not generating). Uses a deterministic name/fact extractor first. Only calls the LLM if the deterministic pass yields nothing new. A safety guard prevents profile shrinkage (new profile must be ≥ 80% length of old profile).
-
-#### MemoryService - Retrieval
-
-```
-requiresMemory(userMessage, sessionTurnCount) ?
-  ├── EmbeddingService ready  → cosine similarity (0.6 semantic + 0.4 score) → top 5
-  └── Not ready               → score-based top 5
-Always injects pinned memories.
-```
-
-`evictIfNeeded(max=10)` deletes the lowest-scored non-pinned memory when over the limit.
-
-#### EmbeddingService
-
-Uses a separate `LlamaContext` (MiniLM Q4_K_M, ~21 MB) initialised in embedding mode (`embedding: true`). Guards against concurrent LLM + embed calls via `setLlmBusy()` / `embedQueue`. Falls back gracefully if the model isn't downloaded yet.
-
----
-
-### 5.4 Onboarding
+### 5.3 Onboarding
 
 **Location:** `src/features/onboarding/`
 
@@ -450,14 +388,14 @@ onboarding complete:
 
 ---
 
-### 5.5 Profile
+### 5.4 Profile
 
 **Location:** `src/features/profile/`
 
 #### ProfileAccountScreen
 
 - Shows user avatar (21 bundled PNGs, assigned randomly at onboarding), display name, "Member since" ring (SVG TextPath).
-- Links to Memory screen, System Prompts screen, GitHub, developer contact email.
+- Links to the AI behavior and System Prompts screens, GitHub, developer contact email.
 - **Erase all data** - calls `ResetAllLocalDataUseCase` which unloads models, clears AsyncStorage, wipes all SQLite tables, and deletes all downloaded GGUF/bin files.
 
 #### ModeSystemPromptsScreen
@@ -470,7 +408,7 @@ PayPal and "Other" payment links configured via `.env` (`SUPPORT_PAYPAL_URL`, `S
 
 ---
 
-### 5.6 Tabs
+### 5.5 Tabs
 
 **Location:** `src/features/tabs/`
 
@@ -506,25 +444,11 @@ PayPal and "Other" payment links configured via `.env` (`SUPPORT_PAYPAL_URL`, `S
 - `stripThinkingTags()` removes DeepSeek R1's chain-of-thought blocks from the final response text before returning to the caller (the UI still shows them live via `ThinkBlock` in `MessageRenderer`).
 
 **`isGenerating()`**
-- `private generating = false` flag set true at generation start, false in `finally`. Used by `SummarizeSessionUseCase` and `UpdateUserProfileUseCase` to avoid concurrent inference.
+- `private generating = false` flag set true at generation start, false in `finally`. Used to avoid starting other work on a busy context.
 
 ---
 
-### 6.2 Embedding Service
-
-**File:** `src/infrastructure/llm/embeddingService.ts`
-
-Separate `LlamaContext` loaded with `embedding: true` using the MiniLM L6 Q4_K_M model (~21 MB). Lives entirely in infrastructure.
-
-**LLM-busy queue:** `setLlmBusy(true)` called by `ChatViewModel` right before `generateResponse()`. Embed calls queue up and drain when `setLlmBusy(false)` is called in `finally`.
-
-**RAM guard:** Skips loading if device usable RAM < 200 MB.
-
-**Graceful degradation:** If model not downloaded or RAM insufficient, `isReady()` returns false and `MemoryService` falls back to score-based retrieval.
-
----
-
-### 6.3 Whisper (STT)
+### 6.2 Whisper (STT)
 
 **File:** `src/infrastructure/whisper/whisperRnAdapter.ts`
 
@@ -534,7 +458,7 @@ Currently a stub - `initialize()` and `transcribe()` throw `TRANSCRIPTION_ERROR`
 
 ---
 
-### 6.4 Downloads
+### 6.3 Downloads
 
 **Files:** `src/infrastructure/downloads/downloadService.ts`, `types.ts`, `modelConfig.ts`
 
@@ -552,7 +476,7 @@ Currently a stub - `initialize()` and `transcribe()` throw `TRANSCRIPTION_ERROR`
 
 ---
 
-### 6.5 Storage (SQLite + AsyncStorage)
+### 6.4 Storage (SQLite + AsyncStorage)
 
 #### SQLiteDriver (`src/infrastructure/storage/sqliteDriver.ts`)
 
@@ -566,8 +490,6 @@ Wraps `@react-native-async-storage/async-storage` with a simple in-memory write 
 
 | Key | Purpose |
 |---|---|
-| `memory:pinnedFacts` | Always-injected user facts |
-| `memory:userProfile` | LLM-derived profile document |
 | `settings:mode:<mode>:systemPrompt` | Per-mode system prompt override |
 | `download_resume_<modelId>` | Download resume state (managed by DownloadService) |
 
@@ -577,8 +499,7 @@ Wraps `@react-native-async-storage/async-storage` with a simple in-memory write 
 chat_sessions       - id, model_id, title, is_title_locked, last_title_bucket
 chat_messages       - id, session_id, role, content, status, created_at, reply_*
 message_alternates  - id, message_id, content, seq   (regeneration history)
-session_summaries   - id, session_id, bucket_index, summary, turn_start, turn_end
-session_memories    - id, session_id, summary, embedding (JSON), score, is_pinned
+(session_summaries and session_memories exist from older versions; the app no longer uses them)
 users               - id=1, display_name, avatar_index, onboarding_complete
 models              - id, filename, is_downloaded, file_path
 ```
@@ -587,7 +508,7 @@ All tables are created lazily in repository `ensureInitialized()` methods with `
 
 ---
 
-### 6.6 Device Capability
+### 6.5 Device Capability
 
 **File:** `src/infrastructure/device/deviceCapability.ts`
 
@@ -605,8 +526,7 @@ All tables are created lazily in repository `ensureInitialized()` methods with `
 |---|---|---|
 | `ILLMEngine` | `ports/ILLMEngine.ts` | The only LLM contract. Implemented by `LlamaRnAdapter`. |
 | `IWhisperEngine` | `ports/IWhisperEngine.ts` | The only STT contract. Implemented by `WhisperRnAdapter`. |
-| `IAppSettingsRepository` | `ports/IAppSettingsRepository.ts` | Mode prompt overrides, pinned facts, user profile. |
-| `IEmbeddingService` | `ports/IEmbeddingService.ts` | `initialize()`, `embed()`, `isReady()`, `setLlmBusy()`, `release()`. |
+| `IAppSettingsRepository` | `ports/IAppSettingsRepository.ts` | Mode prompt overrides and other settings. |
 | `ILocalDataReset` | `ports/ILocalDataReset.ts` | `resetAllLocalData()` - wipes everything. |
 
 ### Result Type
@@ -622,7 +542,7 @@ const err = <E>(error: E): Result<never, E> => ({ success: false, error });
 
 ### AppError Codes
 
-`VALIDATION_ERROR` · `STORAGE_ERROR` · `MODEL_NOT_LOADED` · `MODEL_LOAD_FAILED` · `GENERATION_ERROR` · `GENERATION_CANCELLED` · `DOWNLOAD_FAILED` · `DOWNLOAD_PAUSED` · `TRANSCRIPTION_ERROR` · `MEMORY_EXTRACTION_ERROR` · `NOT_FOUND` · `UNKNOWN_ERROR`
+`VALIDATION_ERROR` · `STORAGE_ERROR` · `MODEL_NOT_LOADED` · `MODEL_LOAD_FAILED` · `GENERATION_ERROR` · `GENERATION_CANCELLED` · `DOWNLOAD_FAILED` · `DOWNLOAD_PAUSED` · `TRANSCRIPTION_ERROR` · `NOT_FOUND` · `UNKNOWN_ERROR`
 
 ---
 
@@ -719,11 +639,8 @@ All routes are file-based. No `@react-navigation` packages are imported in featu
 /(tabs)/models
 /(tabs)/search
 /chat/[id]      → ChatScreen (with ChatViewModel)
-/model/[id]     → placeholder
 /profile/ai-behavior
-/profile/memory
 /profile/mode-system-prompts
-/profile/storage
 /profile/support
 ```
 
@@ -799,29 +716,25 @@ ChatInputBar.onSend()
   → ChatViewModel.sendMessage()
     ├── if isStreaming: enqueue in pendingQueue → return
     └── ChatViewModel.runSendTurn(text, mode)
-        ├── Create optimistic userMessage in memory + save to SQLite
-        ├── runInAction: add userMessage, set isStreaming=true, isModelLoading=true
-        ├── SendMessageUseCase.execute(params)
-        │   ├── Save userMessage + assistant placeholder to SQLite
-        │   ├── llmEngine.initialize(modelId, config)  if not already loaded
-        │   ├── Parallel fetch:
-        │   │   ├── appSettings.getModeSystemPromptOverride(mode)
-        │   │   ├── appSettings.getPinnedFacts()
-        │   │   ├── appSettings.getUserProfile()
-        │   │   ├── memoryService.getRelevantMemories(userMessage, turnCount)
-        │   │   └── memoryRepository.getSessionSummaries(sessionId)
-        │   ├── resolveSystemPromptForChat(mode, modeOverride)
-        │   ├── buildContextMessages({ systemPrompt, pinnedFacts, userProfile,
-        │   │                          crossSessionMemories, inSessionSummaries,
-        │   │                          history, currentMessage })
-        │   ├── onBeforeGenerate() → embeddingService.setLlmBusy(true)
-        │   └── llmEngine.generateResponse(llmMessages, config, onToken, signal)
-        │       └── streams tokens → onToken → ChatViewModel.streamingContent +=
+        ├── add the optimistic user bubble, set isStreaming and isModelLoading
+        └── runStreamedTurn()             (shared by send, edit and regenerate)
+            └── SendMessageUseCase.execute(params)
+                ├── save userMessage + assistant placeholder (failure → return error)
+                ├── llmEngine.initialize(modelId, config)  if not already loaded
+                ├── fit the current message to the input limit
+                ├── appSettings.getModeSystemPromptOverride(mode)
+                ├── resolveSystemPromptForChat(mode, modeOverride)
+                ├── buildContextMessages({ systemPrompt, history, currentMessage,
+                │                          contextSize, reservedOutputTokens })
+                ├── llmEngine.generateResponse(llmMessages, config, onToken, signal)
+                │   └── streams tokens → onToken → ChatViewModel.streamingContent +=
+                └── save final content (failure → return error)
         ├── runInAction: isStreaming=false, update messages with result.data
         ├── fire-and-forget: generateChatTitleUseCase.execute(...)
-        ├── fire-and-forget: maybeSaveSessionMemory()
         └── flushNextQueuedAfterTurn()
 ```
+
+See `docs/architecture/LLM-PIPELINE.md` for the full sequence and the native-call queue.
 
 #### Token Debouncing
 
@@ -834,80 +747,31 @@ Every `generateResponse()` call receives an `AbortSignal` from `AbortController`
 #### Context Window Budget (tokenBudget.ts)
 
 ```
-Total budget: 3800 tokens
-├── System:            300
-├── Pinned facts:      100  (never cut)
-├── User profile:      200
-├── Cross-session mem: 200  (highest score first)
-├── In-session summ:   150  (oldest bucket first)
-└── History:           800  (oldest pairs cut, floor = 4 turns)
+Hard prompt limit: min(3800, n_ctx - reserved output - 64)
+├── System:   300   (capped)
+├── History:  800   soft budget (oldest pairs cut, floor = 4 turns; the floor
+│                   gives way when the hard limit would be exceeded)
+└── Current message: cut by tokens to fit, and the user is told
 ```
 
 `estimateTokens(text)` uses a single-pass codepoint scan: Indic = 1 char/token, CJK = 1.5, Arabic = 2, Latin = 4.
 
 ---
 
-## 12. Memory System - End to End
-
-### Write Path
-
-```
-Chat turn completes
-  └── ChatViewModel.runSendTurn() (success)
-      └── maybeSaveSessionMemory()
-          ├── Skip if: no session, < 4 turns, LLM busy/unloaded
-          ├── Skip if: session_memories already has a row for this session
-          └── SummarizeSessionUseCase.execute({ type: 'cross-session', messages })
-              ├── buildDeterministicCrossSessionSummary(messages)
-              │   └── Extract user statements, deduplicate, format
-              └── memoryRepository.saveSessionMemory(memory)
-                  └── embeddingService.embedAndSave(id, summary)   [fire-and-forget]
-
-Every 20 turns
-  └── SummarizeSessionUseCase.execute({ type: 'bucket', bucketIndex, … })
-      └── llmEngine.generateResponse(SUMMARISE_PROMPT)
-          └── parseSummaryResponse() → TOPICS / FACTS / DONE / OPEN
-          └── memoryRepository.saveSessionSummary(summary)
-
-On chat exit (useFocusEffect cleanup)
-  └── ChatViewModel.maybeUpdateUserProfile(turnCount)
-      └── UpdateUserProfileUseCase.execute(messages)
-          ├── buildDeterministicProfile(currentProfile, userMessages)
-          └── if nothing new: LLM fallback with PROFILE_MAX_CHARS=600
-```
-
-### Read Path (generation time)
-
-```
-SendMessageUseCase / RegenerateReplyUseCase
-  └── parallel: memoryService.getRelevantMemories(userMessage, sessionTurnCount)
-      ├── requiresMemory()?
-      │   ├── sessionTurnCount < 3  → always inject
-      │   └── has contextual markers or not short → inject
-      ├── EmbeddingService ready?
-      │   ├── yes → embed(userMessage) → cosine similarity → top 5
-      │   └── no  → score-based sort → top 5
-      └── Always prepend pinned memories
-  └── buildContextMessages({ crossSessionMemories, inSessionSummaries, … })
-```
-
----
-
-## 13. Download Pipeline
+## 12. Download Pipeline
 
 ```
 ModelSetupViewModel.startDownload(modelId)
   └── StartDownloadUseCase.execute(modelId, onProgress)
       └── ModelRepositoryImpl.startDownload(modelId, onProgress)
           ├── Resolve CDN URL: ${HETZNER_BASE_URL}/models/${modelId}/${filename}
-          ├── maybeDownloadEmbeddingModel()  [fire-and-forget]
           └── DownloadService.startDownload(config, onProgress)
               ├── createDownloadResumable(url, destinationPath, {}, callback)
               ├── Persist state to AsyncStorage
               └── resumable.downloadAsync()
                   ├── Every 3s: compute speed (8-sample rolling avg), emit progress
-                  └── On complete: clearPersistedState, delete from activeDownloads
-          └── markDownloaded(modelId, filename, destinationPath)
+                  └── On complete: check HTTP status + length, clearPersistedState, delete from activeDownloads
+          └── finalizeDownload(): move <file>.part into place, then markDownloaded()
               └── SQLite INSERT OR UPDATE models table
 ```
 
@@ -923,7 +787,7 @@ container.initializeContainer()
 
 ---
 
-## 14. Environment & Configuration
+## 13. Environment & Configuration
 
 ### `.env` Variables
 
@@ -950,7 +814,7 @@ Runtime access point. Reads from `Constants.expoConfig.extra`. All feature code 
 
 ---
 
-## 15. Build System (EAS)
+## 14. Build System (EAS)
 
 ### Profiles (`eas.json`)
 
@@ -976,7 +840,7 @@ Runtime access point. Reads from `Constants.expoConfig.extra`. All feature code 
 
 ---
 
-## 16. Coding Conventions
+## 15. Coding Conventions
 
 ### Naming
 
@@ -1019,12 +883,12 @@ All `console.log` / `console.warn` in production code must be wrapped in `if (__
 
 - Every LLM generation: MUST accept `AbortSignal` - ViewModel MUST expose `cancelGeneration()`
 - Download progress: throttled 250ms
-- Memory extraction: fire-and-forget - `.catch(() => {})` - never await in main pipeline
+- Background work after a turn (for example title generation): fire-and-forget with `.catch(() => undefined)`, never awaited in the main pipeline
 - Never `await` inside MobX `reaction` or `autorun`
 
 ---
 
-## 17. Testing Strategy
+## 16. Testing Strategy
 
 Tests co-locate with source files:
 
@@ -1058,7 +922,7 @@ jest.mock('expo-sqlite');
 
 ---
 
-## 18. Git Conventions
+## 17. Git Conventions
 
 ### Commit Format
 
@@ -1094,11 +958,11 @@ phase/<number>      phase-level branch
 
 ---
 
-## 19. Known Limitations
+## 18. Known Limitations
 
 See [KNOWN-LIMITATIONS.md](../project/KNOWN-LIMITATIONS.md) for community-trackable issues.
 
-**Memory retrieval quality variance** - In some chats memory retrieval is relevant and helpful; in others it can be weaker. Depends on model size, prompt structure, and embedding quality.
+**No memory between chats** - each chat starts fresh; a memory feature was removed because its quality was not good enough.
 
 **Small model answer quality variance** - 0.8B models produce inconsistent quality on nuanced, multi-step prompts. Expected behaviour at this model size.
 
@@ -1108,14 +972,14 @@ See [KNOWN-LIMITATIONS.md](../project/KNOWN-LIMITATIONS.md) for community-tracka
 
 ---
 
-## 20. Roadmap & Future Work
+## 19. Roadmap & Future Work
 
 See [NEXT-DEVELOPMENT.md](./NEXT-DEVELOPMENT.md) for detailed upcoming work.
 
 ### v2.1 (Post-launch)
 - **Voice input (STT):** Full hold-to-talk UI wired to `whisperRnAdapter`. Requires `NSMicrophoneUsageDescription` in `app.json`.
 - **Tool use:** Calendar/Reminders access via EventKit
-- **Android support:** Planned first-class Android target. `DownloadService` already uses `useLegacyPackaging: false`. Embedding service uses platform-aware thread counts. `GlassSurface` falls back to `expo-blur` on Android.
+- **Android support:** Planned first-class Android target. `DownloadService` already uses `useLegacyPackaging: false`. `GlassSurface` falls back to `expo-blur` on Android.
 - **BYOM (Bring Your Own Model):** User-supplied GGUF files
 
 ### v2.2 (Future)

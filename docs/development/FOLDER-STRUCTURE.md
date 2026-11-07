@@ -1,7 +1,6 @@
 # LokalMind v2 - Folder Structure, DI, Dependencies & Build Phases
 
-> **Note:** the memory system described in parts of this document (pinned facts, learned profile, cross-session memories, in-chat summaries, MiniLM embeddings, the Memory screen) was **removed**. Chats now send only the system prompt, recent history and the current message. Sections about memory are kept for history and will be rewritten.
-
+> LokalMind has no memory feature; the memory code (`src/features/memory`, the embedding adapter, the Memory screen) was removed.
 
 ---
 
@@ -15,11 +14,11 @@ lokalmind-app/
 │   ├── onboarding/                   ← welcome / username / model setup
 │   ├── (tabs)/                       ← chat / models / search tabs
 │   ├── chat/[id].tsx                 ← active chat session
-│   ├── model/[id].tsx                ← model detail
-│   └── profile/                      ← support / storage / mode prompts / memory
+│   └── profile/                      ← support / AI behavior / mode prompts
 │
 ├── src/
 │   ├── core/
+│   │   ├── appBusy.ts                ← what a reload would destroy (OTA waits)
 │   │   ├── ports/                    ← app-level interfaces
 │   │   ├── types/                    ← Result, error helpers
 │   │   └── di/container.ts           ← single composition root
@@ -29,10 +28,9 @@ lokalmind-app/
 │   │   ├── models/
 │   │   ├── onboarding/
 │   │   ├── profile/
-│   │   ├── memory/
 │   │   └── tabs/
 │   ├── infrastructure/
-│   │   ├── llm/                      ← llama + embedding adapters
+│   │   ├── llm/                      ← llama adapter (serial native-call queue)
 │   │   ├── whisper/                  ← whisper adapter
 │   │   ├── downloads/                ← resumable downloads + model registry
 │   │   ├── device/                   ← RAM/context sizing helpers
@@ -64,10 +62,9 @@ container.ts
   ├── new LlamaRnAdapter()                  → implements ILLMEngine
   ├── new WhisperRnAdapter()                → implements IWhisperEngine
   ├── new DownloadService(asyncStorageDriver)
-  ├── new EmbeddingService()
   ├── new ChatRepositoryImpl(sqliteDriver)
-  ├── new MemoryRepositoryImpl(sqliteDriver)
-  ├── new ModelRepositoryImpl(downloadService, sqliteDriver, embeddingService)
+  ├── new ModelRepositoryImpl(downloadService, sqliteDriver)
+  ├── new ExpoNotificationsAdapter(asyncStorageDriver)  → implements ILocalNotifications (reminders + chat-done)
   ├── new UserRepositoryImpl(sqliteDriver)
   ├── new AppSettingsRepositoryImpl(asyncStorageDriver)
   └── new LocalDataResetAdapter(...)
@@ -96,7 +93,7 @@ mobx, mobx-react-lite, llama.rn, whisper.rn, react-native-svg.
 | **Phase 0** | Current | Scaffold reset, design system tokens, `ILLMEngine` + `IWhisperEngine` interfaces, DI container skeleton, cursor rules |
 | **Phase 1** | Week 3–5 | `llamaRnAdapter`, model download + management, GGUF loading, streaming chat, message queue |
 | **Phase 2** | Week 6–8 | Full chat UI (FlashList, reply-to-message, swipe gestures), chat history, onboarding, `GlassSurface` components |
-| **Phase 3** | Week 9–10 | Whisper STT pipeline, profile screen, AI modes, memory pipeline |
+| **Phase 3** | Week 9–10 | Whisper STT pipeline, profile screen, AI modes |
 | **Phase 4** | Week 11–12 | Polish, performance profiling, App Store submission, GitHub public release |
 | **v2.1** | Post-launch | Android support, BYOM (Bring Your Own Model), RAG pipeline |
 | **v2.2** | Future | On-device TTS - English + Hindi via `expo-speech`, Indic languages via AI4Bharat `indic-parler-tts` |

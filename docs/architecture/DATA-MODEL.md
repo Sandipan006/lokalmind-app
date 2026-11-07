@@ -1,13 +1,12 @@
 # LokalMind v2 - Data Model
 
-> **Note:** the memory system described in parts of this document (pinned facts, learned profile, cross-session memories, in-chat summaries, MiniLM embeddings, the Memory screen) was **removed**. Chats now send only the system prompt, recent history and the current message. Sections about memory are kept for history and will be rewritten.
-
+> LokalMind has no memory feature. The app no longer reads or writes `session_summaries`, `session_memories`, `memory:pinnedFacts` or `memory:userProfile`. Data saved there by older versions was left in place (no migration, nothing deleted), so those tables and keys can still exist on upgraded devices.
 
 ---
 
 ## SQLite Schema
 
-Database file: `lokalmind.db` (WAL, foreign keys ON). Table names and columns are aligned to `ChatRepositoryImpl`.
+Database file: `lokalmind.db` (WAL, foreign keys ON). Chat tables are created by `ensureChatSchema` (`src/features/chat/data/repositories/chatSchema.ts`), `users` by `UserRepositoryImpl`, `models` by `ModelRepositoryImpl`.
 
 ```sql
 PRAGMA journal_mode = WAL;
@@ -44,6 +43,7 @@ CREATE TABLE IF NOT EXISTS message_alternates (
   FOREIGN KEY (message_id) REFERENCES chat_messages(id) ON DELETE CASCADE
 );
 
+-- Legacy: kept for data from older versions; the app no longer uses it.
 CREATE TABLE IF NOT EXISTS session_summaries (
   id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL,
@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS session_summaries (
   FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
 );
 
+-- Legacy: kept for data from older versions; the app no longer uses it.
 CREATE TABLE IF NOT EXISTS session_memories (
   id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL,
@@ -93,8 +94,7 @@ CREATE TABLE IF NOT EXISTS models (
 
 - `chat_messages.reply_*` stores reply threading metadata.
 - `message_alternates` keeps regenerate history in order (`seq` ascending).
-- `session_summaries` stores rolling in-session summary buckets.
-- `session_memories.embedding` stores JSON-serialized embedding vectors when available.
+- `session_summaries` and `session_memories` are legacy tables (see the note at the top). Deleting a chat still removes their rows through the foreign key cascade.
 - `users` stores local profile + onboarding state.
 - `models` stores download/install status for local GGUF files.
 - Some columns are added via migration guards (`ALTER TABLE ... ADD COLUMN`) when older DBs are opened.
@@ -117,19 +117,17 @@ Source of truth: `src/infrastructure/storage/asyncStorageDriver.ts` (`STORAGE_KE
 | `settings:contextWindow` | `string` | Context window preference |
 | `settings:globalSystemPrompt` | `string` | Global system prompt storage key |
 | `settings:mode:{mode}:systemPrompt` | `string` | Per-mode system prompt override |
-| `memory:pinnedFacts` | `string` | Always-injected user facts |
-| `memory:userProfile` | `string` | Derived profile summary for memory-aware prompts |
 | `onboarding:complete` | `string` | Onboarding completion flag |
-| `lm:notif:inactivity:dailyYmd` | `string` | Local calendar day (YYYYMMDD) for inactivity notification daily cap |
-| `lm:notif:inactivity:dailyCount` | `string` | Inactivity reminders scheduled today (max 4) |
+| `lm:notif:reminders:enabled` | `string` | `'true'`/`'false'` user switch for scheduled reminders; absent means on |
+
+Builds before the reminder redesign wrote `lm:notif:inactivity:dailyYmd` and `lm:notif:inactivity:dailyCount`. They are no longer read and are left in place.
 
 **SQLite vs AsyncStorage:** canonical chat history, `users` row, and `models` install rows live in SQLite. AsyncStorage holds the keys above plus small settings / migration / notification state; keep new durable profile and model state in SQLite unless there is a deliberate exception.
 
 ---
 
-## Memory Model Snapshot
+---
 
-- Long-term memory is not `memory_facts` anymore.
-- Cross-session memory lives in `session_memories`.
-- In-session compression lives in `session_summaries`.
-- Pinned user context lives in `memory:pinnedFacts`.
+## Model Files
+
+Downloaded models are GGUF files in the app documents folder `models/`. A download goes to `<filename>.part` first and is moved into place only after the HTTP status and length checks pass; only then is the `models` row marked downloaded. Reset removes the model files, any `.part` files and the old MiniLM file.

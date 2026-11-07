@@ -5,7 +5,7 @@
 # LokalMind
 
 **Private AI chat that runs entirely on your phone.**  
-No cloud. No subscriptions for core chat. Your data never leaves your device.
+No cloud. No subscriptions for core chat. Your chats never leave your device.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-iOS-lightgrey)](#)
@@ -28,9 +28,9 @@ No cloud. No subscriptions for core chat. Your data never leaves your device.
 
 ## Why LokalMind?
 
-Most AI assistants send everything you type to a server. LokalMind doesn't. The model runs on your phone, responses generate on your CPU/GPU, and nothing is transmitted anywhere.
+Most AI assistants send everything you type to a server. LokalMind doesn't. The model runs on your phone, responses generate on your CPU/GPU, and your messages are never transmitted. The app uses the network only to download models and receive app updates.
 
-- **Truly private** — no account, no telemetry, no API calls
+- **Truly private** — no account, no telemetry, no cloud AI: chat inference runs on your device
 - **Works offline** — on a plane, in a basement, anywhere
 - **One-time download** — download a model once, use it forever
 - **Fast** — Metal-accelerated inference on Apple Silicon

@@ -1,9 +1,8 @@
-# LokalMind v2 - LLM Pipeline
+# LokalMind - LLM Pipeline
 
-> **Note:** the memory system described in parts of this document (pinned facts, learned profile, cross-session memories, in-chat summaries, MiniLM embeddings, the Memory screen) was **removed**. Chats now send only the system prompt, recent history and the current message. Sections about memory are kept for history and will be rewritten.
+How a chat turn runs: engine contract, turn sequence, context assembly, queue, and the Whisper boundary.
 
-
-Covers current chat generation flow, context assembly, queue behavior, memory integration, and voice/STT boundary contracts.
+> LokalMind has no memory feature. Cross-session memories, the learned profile, pinned facts, in-chat summaries and embeddings were removed. A turn sends only the system prompt, recent history and the current message.
 
 ---
 
@@ -11,7 +10,7 @@ Covers current chat generation flow, context assembly, queue behavior, memory in
 
 ### ILLMEngine (`src/core/ports/ILLMEngine.ts`)
 
-`llama.rn` is wrapped behind this contract. Key runtime controls:
+`llama.rn` is wrapped behind this contract. `LlamaRnAdapter` (`src/infrastructure/llm/llamaRnAdapter.ts`) is the only file that imports it.
 
 ```typescript
 export interface ILLMEngine {
@@ -25,18 +24,28 @@ export interface ILLMEngine {
   unloadModel(): Promise<void>;
   isModelLoaded(): boolean;
   getCurrentModelId(): string | null;
+  getContextSize(): number | null;   // active n_ctx, null when nothing is loaded
   isGenerating(): boolean;
   releaseAllContexts(): Promise<void>;
 }
 ```
 
+**Native call queue.** Load, generate, unload and release all run through one serial queue (`runExclusive`) because native `llama.rn` throws "Context is busy" if a call starts before the last one unwinds.
+
+- A call that waits in the queue re-checks the model it needs once it runs. `initialize` skips the load if the model is already there; `generateResponse` throws if another model was loaded meanwhile.
+- A queued call whose `AbortSignal` is already aborted is dropped without waiting.
+- Aborting the running call stops generation at once (`stopCompletion`), even with other work queued.
+- A model load that finishes after the 60 s timeout is released, not kept.
+
 ### IWhisperEngine (`src/core/ports/IWhisperEngine.ts`)
 
-`whisper.rn` remains isolated behind a single adapter contract for on-device transcription.
+`whisper.rn` is isolated behind one adapter contract for on-device transcription. Voice input is planned (TODO G.1); the adapter is a stub.
 
 ---
 
 ## Chat Turn Sequence
+
+Send, edit and regenerate all go through `ChatViewModel.runStreamedTurn`, which creates a fresh `AbortController`, streams tokens, turns a thrown error into a failed result, and always resets the busy flags.
 
 ```
 ChatViewModel.sendMessage()
@@ -44,74 +53,64 @@ ChatViewModel.sendMessage()
   │    enqueue in pendingQueue (max 3), clear composer, return
   └─ runSendTurn()
       ├─ optimistic user bubble added
-      ├─ SendMessageUseCase.execute()
-      │   ├─ persist user + assistant placeholder rows
-      │   ├─ ensure model is loaded
-      │   ├─ fetch context inputs in parallel:
-      │   │   - mode override
-      │   │   - pinned facts
-      │   │   - user profile summary
-      │   │   - relevant cross-session memories
-      │   │   - in-session summaries
-      │   ├─ buildContextMessages() with token budgeting
-      │   └─ llmEngine.generateResponse(..., signal)
-      ├─ stream tokens into UI
-      ├─ finalize assistant row content
-      ├─ optional background summarization triggers
+      └─ runStreamedTurn()
+          └─ SendMessageUseCase.execute()
+              ├─ persist user message + assistant placeholder (fail -> return error)
+              ├─ ensure the model is loaded
+              ├─ fit the current message to the input limit (tell the user if cut)
+              ├─ read the mode prompt override
+              ├─ buildContextMessages() with token budgeting
+              ├─ llmEngine.generateResponse(..., maxTokens, signal)
+              └─ save final content (fail -> return error, no success notification)
+      ├─ success: add reply, generate title in the background
+      │  failure: show the error, drop the streaming bubble
       └─ flush next queued message (FIFO)
 ```
 
+`EditMessageUseCase` rewrites the edited message and drops later ones, then the same send path runs. `RegenerateReplyUseCase` follows the same context steps and saves the new reply as an alternate of the old one.
+
 ---
 
-## Prompt Resolution and Context
+## Context Assembly
 
-- System prompt still resolves by priority: mode override -> mode default fallback logic.
-- `buildContextMessages()` composes a single bounded prompt from:
-  - system prompt
-  - pinned facts (`memory:pinnedFacts`)
-  - derived user profile (`memory:userProfile`)
-  - relevant `session_memories`
-  - recent `session_summaries`
-  - capped chat history + current user turn
-- Raw conversation payload is capped to the last 10 messages (`MAX_LLM_CONVERSATION_MESSAGES`) before budget assembly, and each message is hard-clamped to 2000 chars before send.
-- `buildContextMessages()` then applies token budgets (system/memory/history) and can trim oldest history pairs further while keeping a minimum floor.
+`buildContextMessages()` (`src/features/chat/domain/utils/tokenBudget.ts`) is a pure function.
+
+Inputs: system prompt (mode default or the user's mode override), history, current message, the active `n_ctx` and the reserved output tokens (`env.models.chatMaxTokens`, default 512).
+
+1. **Pre-cap.** Before assembly, history is limited to the last 10 messages (including the current one), and each older message to 2000 characters (head 900 + tail 900, with a marker). The current message is not cut this way.
+2. **Current message.** `fitInputToTokens` cuts it to `maxInputTokens(n_ctx, reserved)`. When it cuts, the reply starts with a visible notice (`INPUT_TRUNCATION_NOTICE`).
+3. **System prompt.** Capped at 300 tokens.
+4. **History.** Soft budget 800 tokens: oldest pairs are dropped, but at least 4 turns stay.
+5. **Hard limit.** The whole prompt never exceeds `min(3800, n_ctx - reservedOutput - 64)` tokens. If it would, oldest history pairs are dropped even below the 4-turn floor. The system prompt and current message always stay.
+
+Token counts come from `estimateTokens`, a character-based estimate, not the real tokenizer.
+
+---
+
+## Generation Settings
+
+`SendMessageUseCase` and `RegenerateReplyUseCase` pass `temperature: 0.7` and `maxTokens: env.models.chatMaxTokens` to the engine, so `n_predict` is never unbounded. Stop tokens come from the model entry in `modelConfig.ts`. `<think>...</think>` blocks (DeepSeek R1, Qwen thinking mode) are stripped from the saved text by the adapter and shown separately while streaming by `MessageRenderer`.
 
 ---
 
 ## Queue Behavior
 
-- Queue state: `ChatViewModel.pendingQueue`.
+- State: `ChatViewModel.pendingQueue`, in memory only.
 - Maximum depth: `MAX_PENDING_MESSAGE_QUEUE = 3`.
-- Queue is in-memory only.
-- Each queued item keeps text, mode, and optional reply metadata.
-- Flush is automatic after every completed/failed/aborted turn.
+- Each item keeps text, mode and optional reply metadata. It can be edited or cancelled while waiting.
+- The next item is sent automatically after every finished, failed or stopped turn.
+- Switching to another chat clears the queue.
 
 ---
 
-## Memory Pipeline (Current)
+## Busy State and App Updates
 
-Current memory model is summary-based (not `memory_facts`):
-
-- `session_summaries`: rolling in-session summary buckets.
-- `session_memories`: cross-session memory cards (optional embeddings + scores).
-- `memory:pinnedFacts`: always-injected user facts.
-- `memory:userProfile`: compact profile summary used for personalization.
-
-Generation-time retrieval:
-
-1. Relevant memories are selected by `MemoryService`.
-2. Embedding path is used when available; fallback ranking uses score/recency.
-3. Retrieved memories are injected only through token-budgeted context assembly.
-
-Background updates:
-
-- `ChatViewModel` can trigger bucket summarization and cross-session memory save after turns.
-- Summarization is skipped if model is unloaded or already generating.
+`src/core/appBusy.ts` tracks work a reload would destroy: chat typing, streaming or model loading, and active downloads. `useOtaUpdates` fetches an update when found but reloads only when the app is idle.
 
 ---
 
-## Whisper STT Pipeline (Contract Level)
+## Whisper STT (Contract Level)
 
-- Voice transcription remains on-device through `IWhisperEngine`.
-- Output text is inserted into composer for user review before send.
-- Download/readiness checks happen before recording/transcription flows.
+- Transcription stays on device through `IWhisperEngine`.
+- Output text is inserted into the composer for review before send.
+- Download and readiness checks come before recording.

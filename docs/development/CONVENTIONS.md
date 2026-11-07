@@ -192,7 +192,7 @@ type Result<T, E = AppError> = { success: true; data: T } | { success: false; er
 - Infrastructure adapters MUST catch third-party exceptions and wrap as `AppError`
 - Never use `any` as error type
 - Never swallow errors silently - every `catch` must re-throw as `AppError` or return `err(...)`
-- `AppErrorCode` values: `VALIDATION_ERROR`, `STORAGE_ERROR`, `MODEL_NOT_LOADED`, `MODEL_LOAD_FAILED`, `GENERATION_ERROR`, `GENERATION_CANCELLED`, `DOWNLOAD_FAILED`, `TRANSCRIPTION_ERROR`, `MEMORY_EXTRACTION_ERROR`, `NOT_FOUND`, `UNKNOWN_ERROR`
+- `AppErrorCode` values: `VALIDATION_ERROR`, `STORAGE_ERROR`, `MODEL_NOT_LOADED`, `MODEL_LOAD_FAILED`, `GENERATION_ERROR`, `GENERATION_CANCELLED`, `DOWNLOAD_FAILED`, `TRANSCRIPTION_ERROR`, `NOT_FOUND`, `UNKNOWN_ERROR`
 
 ---
 
@@ -221,7 +221,7 @@ appendToken(token: string) {
 - Every LLM generation MUST accept `AbortSignal` - every ViewModel MUST expose `cancelGeneration()`
 - Token updates MUST be debounced (50ms)
 - Download progress MUST be throttled (250ms)
-- Background tasks (memory extraction) MUST be fire-and-forget: `.catch(() => {})`
+- Background tasks (for example title generation) MUST be fire-and-forget: `.catch(() => {})`
 - Never `await` inside MobX `reaction` or `autorun`
 - Always clean up `useEffect` subscriptions
 
