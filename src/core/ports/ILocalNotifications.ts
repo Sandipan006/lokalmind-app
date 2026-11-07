@@ -5,7 +5,7 @@
 
 export type LocalNotificationTapPayload =
   | { kind: 'chat'; sessionId: string }
-  | { kind: 'inactivity' };
+  | { kind: 'reminder' };
 
 export interface ILocalNotifications {
   /** iOS: true if notifications are already allowed. Does not prompt. */
@@ -21,11 +21,18 @@ export interface ILocalNotifications {
     errorMessage?: string;
   }): Promise<void>;
 
-  /** App became inactive/background - may schedule inactivity reminder (cooldown + cancel-replace). */
+  /**
+   * App left the foreground: replace all pending reminders with a fresh plan of 56 slots
+   * (4 a day, about 14 days) counted from now.
+   */
   onAppBackground(): Promise<void>;
 
-  /** App active - cancel pending inactivity reminder. */
+  /** App active: same reset, so the plan always starts from the latest open. */
   onAppForeground(): Promise<void>;
+
+  /** Reminders are on by default; the user can turn them off (cancels all pending ones). */
+  areRemindersEnabled(): Promise<boolean>;
+  setRemindersEnabled(enabled: boolean): Promise<void>;
 
   /** Handle notification taps (deep link). Call once from root layout after container init. */
   setResponseListener(listener: (payload: LocalNotificationTapPayload) => void): void;

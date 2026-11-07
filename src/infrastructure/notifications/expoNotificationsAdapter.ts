@@ -3,19 +3,10 @@ import { STORAGE_KEYS } from '@/src/infrastructure/storage/asyncStorageDriver';
 import type { IAsyncStorageDriver } from '@/src/infrastructure/storage/asyncStorageDriver';
 import * as Notifications from 'expo-notifications';
 import { AppState, Platform } from 'react-native';
+import { buildReminderPlan, REMINDER_ID_PREFIX } from './reminderPlan';
 
 /** Dedupe window for the same session + event kind. */
 const DEDUPE_TTL_MS = 90_000;
-
-/** Max inactivity reminders scheduled per local calendar day (conservative cap). */
-const INACTIVITY_DAILY_MAX = 4;
-
-const INACTIVITY_TIERS = [
-  { delaySec: 4 * 3600, title: 'Still chatting?', body: 'Pick up where you left off in LokalMind.' },
-  { delaySec: 10 * 3600, title: 'Your thread is waiting', body: 'A quick tap brings your last session back.' },
-  { delaySec: 24 * 3600, title: 'Been a while', body: 'New ideas land better when you jot them down here.' },
-  { delaySec: 30 * 3600, title: 'We saved your context', body: 'Open LokalMind when you are ready to continue.' },
-] as const;
 
 let handlerConfigured = false;
 
@@ -44,19 +35,15 @@ function isBackgroundForBanner(): boolean {
   return AppState.currentState !== 'active';
 }
 
-/** Local calendar day as YYYYMMDD for daily notification budget. */
-function localCalendarYmd(d: Date): number {
-  return d.getFullYear() * 10_000 + (d.getMonth() + 1) * 100 + d.getDate();
-}
-
 function parseData(data: Record<string, unknown> | undefined | null): LocalNotificationTapPayload | null {
   if (!data || typeof data !== 'object') return null;
   const kind = data.kind;
   if (kind === 'chat' && typeof data.sessionId === 'string') {
     return { kind: 'chat', sessionId: data.sessionId };
   }
-  if (kind === 'inactivity') {
-    return { kind: 'inactivity' };
+  // 'inactivity' = reminders scheduled by builds before the 56-slot plan; still open the chat tab.
+  if (kind === 'inactivity' || kind === 'reminder') {
+    return { kind: 'reminder' };
   }
   return null;
 }
@@ -68,9 +55,13 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
 
   private readonly dedupeAt = new Map<string, number>();
 
-  private pendingInactivityNotificationIds: string[] = [];
+  /** Serialises reschedules so a quick background/foreground flip cannot interleave. */
+  private reminderQueue: Promise<void> = Promise.resolve();
 
-  constructor(private readonly storage: Pick<IAsyncStorageDriver, 'getNumber' | 'setNumber'>) {}
+  constructor(
+    private readonly storage: Pick<IAsyncStorageDriver, 'getBoolean' | 'setBoolean'>,
+    private readonly now: () => Date = () => new Date(),
+  ) {}
 
   setResponseListener(listener: (payload: LocalNotificationTapPayload) => void): void {
     if (!isIos()) return;
@@ -139,77 +130,58 @@ export class ExpoNotificationsAdapter implements ILocalNotifications {
     });
   }
 
+  async areRemindersEnabled(): Promise<boolean> {
+    return (await this.storage.getBoolean(STORAGE_KEYS.NOTIFICATION_REMINDERS_ENABLED)) ?? true;
+  }
+
+  async setRemindersEnabled(enabled: boolean): Promise<void> {
+    await this.storage.setBoolean(STORAGE_KEYS.NOTIFICATION_REMINDERS_ENABLED, enabled);
+    await this.refreshReminders();
+  }
+
+  /** Leaving the app: start a fresh 14-day plan from now. */
   async onAppBackground(): Promise<void> {
-    if (!isIos()) return;
-    ensureNotificationHandler();
-    const granted = await this.hasNotificationPermission();
-    if (!granted) return;
-
-    await this.cancelPendingInactivityNotifications({ refundDailyCap: true });
-
-    const ymdToday = localCalendarYmd(new Date());
-    const storedYmd = await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_YMD);
-    let usedToday = (await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT)) ?? 0;
-    if (storedYmd !== ymdToday) {
-      usedToday = 0;
-    }
-    const remaining = INACTIVITY_DAILY_MAX - usedToday;
-    if (remaining <= 0) {
-      return;
-    }
-
-    const tiers = INACTIVITY_TIERS.slice(0, Math.min(INACTIVITY_TIERS.length, remaining));
-    const ids: string[] = [];
-    for (const [tierIndex, tier] of tiers.entries()) {
-      const id = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: tier.title,
-          body: tier.body,
-          data: { kind: 'inactivity', tierIndex },
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: tier.delaySec,
-          repeats: false,
-        },
-      });
-      ids.push(id);
-    }
-    this.pendingInactivityNotificationIds = ids;
-    await this.storage.setNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_YMD, ymdToday);
-    await this.storage.setNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT, usedToday + tiers.length);
+    await this.refreshReminders();
   }
 
+  /** Back in the app: the count restarts from the first slot after this moment. */
   async onAppForeground(): Promise<void> {
-    if (!isIos()) return;
-    await this.cancelPendingInactivityNotifications({ refundDailyCap: true });
+    await this.refreshReminders();
   }
 
-  private async cancelPendingInactivityNotifications(options?: {
-    refundDailyCap?: boolean;
-  }): Promise<void> {
-    const ids = this.pendingInactivityNotificationIds;
-    this.pendingInactivityNotificationIds = [];
-    let cancelledOk = 0;
-    for (const id of ids) {
-      try {
-        await Notifications.cancelScheduledNotificationAsync(id);
-        cancelledOk += 1;
-      } catch {
-        /* ignore */
-      }
-    }
-    if (!options?.refundDailyCap || cancelledOk === 0) {
-      return;
-    }
-    const ymdToday = localCalendarYmd(new Date());
-    const storedYmd = await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_YMD);
-    const count = (await this.storage.getNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT)) ?? 0;
-    if (storedYmd !== ymdToday) {
-      return;
-    }
-    const next = Math.max(0, count - cancelledOk);
-    await this.storage.setNumber(STORAGE_KEYS.NOTIFICATION_INACTIVITY_DAILY_COUNT, next);
+  private refreshReminders(): Promise<void> {
+    if (!isIos()) return Promise.resolve();
+    const run = this.reminderQueue.then(() => this.rebuildReminders());
+    this.reminderQueue = run.catch(() => undefined);
+    return run.catch(() => undefined);
+  }
+
+  /** Cancel everything this feature owns, then schedule the next plan (if allowed). */
+  private async rebuildReminders(): Promise<void> {
+    ensureNotificationHandler();
+    await this.cancelReminders();
+    if (!(await this.areRemindersEnabled()) || !(await this.hasNotificationPermission())) return;
+    const plan = buildReminderPlan(this.now());
+    await Promise.all(
+      plan.map((r) =>
+        Notifications.scheduleNotificationAsync({
+          identifier: r.id,
+          content: { title: r.copy.title, body: r.copy.body, data: { kind: 'reminder', slot: r.slot } },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: r.at },
+        }),
+      ),
+    );
+  }
+
+  /** Looks up pending ids from the OS, so it still works after the app was killed. */
+  private async cancelReminders(): Promise<void> {
+    const pending = await Notifications.getAllScheduledNotificationsAsync();
+    const owned = pending.filter(
+      (n) =>
+        n.identifier.startsWith(REMINDER_ID_PREFIX) ||
+        (n.content.data as Record<string, unknown> | null)?.kind === 'inactivity',
+    );
+    await Promise.all(owned.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
   }
 
   private shouldDedupe(key: string): boolean {

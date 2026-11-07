@@ -12,7 +12,7 @@ function navigateForPayload(
     case 'chat':
       router.push(`/chat/${payload.sessionId}`);
       break;
-    case 'inactivity':
+    case 'reminder':
       router.push('/(tabs)/chat');
       break;
     default:

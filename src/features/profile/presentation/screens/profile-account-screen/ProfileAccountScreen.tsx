@@ -10,12 +10,13 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Linking,
   ScrollView,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -32,12 +33,23 @@ export const ProfileAccountScreen = observer(() => {
     ),
   ).current;
 
+  const [remindersOn, setRemindersOn] = useState(true);
+
+  const toggleReminders = (next: boolean) => {
+    const previous = remindersOn;
+    setRemindersOn(next);
+    void Haptics.selectionAsync();
+    container.localNotifications.setRemindersEnabled(next).catch(() => setRemindersOn(previous));
+  };
+
   useEffect(() => {
     let mounted = true;
     void (async () => {
       await container.initializeContainer();
       if (mounted) {
         await viewModel.loadProfile();
+        const enabled = await container.localNotifications.areRemindersEnabled();
+        if (mounted) setRemindersOn(enabled);
       }
     })();
     return () => {
@@ -177,6 +189,24 @@ export const ProfileAccountScreen = observer(() => {
                 <SymbolView name="chevron.right" size={14} tintColor={TEXT_WHITE_40} />
               </View>
             </TouchableOpacity>
+          </GlassSurface>
+
+          <GlassSurface tier="medium" style={styles.card}>
+            <View style={styles.cardInner}>
+              <View style={styles.cardLeft}>
+                <Text style={styles.cardTitle}>Reminders</Text>
+                <Text style={styles.cardSubtitle}>
+                  A few gentle nudges a day, scheduled on this phone. Turn off anytime
+                </Text>
+              </View>
+              <Switch
+                value={remindersOn}
+                onValueChange={toggleReminders}
+                disabled={viewModel.isResetting}
+                accessibilityLabel="Reminders"
+                accessibilityHint="Turns the scheduled reminder notifications on or off"
+              />
+            </View>
           </GlassSurface>
 
           <GlassSurface tier="medium" style={styles.card}>

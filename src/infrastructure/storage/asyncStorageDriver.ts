@@ -11,10 +11,8 @@ export const STORAGE_KEYS = {
   SETTINGS_CONTEXT_WINDOW: 'settings:contextWindow',
   SETTINGS_GLOBAL_SYSTEM_PROMPT: 'settings:globalSystemPrompt',
   ONBOARDING_COMPLETE: 'onboarding:complete',
-  /** Local calendar day (YYYYMMDD) for inactivity notification daily cap. */
-  NOTIFICATION_INACTIVITY_DAILY_YMD: 'lm:notif:inactivity:dailyYmd',
-  /** How many inactivity reminders were scheduled today (max 4). */
-  NOTIFICATION_INACTIVITY_DAILY_COUNT: 'lm:notif:inactivity:dailyCount',
+  /** User switch for the scheduled reminders; absent means on. */
+  NOTIFICATION_REMINDERS_ENABLED: 'lm:notif:reminders:enabled',
   modeSystemPrompt: (mode: string) => `settings:mode:${mode}:systemPrompt`,
 } as const;
 
